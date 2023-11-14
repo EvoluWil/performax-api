@@ -24,8 +24,8 @@ export class FinancialController {
   }
 
   @Get()
-  findAll() {
-    return this.financialService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.financialService.findAll(companyId);
   }
 
   @Get(':id')

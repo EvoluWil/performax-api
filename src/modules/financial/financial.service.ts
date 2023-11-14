@@ -25,9 +25,12 @@ export class FinancialService {
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('financial');
-    const financies = await this.prisma.financial.findMany(query);
+    const financies = await this.prisma.financial.findMany({
+      ...query,
+      where: { ...query.where, companyId },
+    });
     return financies;
   }
 
