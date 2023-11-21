@@ -31,6 +31,12 @@ export class CompanyRoleService {
     });
   }
 
+  async findAll(sectorId: string) {
+    return this.prisma.role.findMany({
+      where: { sectorId },
+    });
+  }
+
   async update(roleId: string, updateCompanyRoleDto: UpdateCompanyRoleDto) {
     const role = await this.prisma.role.findFirst({
       where: { id: roleId },

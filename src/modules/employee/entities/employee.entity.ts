@@ -1,8 +1,9 @@
 import { AccessLevelEnum, ContractTypeEnum, Employee } from '@prisma/client';
 
 export class EmployeeEntity implements Employee {
+  companyId: string;
   id: string;
-  salary: number;
+  salary: string;
   admission: Date;
   accessLevel: AccessLevelEnum;
   contractType: ContractTypeEnum;

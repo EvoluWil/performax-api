@@ -14,7 +14,7 @@ async function bootstrap() {
         credentials: true,
         preflightContinue: false,
         optionsSuccessStatus: 204,
-        origin: ['http://localhost:5173'],
+        origin: ['http://localhost:5173', 'https://performax.vercel.app'],
         allowedHeaders: [
             'X-Requested-With',
             'X-HTTP-Method-Override',

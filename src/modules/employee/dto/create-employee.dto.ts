@@ -1,17 +1,18 @@
 import { ContractTypeEnum } from '@prisma/client';
 import {
   IsDateString,
+  IsEmail,
   IsEnum,
   IsMongoId,
   IsNotEmpty,
-  IsNumber,
   IsString,
 } from 'class-validator';
+import { IsCpf } from 'src/decorators/cpf.decorator';
 
 export class CreateEmployeeDto {
-  @IsNumber()
   @IsNotEmpty()
-  salary: number;
+  @IsString()
+  salary: string;
 
   @IsNotEmpty()
   @IsDateString()
@@ -28,6 +29,15 @@ export class CreateEmployeeDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsMongoId()
-  userId: string;
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsCpf()
+  cpf: string;
 }

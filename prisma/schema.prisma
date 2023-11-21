@@ -122,6 +122,7 @@ model Company {
   financials          Financial[]
   financialCategories FinancialCategory[]
   financialContracts  FinancialContract[]
+  employee            Employee[]
 
   @@map("companies")
 }
@@ -156,7 +157,7 @@ model Role {
 
 model Employee {
   id                  String           @id @default(auto()) @map("_id") @db.ObjectId
-  salary              Float
+  salary              String
   admission           DateTime
   accessLevel         AccessLevelEnum  @default(COMUM)
   contractType        ContractTypeEnum
@@ -183,6 +184,8 @@ model Employee {
   managerId String?   @db.ObjectId
 
   managedEmployees Employee[] @relation("ManagerEmployee")
+  company          Company    @relation(fields: [companyId], references: [id])
+  companyId        String     @db.ObjectId
 
   @@map("employees")
 }

@@ -3,16 +3,18 @@ import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-query
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class EmployeeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
+    private readonly userService: UserService,
   ) {}
 
   async create(companyId: string, createEmployeeDto: CreateEmployeeDto) {
-    const { roleId, userId, ...newEmployee } = createEmployeeDto;
+    const { roleId, name, email, cpf, ...newEmployee } = createEmployeeDto;
     const company = await this.prisma.company.findFirst({
       where: { id: companyId },
     });
@@ -29,9 +31,19 @@ export class EmployeeService {
       throw new BadRequestException('Cargo não encontrado');
     }
 
-    const user = await this.prisma.user.findFirst({
-      where: { id: userId },
+    let user = await this.prisma.user.findFirst({
+      where: {
+        AND: [{ cpf }, { email }],
+      },
     });
+
+    if (!user) {
+      user = (await this.userService.create({
+        cpf: cpf,
+        email: email,
+        name: name,
+      })) as unknown as typeof user;
+    }
 
     if (!user) {
       throw new BadRequestException('Usuário não encontrado');
@@ -40,15 +52,19 @@ export class EmployeeService {
     return this.prisma.employee.create({
       data: {
         ...newEmployee,
+        company: { connect: { id: companyId } },
         role: { connect: { id: roleId } },
-        user: { connect: { id: userId } },
+        user: { connect: { id: user.id } },
       },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('employee');
-    const employees = await this.prisma.employee.findMany(query);
+    const employees = await this.prisma.employee.findMany({
+      ...query,
+      where: { ...query.where, companyId },
+    });
     return employees;
   }
 

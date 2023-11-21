@@ -4,16 +4,15 @@ import {
   IsEnum,
   IsMongoId,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
 
 export class UpdateEmployeeDto {
-  @IsNumber()
+  @IsString()
   @IsOptional()
   @IsNotEmpty()
-  salary: number;
+  salary: string;
 
   @IsNotEmpty()
   @IsOptional()
