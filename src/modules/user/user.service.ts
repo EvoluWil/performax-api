@@ -7,6 +7,7 @@ import { defaultPlainToClass } from 'src/utils/default-plain-class.utils';
 import { generateHash } from 'src/utils/generate-hash.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindUserDto } from './dto/find-user.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -66,7 +67,7 @@ export class UserService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const { email, name } = updateUserDto;
+    const { email, name, cpf } = updateUserDto;
     const user = await this.prisma.user.findUnique({ where: { id: id } });
 
     if (!user) {
@@ -81,6 +82,38 @@ export class UserService {
       if (userEmailExists) {
         throw new BadRequestException(`E-mail já esta em uso!`);
       }
+
+      if (!user?.password) {
+        const hash = generateHash();
+
+        await this.emailService.welcomeEmail({
+          email,
+          name,
+          hash,
+        });
+
+        const resetTokenExpiry = add(new Date(), { days: 15 });
+
+        return this.prisma.user.update({
+          where: { id },
+          data: {
+            name,
+            email,
+            resetToken: hash,
+            resetTokenExpiry,
+          },
+        });
+      }
+    }
+
+    if (cpf && cpf !== user.cpf) {
+      const userCpfExists = await this.prisma.user.findFirst({
+        where: { cpf },
+      });
+
+      if (userCpfExists) {
+        throw new BadRequestException(`CPF já esta em uso!`);
+      }
     }
 
     await this.prisma.user.update({
@@ -88,7 +121,23 @@ export class UserService {
       data: {
         name,
         email,
+        cpf,
       },
+    });
+
+    return { ok: true };
+  }
+
+  async updateRole(id: string, updateRoleDto: UpdateRoleDto) {
+    const user = await this.prisma.user.findFirst({ where: { id } });
+
+    if (!user) {
+      throw new BadRequestException(`Usuário não encontrado!`);
+    }
+
+    await this.prisma.user.update({
+      where: { id },
+      data: updateRoleDto,
     });
 
     return { ok: true };

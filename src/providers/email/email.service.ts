@@ -6,11 +6,6 @@ import { WelcomeEmailDto } from './dto/welcome-email.dto';
 @Injectable()
 export class EmailService {
   private images = {
-    logo: 'https://firebasestorage.googleapis.com/v0/b/controller-2a100.appspot.com/o/logo.png?alt=media&token=9481875b-9356-4017-a0d3-e0d88bce2609',
-    linkedIn:
-      'https://firebasestorage.googleapis.com/v0/b/controller-2a100.appspot.com/o/linkedIn.png?alt=media&token=a2cfb525-c4f8-41d7-8b08-9949134f15c2',
-    instagram:
-      'https://firebasestorage.googleapis.com/v0/b/controller-2a100.appspot.com/o/instagram.png?alt=media&token=536998fe-c2ee-4b63-b1e6-32ef42bebb49',
     suporte:
       'https://firebasestorage.googleapis.com/v0/b/controller-2a100.appspot.com/o/suporte.png?alt=media&token=e3224891-3ca0-4f60-b155-7cf5a4e51daa',
     wave: 'https://firebasestorage.googleapis.com/v0/b/controller-2a100.appspot.com/o/wave.png?alt=media&token=a76ae741-1140-48b4-8627-1d16e6ebb1b9',
@@ -277,68 +272,7 @@ export class EmailService {
                                   border-bottom: 0px solid transparent;
                                 "
                               ><!--<![endif]-->
-                                <table
-                                  style="font-family: arial, helvetica, sans-serif"
-                                  role="presentation"
-                                  cellpadding="0"
-                                  cellspacing="0"
-                                  width="100%"
-                                  border="0"
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <td
-                                        style="
-                                          overflow-wrap: break-word;
-                                          word-break: break-word;
-                                          padding: 21px 10px 20px;
-                                          font-family: arial, helvetica, sans-serif;
-                                        "
-                                        align="left"
-                                      >
-                                        <table
-                                          width="100%"
-                                          cellpadding="0"
-                                          cellspacing="0"
-                                          border="0"
-                                        >
-                                          <tr>
-                                            <td
-                                              class="v-text-align"
-                                              style="
-                                                padding-right: 0px;
-                                                padding-left: 0px;
-                                              "
-                                              align="center"
-                                            >
-                                              <img
-                                                align="center"
-                                                border="0"
-                                                src="${this.images.logo}"
-                                                alt="Image"
-                                                title="Image"
-                                                style="
-                                                  outline: none;
-                                                  text-decoration: none;
-                                                  -ms-interpolation-mode: bicubic;
-                                                  clear: both;
-                                                  display: inline-block !important;
-                                                  border: none;
-                                                  height: auto;
-                                                  float: none;
-                                                  width: 29%;
-                                                  max-width: 168.2px;
-                                                "
-                                                width="168.2"
-                                                class="v-src-width v-src-max-width"
-                                              />
-                                            </td>
-                                          </tr>
-                                        </table>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
+                         
 
                                 <!--[if (!mso)&(!IE)]><!-->
                               </div>
@@ -2843,66 +2777,14 @@ export class EmailService {
                                             word-wrap: break-word;
                                           "
                                         >
-                                          <p style="font-size: 14px; line-height: 140%">
-                                            <span
-                                              style="
-                                                font-family: Cabin, sans-serif;
-                                                font-size: 14px;
-                                                line-height: 19.6px;
-                                              "
-                                              ><span
-                                                style="
-                                                  font-size: 16px;
-                                                  line-height: 22.4px;
-                                                "
-                                                >Contato</span
-                                              ><br
-                                            /></span>
-                                          </p>
+                                          
                                         </div>
                                       </td>
                                     </tr>
                                   </tbody>
                                 </table>
 
-                                <table
-                                  id="u_content_text_34"
-                                  style="font-family: arial, helvetica, sans-serif"
-                                  role="presentation"
-                                  cellpadding="0"
-                                  cellspacing="0"
-                                  width="100%"
-                                  border="0"
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <td
-                                        style="
-                                          overflow-wrap: break-word;
-                                          word-break: break-word;
-                                          padding: 10px;
-                                          font-family: arial, helvetica, sans-serif;
-                                        "
-                                        align="left"
-                                      >
-                                        <div
-                                          class="v-text-align"
-                                          style="
-                                            font-size: 14px;
-                                            color: #4c5763;
-                                            line-height: 170%;
-                                            text-align: center;
-                                            word-wrap: break-word;
-                                          "
-                                        >
-                                          <p style="font-size: 14px; line-height: 170%">
-                                            support@domain.com<br />sales@domain.com
-                                          </p>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
+                               
 
                                 <!--[if (!mso)&(!IE)]><!-->
                               </div>
@@ -2963,14 +2845,7 @@ export class EmailService {
                                           "
                                         >
                                           <p style="font-size: 14px; line-height: 140%">
-                                            <span
-                                              style="
-                                                font-family: Cabin, sans-serif;
-                                                font-size: 16px;
-                                                line-height: 22.4px;
-                                              "
-                                              >Siga-nos<br
-                                            /></span>
+                                            
                                           </p>
                                         </div>
                                       </td>
@@ -2998,133 +2873,6 @@ export class EmailService {
                                         align="left"
                                       >
                                         <div align="center">
-                                          <div style="display: table; max-width: 93px">
-                                            <!--[if (mso)|(IE)]><table width="93" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-collapse:collapse;" align="center"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace: 0pt;mso-table-rspace: 0pt; width:93px;"><tr><![endif]-->
-
-                                            <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 15px;" valign="top"><![endif]-->
-                                            <table
-                                              align="left"
-                                              border="0"
-                                              cellspacing="0"
-                                              cellpadding="0"
-                                              width="32"
-                                              height="32"
-                                              style="
-                                                width: 32px !important;
-                                                height: 32px !important;
-                                                display: inline-block;
-                                                border-collapse: collapse;
-                                                table-layout: fixed;
-                                                border-spacing: 0;
-                                                mso-table-lspace: 0pt;
-                                                mso-table-rspace: 0pt;
-                                                vertical-align: top;
-                                                margin-right: 15px;
-                                              "
-                                            >
-                                              <tbody>
-                                                <tr style="vertical-align: top">
-                                                  <td
-                                                    align="left"
-                                                    valign="middle"
-                                                    style="
-                                                      word-break: break-word;
-                                                      border-collapse: collapse !important;
-                                                      vertical-align: top;
-                                                    "
-                                                  >
-                                                    <a
-                                                      href="https://instagram.com/"
-                                                      title="Instagram"
-                                                      target="_blank"
-                                                    >
-                                                      <img
-                                                        src="${this.images.instagram}"
-                                                        alt="Instagram"
-                                                        title="Instagram"
-                                                        width="32"
-                                                        style="
-                                                          outline: none;
-                                                          text-decoration: none;
-                                                          -ms-interpolation-mode: bicubic;
-                                                          clear: both;
-                                                          display: block !important;
-                                                          border: none;
-                                                          height: auto;
-                                                          float: none;
-                                                          max-width: 32px !important;
-                                                        "
-                                                      />
-                                                    </a>
-                                                  </td>
-                                                </tr>
-                                              </tbody>
-                                            </table>
-                                            <!--[if (mso)|(IE)]></td><![endif]-->
-
-                                            <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 0px;" valign="top"><![endif]-->
-                                            <table
-                                              align="left"
-                                              border="0"
-                                              cellspacing="0"
-                                              cellpadding="0"
-                                              width="32"
-                                              height="32"
-                                              style="
-                                                width: 32px !important;
-                                                height: 32px !important;
-                                                display: inline-block;
-                                                border-collapse: collapse;
-                                                table-layout: fixed;
-                                                border-spacing: 0;
-                                                mso-table-lspace: 0pt;
-                                                mso-table-rspace: 0pt;
-                                                vertical-align: top;
-                                                margin-right: 0px;
-                                              "
-                                            >
-                                              <tbody>
-                                                <tr style="vertical-align: top">
-                                                  <td
-                                                    align="left"
-                                                    valign="middle"
-                                                    style="
-                                                      word-break: break-word;
-                                                      border-collapse: collapse !important;
-                                                      vertical-align: top;
-                                                    "
-                                                  >
-                                                    <a
-                                                      href="https://linkedin.com/"
-                                                      title="LinkedIn"
-                                                      target="_blank"
-                                                    >
-                                                      <img
-                                                        src="${this.images.linkedIn}"
-                                                        alt="LinkedIn"
-                                                        title="LinkedIn"
-                                                        width="32"
-                                                        style="
-                                                          outline: none;
-                                                          text-decoration: none;
-                                                          -ms-interpolation-mode: bicubic;
-                                                          clear: both;
-                                                          display: block !important;
-                                                          border: none;
-                                                          height: auto;
-                                                          float: none;
-                                                          max-width: 32px !important;
-                                                        "
-                                                      />
-                                                    </a>
-                                                  </td>
-                                                </tr>
-                                              </tbody>
-                                            </table>
-                                            <!--[if (mso)|(IE)]></td><![endif]-->
-
-                                            <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
-                                          </div>
                                         </div>
                                       </td>
                                     </tr>
@@ -3435,17 +3183,6 @@ export class EmailService {
           <tbody>
             <tr>
               <td style="overflow-wrap:break-word;word-break:break-word;padding:21px 10px 20px;font-family:arial,helvetica,sans-serif;" align="left">
-                
-        <table width="100%" cellpadding="0" cellspacing="0" border="0">
-          <tr>
-            <td class="v-text-align" style="padding-right: 0px;padding-left: 0px;" align="center">
-              
-              <img align="center" border="0" src="${this.images.logo}" alt="Image" title="Image" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: inline-block !important;border: none;height: auto;float: none;width: 29%;max-width: 168.2px;" width="168.2" class="v-src-width v-src-max-width"/>
-              
-            </td>
-          </tr>
-        </table>
-
               </td>
             </tr>
           </tbody>
@@ -3687,9 +3424,6 @@ export class EmailService {
             <tr>
               <td style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:arial,helvetica,sans-serif;" align="left">
                 
-          <div class="v-text-align" style="font-size: 14px; color: #00d09c; line-height: 140%; text-align: center; word-wrap: break-word;">
-            <p style="font-size: 14px; line-height: 140%;"><span style="font-family: Cabin, sans-serif; font-size: 14px; line-height: 19.6px;"><span style="font-size: 16px; line-height: 22.4px;">Contato</span><br /></span></p>
-          </div>
 
               </td>
             </tr>
@@ -3702,7 +3436,6 @@ export class EmailService {
               <td style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:arial,helvetica,sans-serif;" align="left">
                 
           <div class="v-text-align" style="font-size: 14px; color: #4c5763; line-height: 170%; text-align: center; word-wrap: break-word;">
-            <p style="font-size: 14px; line-height: 170%;">support@domain.com <br />sales@domain.com</p>
           </div>
 
               </td>
@@ -3725,7 +3458,6 @@ export class EmailService {
               <td style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:arial,helvetica,sans-serif;" align="left">
                 
           <div class="v-text-align" style="font-size: 14px; color: #00d09c; line-height: 140%; text-align: center; word-wrap: break-word;">
-            <p style="font-size: 14px; line-height: 140%;"><span style="font-family: Cabin, sans-serif; font-size: 16px; line-height: 22.4px;">Siga-nos<br /></span></p>
           </div>
 
               </td>
@@ -3746,9 +3478,6 @@ export class EmailService {
             <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 15px;" valign="top"><![endif]-->
             <table align="left" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width: 32px !important;height: 32px !important;display: inline-block;border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 15px">
               <tbody><tr style="vertical-align: top"><td align="left" valign="middle" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-                <a href="https://instagram.com/" title="Instagram" target="_blank">
-                  <img src="${this.images.instagram}" alt="Instagram" title="Instagram" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
-                </a>
               </td></tr>
             </tbody></table>
             <!--[if (mso)|(IE)]></td><![endif]-->
@@ -3756,9 +3485,6 @@ export class EmailService {
             <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 0px;" valign="top"><![endif]-->
             <table align="left" border="0" cellspacing="0" cellpadding="0" width="32" height="32" style="width: 32px !important;height: 32px !important;display: inline-block;border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 0px">
               <tbody><tr style="vertical-align: top"><td align="left" valign="middle" style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
-                <a href="https://linkedin.com/" title="LinkedIn" target="_blank">
-                  <img src="${this.images.linkedIn}" alt="LinkedIn" title="LinkedIn" width="32" style="outline: none;text-decoration: none;-ms-interpolation-mode: bicubic;clear: both;display: block !important;border: none;height: auto;float: none;max-width: 32px !important">
-                </a>
               </td></tr>
             </tbody></table>
             <!--[if (mso)|(IE)]></td><![endif]-->

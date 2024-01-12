@@ -1,5 +1,4 @@
 import { Expose } from 'class-transformer';
-import { ProfileEntity } from 'src/modules/profile/entities/profile.entity';
 
 export class FindUserDto {
   @Expose()
@@ -13,9 +12,6 @@ export class FindUserDto {
 
   @Expose()
   name: string;
-
-  @Expose()
-  profile: ProfileEntity;
 
   @Expose()
   profileId: string;

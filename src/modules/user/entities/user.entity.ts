@@ -1,15 +1,14 @@
-import { User } from '@prisma/client';
+import { User, UserRoleEnum } from '@prisma/client';
 
 export class UserEntity implements User {
   id: string;
-  cpf: string;
   name: string;
+  cpf: string;
   email: string;
   password: string;
-  profileId: string;
-  createdAt: Date;
-  updatedAt: Date;
   resetToken: string;
   resetTokenExpiry: Date;
-  adminInIds: string[];
+  role: UserRoleEnum;
+  createdAt: Date;
+  updatedAt: Date;
 }

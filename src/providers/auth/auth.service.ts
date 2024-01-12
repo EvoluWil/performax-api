@@ -33,35 +33,6 @@ export class AuthService {
 
     const user = await this.prisma.user.findFirst({
       where: { email: email },
-      include: {
-        companies: {
-          select: {
-            name: true,
-            id: true,
-          },
-        },
-        employees: {
-          select: {
-            id: true,
-            accessLevel: true,
-            role: {
-              select: {
-                name: true,
-                sector: {
-                  select: {
-                    company: {
-                      select: {
-                        name: true,
-                        id: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
     });
 
     if (!user) {
@@ -104,34 +75,6 @@ export class AuthService {
   async getMe({ id }: AuthUserDto) {
     const user = await this.prisma.user.findFirst({
       where: { id },
-      include: {
-        companies: {
-          select: {
-            name: true,
-            id: true,
-          },
-        },
-        employees: {
-          select: {
-            id: true,
-            role: {
-              select: {
-                name: true,
-                sector: {
-                  select: {
-                    company: {
-                      select: {
-                        name: true,
-                        id: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
     });
 
     if (!user) {
