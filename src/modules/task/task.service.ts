@@ -53,9 +53,16 @@ export class TaskService {
   }
 
   async findOne(id: string) {
-    return await this.prisma.task.findFirst({
+    const task = await this.prisma.task.findFirst({
       where: { id },
+      include: { user: true },
     });
+
+    if (!task) {
+      throw new NotFoundException('Tarefa não encontrada!');
+    }
+
+    return { ...task, user: { name: task.user.name } };
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto, userId?: string) {
