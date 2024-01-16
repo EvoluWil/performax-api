@@ -25,6 +25,16 @@ export class TaskService {
 
   async findAll(userId: string) {
     const query = await this.qb.query('task');
+
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId },
+      select: { name: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado!');
+    }
+
     const tasksTemp = await this.prisma.task.findMany({
       ...query,
       where: { ...query.where, userId },
@@ -49,7 +59,7 @@ export class TaskService {
 
     await Promise.all(expiredTasks);
 
-    return tasks;
+    return { tasks, user };
   }
 
   async findOne(id: string) {
