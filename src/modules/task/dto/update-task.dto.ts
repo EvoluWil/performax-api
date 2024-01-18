@@ -10,5 +10,5 @@ export class UpdateTaskDto extends PartialType(CreateTaskDto) {
 
   @IsString()
   @IsOptional()
-  service: string;
+  service?: string;
 }
