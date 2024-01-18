@@ -10,5 +10,6 @@ export class TaskEntity implements Task {
   updatedById: string;
   userId: string;
   status: TaskStatusEnum;
+  service: string;
   endDate: Date;
 }

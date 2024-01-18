@@ -30,6 +30,7 @@ model Task {
   id          String         @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String
+  service     String         @default("Não informado")
   status      TaskStatusEnum @default(OPEN)
   files       String[]       @default([])
   endDate     DateTime?
