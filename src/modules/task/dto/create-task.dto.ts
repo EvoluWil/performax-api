@@ -15,10 +15,6 @@ export class CreateTaskDto {
   @IsNotEmpty()
   description: string;
 
-  @IsString()
-  @IsNotEmpty()
-  service: string;
-
   @IsArray()
   @IsOptional()
   files: string[];
