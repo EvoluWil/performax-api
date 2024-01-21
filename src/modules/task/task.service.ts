@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Task } from '@prisma/client';
+import { User } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -12,70 +12,70 @@ export class TaskService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto, userId: string) {
+  async create(createTaskDto: CreateTaskDto, authUserId: string) {
+    const { clientId, typeId, userId, ...rest } = createTaskDto;
     return await this.prisma.task.create({
       data: {
-        ...createTaskDto,
+        ...rest,
         user: {
           connect: { id: userId },
+        },
+        client: {
+          connect: { id: clientId },
+        },
+        type: {
+          connect: { id: typeId },
+        },
+        createdBy: {
+          connect: { id: authUserId },
         },
       },
     });
   }
 
-  async findAll(userId: string) {
+  async findAll() {
     const query = await this.qb.query('task');
 
-    const user = await this.prisma.user.findFirst({
-      where: { id: userId },
-      select: { name: true },
+    await this.prisma.task.updateMany({
+      where: {
+        AND: [
+          {
+            endDate: {
+              lt: new Date(),
+            },
+          },
+          {
+            status: 'OPEN',
+          },
+        ],
+      },
+      data: {
+        status: 'EXPIRED',
+      },
     });
 
-    if (!user) {
-      throw new NotFoundException('Usuário não encontrado!');
-    }
-
-    const tasksTemp = await this.prisma.task.findMany({
+    return this.prisma.task.findMany({
       ...query,
-      where: { ...query.where, userId },
+      where: { ...query.where },
     });
-
-    const tasks: Task[] = [];
-
-    const expiredTasks = tasksTemp
-      .filter((task) => {
-        if (
-          task.status === 'OPEN' &&
-          task?.endDate &&
-          new Date(task.endDate) < new Date()
-        ) {
-          tasks.push({ ...task, status: 'EXPIRED' });
-          return true;
-        }
-        tasks.push(task);
-        return false;
-      })
-      .map((task) => this.update(task.id, { status: 'EXPIRED' }));
-
-    await Promise.all(expiredTasks);
-
-    return { tasks, user };
   }
 
   async findOne(id: string) {
     const task = await this.prisma.task.findFirst({
       where: { id },
-      include: { user: true },
+      include: { user: true, client: true, type: true, updatedBy: true },
     });
 
     if (!task) {
       throw new NotFoundException('Tarefa não encontrada!');
     }
 
+    task.updatedBy = { name: task?.updatedBy?.name } as User;
+
     return { ...task, user: { name: task.user.name } };
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto, userId?: string) {
+  async update(id: string, updateTaskDto: UpdateTaskDto, authUserId: string) {
     const task = await this.prisma.task.findFirst({
       where: { id },
     });
@@ -84,25 +84,35 @@ export class TaskService {
       throw new NotFoundException('Tarefa não encontrada!');
     }
 
-    if (userId) {
-      if (updateTaskDto?.endDate && task.status !== 'CLOSED') {
-        const newStatus =
-          new Date(updateTaskDto.endDate) < new Date() ? 'EXPIRED' : 'OPEN';
-        updateTaskDto.status = newStatus;
-      }
-      return await this.prisma.task.update({
-        where: { id },
-        data: {
-          ...updateTaskDto,
-          updatedBy: { connect: { id: userId } },
-        },
-      });
-    } else {
-      return await this.prisma.task.update({
-        where: { id },
-        data: updateTaskDto,
-      });
+    if (updateTaskDto?.endDate && task.status !== 'CLOSED') {
+      const newStatus =
+        new Date(updateTaskDto.endDate) < new Date() ? 'EXPIRED' : 'OPEN';
+      updateTaskDto.status = newStatus;
     }
+
+    if (updateTaskDto?.typeId) {
+      (updateTaskDto as any).type = { connect: { id: updateTaskDto.typeId } };
+      delete updateTaskDto.typeId;
+    }
+
+    if (updateTaskDto?.clientId) {
+      (updateTaskDto as any).client = {
+        connect: { id: updateTaskDto.clientId },
+      };
+      delete updateTaskDto.clientId;
+    }
+
+    if (updateTaskDto?.userId) {
+      (updateTaskDto as any).user = { connect: { id: updateTaskDto.userId } };
+      delete updateTaskDto.userId;
+    }
+
+    (updateTaskDto as any).updatedBy = { connect: { id: authUserId } };
+
+    return this.prisma.task.update({
+      where: { id },
+      data: updateTaskDto,
+    });
   }
 
   async remove(id: string) {

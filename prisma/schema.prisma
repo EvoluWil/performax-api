@@ -22,28 +22,73 @@ model User {
 
   tasks       Task[] @relation(name: "user")
   taskUpdates Task[] @relation(name: "updatedBy")
+  taskCreates Task[] @relation(name: "createdBy")
 
   @@map("users")
 }
 
 model Task {
-  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String
   service     String?
-  status      TaskStatusEnum @default(OPEN)
-  files       String[]       @default([])
-  endDate     DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+
+  status TaskStatusEnum @default(OPEN)
+
+  files           File[]
+  conclusionFiles File[]
+
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  client   Client? @relation(fields: [clientId], references: [id])
+  clientId String? @db.ObjectId
+
+  type   TaskType? @relation(fields: [typeId], references: [id])
+  typeId String?   @db.ObjectId
 
   updatedBy   User?   @relation(fields: [updatedById], references: [id], name: "updatedBy", onDelete: SetNull)
   updatedById String? @db.ObjectId
+
+  createdBy   User?   @relation(fields: [updatedById], references: [id], name: "createdBy", onDelete: SetNull)
+  createdById String? @db.ObjectId
 
   user   User   @relation(fields: [userId], references: [id], name: "user", onDelete: Cascade)
   userId String @db.ObjectId
 
   @@map("tasks")
+}
+
+model TaskType {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks Task[]
+
+  @@map("taskTypes")
+}
+
+model Client {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  cnpj    String @unique
+  address String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks Task[]
+
+  @@map("clients")
+}
+
+type File {
+  type String
+  url  String
 }
 
 enum UserRoleEnum {

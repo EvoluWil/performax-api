@@ -7,25 +7,27 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { Request } from 'express';
+import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
 
-@Controller('users/:userId/tasks')
+@Controller('tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
   @Post()
   create(
     @Body() createTaskDto: CreateTaskDto,
-    @Param('userId') userId: string,
+    @AuthUser() authUser: Request['user'],
   ) {
-    return this.taskService.create(createTaskDto, userId);
+    return this.taskService.create(createTaskDto, authUser?.id);
   }
 
   @Get()
-  findAll(@Param('userId') userId: string) {
-    return this.taskService.findAll(userId);
+  findAll() {
+    return this.taskService.findAll();
   }
 
   @Get(':id')
@@ -36,10 +38,10 @@ export class TaskController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Param('userId') userId: string,
     @Body() updateTaskDto: UpdateTaskDto,
+    @AuthUser() authUser: Request['user'],
   ) {
-    return this.taskService.update(id, updateTaskDto, userId);
+    return this.taskService.update(id, updateTaskDto, authUser?.id);
   }
 
   @Delete(':id')

@@ -1,6 +1,8 @@
+import { File } from '@prisma/client';
 import {
   IsArray,
   IsDateString,
+  IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -17,10 +19,22 @@ export class CreateTaskDto {
 
   @IsArray()
   @IsOptional()
-  files: string[];
+  files: File[];
 
   @IsString()
   @IsOptional()
   @IsDateString()
   endDate: Date;
+
+  @IsString()
+  @IsMongoId()
+  userId: string;
+
+  @IsString()
+  @IsMongoId()
+  clientId: string;
+
+  @IsString()
+  @IsMongoId()
+  typeId: string;
 }
