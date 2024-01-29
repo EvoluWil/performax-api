@@ -86,6 +86,34 @@ model Client {
   @@map("clients")
 }
 
+model Employee {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  cpf      String @unique
+  password String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employeeClock EmployeeClock[]
+
+  @@map("employees")
+}
+
+model EmployeeClock {
+  id   String            @id @default(auto()) @map("_id") @db.ObjectId
+  date DateTime          @default(now())
+  type EmployeeClockEnum @default(IN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String   @db.ObjectId
+
+  @@map("employeeClocks")
+}
+
 type File {
   type String
   url  String
@@ -101,4 +129,11 @@ enum TaskStatusEnum {
   OPEN
   CLOSED
   EXPIRED
+}
+
+enum EmployeeClockEnum {
+  IN
+  OUT
+  IN_LUNCH
+  OUT_LUNCH
 }
