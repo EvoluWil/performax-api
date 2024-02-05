@@ -95,21 +95,45 @@ model Employee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  employeeClock EmployeeClock[]
+  employeeDay EmployeeDay[]
 
   @@map("employees")
 }
 
-model EmployeeClock {
-  id   String            @id @default(auto()) @map("_id") @db.ObjectId
-  date DateTime          @default(now())
-  type EmployeeClockEnum @default(IN)
+model EmployeeDay {
+  id   String   @id @default(auto()) @map("_id") @db.ObjectId
+  date DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   employee   Employee @relation(fields: [employeeId], references: [id])
   employeeId String   @db.ObjectId
+
+  in       EmployeeClock  @relation(name: "in", fields: [inClockId], references: [id], onDelete: Cascade)
+  out      EmployeeClock? @relation(name: "out", fields: [outClockId], references: [id], onDelete: Cascade)
+  inLunch  EmployeeClock? @relation(name: "inLunch", fields: [inLunchClockId], references: [id], onDelete: Cascade)
+  outLunch EmployeeClock? @relation(name: "outLunch", fields: [outLunchClockId], references: [id], onDelete: Cascade)
+
+  inClockId       String  @db.ObjectId
+  outClockId      String? @db.ObjectId
+  inLunchClockId  String? @db.ObjectId
+  outLunchClockId String? @db.ObjectId
+
+  @@map("employeeDays")
+}
+
+model EmployeeClock {
+  id   String   @id @default(auto()) @map("_id") @db.ObjectId
+  date DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ins       EmployeeDay[] @relation(name: "in")
+  outs      EmployeeDay[] @relation(name: "out")
+  inLunchs  EmployeeDay[] @relation(name: "inLunch")
+  outLunchs EmployeeDay[] @relation(name: "outLunch")
 
   @@map("employeeClocks")
 }
@@ -129,11 +153,4 @@ enum TaskStatusEnum {
   OPEN
   CLOSED
   EXPIRED
-}
-
-enum EmployeeClockEnum {
-  IN
-  OUT
-  IN_LUNCH
-  OUT_LUNCH
 }

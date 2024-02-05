@@ -5,9 +5,10 @@ import { ClientModule } from './client/client.module';
 import { TaskTypeModule } from './task-type/task-type.module';
 import { EmployeeModule } from './employee/employee.module';
 import { EmployeeClockModule } from './employee-clock/employee-clock.module';
+import { EmployeeDayModule } from './employee-day/employee-day.module';
 
 @Module({
-  imports: [UserModule, TaskModule, ClientModule, TaskTypeModule, EmployeeModule, EmployeeClockModule],
+  imports: [UserModule, TaskModule, ClientModule, TaskTypeModule, EmployeeModule, EmployeeClockModule, EmployeeDayModule],
   providers: [],
   exports: [],
 })
