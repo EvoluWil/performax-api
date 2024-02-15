@@ -1,23 +1,4 @@
-import { IsMongoId, IsOptional, IsString } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateEmployeeDayDto } from './create-employee-day.dto';
 
-export class UpdateEmployeeDayDto {
-  @IsString()
-  @IsMongoId()
-  @IsOptional()
-  inClockId: string;
-
-  @IsString()
-  @IsMongoId()
-  @IsOptional()
-  outClockId: string;
-
-  @IsString()
-  @IsMongoId()
-  @IsOptional()
-  inLunchClockId: string;
-
-  @IsString()
-  @IsMongoId()
-  @IsOptional()
-  outLunchClockId: string;
-}
+export class UpdateEmployeeDayDto extends PartialType(CreateEmployeeDayDto) {}

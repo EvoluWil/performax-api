@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import { CreateEmployeeDayDto } from './dto/create-employee-day.dto';
 import { UpdateEmployeeDayDto } from './dto/update-employee-day.dto';
 
 @Injectable()
@@ -9,6 +10,25 @@ export class EmployeeDayService {
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
   ) {}
+  async create(employeeId: string, createEmployeeDayDto: CreateEmployeeDayDto) {
+    const { in: employeeDayIn, inLunch, out, outLunch } = createEmployeeDayDto;
+    const employeeDay = await this.prisma.employeeDay.create({
+      data: {
+        date: employeeDayIn,
+        employee: {
+          connect: {
+            id: employeeId,
+          },
+        },
+        in: { create: { date: employeeDayIn } },
+        inLunch: { create: { date: inLunch } },
+        out: { create: { date: out } },
+        outLunch: { create: { date: outLunch } },
+      },
+    });
+
+    return employeeDay;
+  }
 
   async findAll() {
     const query = await this.qb.query('employeeDay');
@@ -38,39 +58,32 @@ export class EmployeeDayService {
   }
 
   async update(id: string, updateEmployeeDayDto: UpdateEmployeeDayDto) {
-    const { inClockId, inLunchClockId, outClockId, outLunchClockId } =
-      updateEmployeeDayDto;
+    const { in: employeeDayIn, inLunch, out, outLunch } = updateEmployeeDayDto;
 
     const data: any = {};
 
-    if (inClockId) {
+    if (employeeDayIn) {
       data.in = {
-        connect: {
-          id: inClockId,
-        },
+        create: { date: employeeDayIn },
       };
     }
 
-    if (inLunchClockId) {
+    if (inLunch) {
       data.inLunch = {
-        connect: {
-          id: inLunchClockId,
-        },
+        create: { date: inLunch },
       };
     }
 
-    if (outClockId) {
-      data.out = {
-        connect: {
-          id: outClockId,
-        },
-      };
-    }
-
-    if (outLunchClockId) {
+    if (outLunch) {
       data.outLunch = {
-        connect: {
-          id: outLunchClockId,
+        create: { date: outLunch },
+      };
+    }
+
+    if (out) {
+      data.out = {
+        create: {
+          date: out,
         },
       };
     }

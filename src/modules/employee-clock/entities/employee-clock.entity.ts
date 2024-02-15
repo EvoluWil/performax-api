@@ -5,5 +5,4 @@ export class EmployeeClockEntity implements EmployeeClock {
   date: Date;
   createdAt: Date;
   updatedAt: Date;
-  employeeId: string;
 }

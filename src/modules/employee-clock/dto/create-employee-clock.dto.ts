@@ -4,5 +4,5 @@ export class CreateEmployeeClockDto {
   @IsString()
   @IsDateString()
   @IsNotEmpty()
-  date: Date;
+  date: string;
 }

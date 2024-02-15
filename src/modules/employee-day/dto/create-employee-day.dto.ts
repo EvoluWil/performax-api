@@ -1,16 +1,19 @@
-import { IsDateString, IsMongoId, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty } from 'class-validator';
 
 export class CreateEmployeeDayDto {
-  @IsString()
   @IsDateString()
-  @IsOptional()
-  date: Date;
+  @IsNotEmpty()
+  in: string;
 
-  @IsString()
-  @IsMongoId()
-  employeeId: string;
+  @IsDateString()
+  @IsNotEmpty()
+  out: string;
 
-  @IsString()
-  @IsMongoId()
-  inClockId: string;
+  @IsDateString()
+  @IsNotEmpty()
+  inLunch: string;
+
+  @IsDateString()
+  @IsNotEmpty()
+  outLunch: string;
 }
