@@ -6,9 +6,11 @@ import { TaskTypeModule } from './task-type/task-type.module';
 import { EmployeeModule } from './employee/employee.module';
 import { EmployeeClockModule } from './employee-clock/employee-clock.module';
 import { EmployeeDayModule } from './employee-day/employee-day.module';
+import { EntryModule } from './entry/entry.module';
+import { ChecklistModule } from './checklist/checklist.module';
 
 @Module({
-  imports: [UserModule, TaskModule, ClientModule, TaskTypeModule, EmployeeModule, EmployeeClockModule, EmployeeDayModule],
+  imports: [UserModule, TaskModule, ClientModule, TaskTypeModule, EmployeeModule, EmployeeClockModule, EmployeeDayModule, EntryModule, ChecklistModule],
   providers: [],
   exports: [],
 })
