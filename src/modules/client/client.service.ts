@@ -12,12 +12,14 @@ export class ClientService {
   ) {}
 
   async create(createClientDto: CreateClientDto) {
-    const client = await this.prisma.client.findFirst({
-      where: { cnpj: createClientDto.cnpj },
-    });
+    if (createClientDto.cnpj) {
+      const client = await this.prisma.client.findFirst({
+        where: { cnpj: createClientDto.cnpj },
+      });
 
-    if (client) {
-      throw new BadRequestException('CNPJ já cadastrado!');
+      if (client) {
+        throw new BadRequestException('CNPJ já cadastrado!');
+      }
     }
 
     return this.prisma.client.create({
@@ -52,12 +54,12 @@ export class ClientService {
       throw new BadRequestException('Cliente não encontrado!');
     }
 
-    if (updateClientDto.cnpj) {
+    if (updateClientDto?.cnpj) {
       const cnpjClient = await this.prisma.client.findFirst({
         where: { cnpj: updateClientDto.cnpj },
       });
 
-      if (cnpjClient && cnpjClient.cnpj !== client.cnpj) {
+      if (cnpjClient && client.cnpj && cnpjClient.cnpj !== client.cnpj) {
         throw new BadRequestException('CNPJ já cadastrado!');
       }
     }

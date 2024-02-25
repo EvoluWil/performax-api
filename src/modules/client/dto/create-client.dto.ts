@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IsCnpj } from 'src/decorators/cnpj.decorator';
 
 export class CreateClientDto {
@@ -7,11 +7,11 @@ export class CreateClientDto {
   name: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @IsCnpj()
   cnpj: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   address: string;
 }
