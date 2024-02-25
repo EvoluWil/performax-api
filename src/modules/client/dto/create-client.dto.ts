@@ -8,7 +8,7 @@ export class CreateClientDto {
 
   @IsString()
   @IsOptional()
-  @IsCnpj()
+  @IsCnpj(null, true)
   cnpj: string;
 
   @IsString()

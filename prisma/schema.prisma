@@ -78,7 +78,7 @@ model TaskType {
 model Client {
   id      String  @id @default(auto()) @map("_id") @db.ObjectId
   name    String
-  cnpj    String? @unique
+  cnpj    String?
   address String?
 
   createdAt DateTime @default(now())
