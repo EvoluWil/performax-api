@@ -9,6 +9,10 @@ import {
 export class CreateEntryDto {
   @IsString()
   @IsNotEmpty()
+  title: string;
+
+  @IsString()
+  @IsOptional()
   description: string;
 
   @IsString()

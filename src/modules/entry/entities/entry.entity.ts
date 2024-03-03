@@ -2,6 +2,7 @@ import { Entry } from '@prisma/client';
 
 export class EntryEntity implements Entry {
   id: string;
+  title: string;
   description: string;
   value: string;
   createdAt: Date;

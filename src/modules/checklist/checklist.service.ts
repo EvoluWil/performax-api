@@ -11,7 +11,7 @@ export class ChecklistService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createChecklistDto: CreateChecklistDto) {
+  async create(createChecklistDto: CreateChecklistDto, authUserId: string) {
     const { userId, ...rest } = createChecklistDto;
     const user = await this.prisma.user.findFirst({
       where: { id: userId },
@@ -25,6 +25,7 @@ export class ChecklistService {
       data: {
         ...rest,
         user: { connect: { id: userId } },
+        createdBy: { connect: { id: authUserId } },
       },
     });
   }
@@ -70,6 +71,17 @@ export class ChecklistService {
         },
       });
     }
+
+    if (rest.lastCheck) {
+      return this.prisma.checklist.update({
+        where: { id: checklistId },
+        data: {
+          lastCheck: new Date(rest.lastCheck),
+          checks: { push: new Date() },
+        },
+      });
+    }
+
     return this.prisma.checklist.update({
       where: { id: checklistId },
       data: rest,

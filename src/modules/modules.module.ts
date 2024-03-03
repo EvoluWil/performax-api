@@ -1,16 +1,28 @@
 import { Module } from '@nestjs/common';
-import { TaskModule } from './task/task.module';
-import { UserModule } from './user/user.module';
+import { ChecklistModule } from './checklist/checklist.module';
 import { ClientModule } from './client/client.module';
-import { TaskTypeModule } from './task-type/task-type.module';
-import { EmployeeModule } from './employee/employee.module';
 import { EmployeeClockModule } from './employee-clock/employee-clock.module';
 import { EmployeeDayModule } from './employee-day/employee-day.module';
+import { EmployeeModule } from './employee/employee.module';
+import { EntryTypeModule } from './entry-types/entry-type.module';
 import { EntryModule } from './entry/entry.module';
-import { ChecklistModule } from './checklist/checklist.module';
+import { TaskTypeModule } from './task-type/task-type.module';
+import { TaskModule } from './task/task.module';
+import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [UserModule, TaskModule, ClientModule, TaskTypeModule, EmployeeModule, EmployeeClockModule, EmployeeDayModule, EntryModule, ChecklistModule],
+  imports: [
+    UserModule,
+    TaskModule,
+    ClientModule,
+    TaskTypeModule,
+    EntryTypeModule,
+    EmployeeModule,
+    EmployeeClockModule,
+    EmployeeDayModule,
+    EntryModule,
+    ChecklistModule,
+  ],
   providers: [],
   exports: [],
 })

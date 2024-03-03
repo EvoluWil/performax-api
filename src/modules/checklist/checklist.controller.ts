@@ -7,6 +7,8 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { Request } from 'express';
+import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { ChecklistService } from './checklist.service';
 import { CreateChecklistDto } from './dto/create-checklist.dto';
 import { UpdateChecklistDto } from './dto/update-checklist.dto';
@@ -16,8 +18,11 @@ export class ChecklistController {
   constructor(private readonly checklistService: ChecklistService) {}
 
   @Post()
-  create(@Body() createChecklistDto: CreateChecklistDto) {
-    return this.checklistService.create(createChecklistDto);
+  create(
+    @Body() createChecklistDto: CreateChecklistDto,
+    @AuthUser() authUser: Request['user'],
+  ) {
+    return this.checklistService.create(createChecklistDto, authUser?.id);
   }
 
   @Get()
