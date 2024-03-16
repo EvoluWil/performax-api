@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { BudgetTypeModule } from './budget-type/budget-type.module';
+import { BudgetModule } from './budget/budget.module';
 import { ChecklistModule } from './checklist/checklist.module';
 import { ClientModule } from './client/client.module';
 import { EmployeeClockModule } from './employee-clock/employee-clock.module';
@@ -22,6 +24,8 @@ import { UserModule } from './user/user.module';
     EmployeeDayModule,
     EntryModule,
     ChecklistModule,
+    BudgetModule,
+    BudgetTypeModule,
   ],
   providers: [],
   exports: [],

@@ -17,7 +17,7 @@ export class EntryTypeService {
     });
 
     if (entryType) {
-      throw new BadRequestException('Tipo de tarefa já cadastrado!');
+      throw new BadRequestException('Tipo de lançamento já cadastrado!');
     }
 
     return this.prisma.entryType.create({
@@ -37,7 +37,7 @@ export class EntryTypeService {
     });
 
     if (!entryType) {
-      throw new BadRequestException('Tipo de tarefa não encontrado!');
+      throw new BadRequestException('Tipo de lançamento não encontrado!');
     }
 
     return entryType;
@@ -49,7 +49,7 @@ export class EntryTypeService {
     });
 
     if (!entryType) {
-      throw new BadRequestException('Tipo de tarefa não encontrado!');
+      throw new BadRequestException('Tipo de lançamento não encontrado!');
     }
 
     return this.prisma.entryType.update({
@@ -64,7 +64,7 @@ export class EntryTypeService {
     });
 
     if (!entryType) {
-      throw new BadRequestException('Tipo de tarefa não encontrado!');
+      throw new BadRequestException('Tipo de lançamento não encontrado!');
     }
 
     return this.prisma.entryType.delete({

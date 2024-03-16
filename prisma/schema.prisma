@@ -26,6 +26,7 @@ model User {
   checklistCreates Checklist[] @relation(name: "createdBy")
   checklist        Checklist[]
   entriesCreates   Entry[]
+  budgets          Budget[]
 
   @@map("users")
 }
@@ -86,6 +87,7 @@ model Client {
 
   tasks   Task[]
   entries Entry[]
+  budgets Budget[]
 
   @@map("clients")
 }
@@ -193,6 +195,40 @@ model EntryType {
   entries Entry[]
 
   @@map("entryTypes")
+}
+
+model Budget {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String  @default("Sem título")
+  description String?
+  value       String
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  allClients Boolean  @default(false)
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String @db.ObjectId
+
+  type   BudgetType? @relation(fields: [typeId], references: [id])
+  typeId String?     @db.ObjectId
+
+  client   Client? @relation(fields: [clientId], references: [id])
+  clientId String? @db.ObjectId
+
+  @@map("budgets")
+}
+
+model BudgetType {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  entries Budget[]
+
+  @@map("budgetTypes")
 }
 
 type File {
