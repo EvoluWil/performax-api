@@ -30,7 +30,7 @@ export class EntryService {
       throw new BadRequestException('Cliente não encontrado!');
     }
 
-    const type = await this.prisma.taskType.findFirst({
+    const type = await this.prisma.entryType.findFirst({
       where: { id: typeId },
     });
 
