@@ -1,6 +1,7 @@
 import { Entry } from '@prisma/client';
 
 export class EntryEntity implements Entry {
+  confirmed: boolean;
   id: string;
   title: string;
   description: string;

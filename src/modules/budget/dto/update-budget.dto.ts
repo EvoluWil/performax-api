@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+import { BudgetStatusEnum } from '@prisma/client';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateBudgetDto {
   @IsString()
@@ -12,4 +13,12 @@ export class UpdateBudgetDto {
   @IsString()
   @IsOptional()
   value: string;
+
+  @IsBoolean()
+  @IsOptional()
+  confirmed: boolean;
+
+  @IsEnum(BudgetStatusEnum)
+  @IsOptional()
+  status: BudgetStatusEnum;
 }

@@ -1,7 +1,8 @@
-import { File } from '@prisma/client';
+import { File, TaskStatusEnum } from '@prisma/client';
 import {
   IsArray,
   IsDateString,
+  IsEnum,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
@@ -37,4 +38,8 @@ export class CreateTaskDto {
   @IsString()
   @IsMongoId()
   typeId: string;
+
+  @IsEnum(TaskStatusEnum)
+  @IsOptional()
+  status: TaskStatusEnum;
 }

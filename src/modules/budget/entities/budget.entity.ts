@@ -1,6 +1,8 @@
-import { Budget } from '@prisma/client';
+import { Budget, BudgetStatusEnum } from '@prisma/client';
 
 export class BudgetEntity implements Budget {
+  confirmed: boolean;
+  status: BudgetStatusEnum;
   id: string;
   title: string;
   description: string;

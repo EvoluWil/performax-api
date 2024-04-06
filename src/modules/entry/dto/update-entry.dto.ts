@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class UpdateEntryDto {
   @IsString()
@@ -12,4 +12,8 @@ export class UpdateEntryDto {
   @IsString()
   @IsOptional()
   value: string;
+
+  @IsBoolean()
+  @IsOptional()
+  confirmed: boolean;
 }
