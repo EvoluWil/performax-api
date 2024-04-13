@@ -40,6 +40,6 @@ export class CreateTaskDto {
   typeId: string;
 
   @IsEnum(TaskStatusEnum)
-  @IsOptional()
+  @IsNotEmpty()
   status: TaskStatusEnum;
 }
