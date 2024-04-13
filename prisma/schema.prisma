@@ -263,7 +263,7 @@ enum TaskStatusEnum {
   CLOSED
   EXPIRED
   EMERGENCY
-  SCHENDULED
+  SCHEDULED
   IMPEDED
 }
 
