@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class UpdateEntryDto {
   @IsString()
@@ -16,4 +16,8 @@ export class UpdateEntryDto {
   @IsBoolean()
   @IsOptional()
   confirmed: boolean;
+
+  @IsDateString()
+  @IsOptional()
+  visitedAt: Date;
 }

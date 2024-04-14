@@ -164,10 +164,11 @@ model Checklist {
 }
 
 model Entry {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  title       String  @default("Sem título")
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String    @default("Sem título")
   description String?
   value       String
+  visitedAt   DateTime?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -207,9 +208,10 @@ model Budget {
   updatedAt   DateTime         @updatedAt
   allClients  Boolean          @default(false)
   confirmed   Boolean          @default(false)
-  status      BudgetStatusEnum @default(PENDDING)
+  status      BudgetStatusEnum @default(PENDING)
+  visitedAt   DateTime?
 
-  items BudgetItem[]
+  items String @default("")
 
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String @db.ObjectId
@@ -221,17 +223,6 @@ model Budget {
   clientId String? @db.ObjectId
 
   @@map("budgets")
-}
-
-model BudgetItem {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
-  name  String
-  value String
-
-  budget   Budget @relation(fields: [budgetId], references: [id])
-  budgetId String @db.ObjectId
-
-  @@map("budgetItems")
 }
 
 model BudgetType {
@@ -277,7 +268,7 @@ enum ChecklistRecurrenceEnum {
 }
 
 enum BudgetStatusEnum {
-  PENDDING
+  PENDING
   APPROVED
   REJECTED
   COMPLETED

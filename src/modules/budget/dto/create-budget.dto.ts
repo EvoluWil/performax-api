@@ -30,4 +30,8 @@ export class CreateBudgetDto {
   @IsOptional()
   @IsMongoId()
   clientId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  items: string;
 }
