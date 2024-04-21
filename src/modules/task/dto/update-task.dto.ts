@@ -8,6 +8,10 @@ export class UpdateTaskDto extends PartialType(CreateTaskDto) {
   @IsOptional()
   service?: string;
 
+  @IsString()
+  @IsOptional()
+  impedimentNote?: string;
+
   @IsArray()
   @IsOptional()
   conclusionFiles?: File[];

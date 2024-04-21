@@ -42,4 +42,8 @@ export class CreateTaskDto {
   @IsEnum(TaskStatusEnum)
   @IsNotEmpty()
   status: TaskStatusEnum;
+
+  @IsString()
+  @IsOptional()
+  internalNote: string;
 }

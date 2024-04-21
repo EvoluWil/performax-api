@@ -4,6 +4,7 @@ import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-query
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { generateProtocol } from 'src/utils/generate-protocol';
 
 @Injectable()
 export class TaskService {
@@ -12,11 +13,26 @@ export class TaskService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto, authUserId: string) {
+  async create(
+    createTaskDto: CreateTaskDto,
+    authUserId: string,
+    increment = 1,
+  ) {
     const { clientId, typeId, userId, ...rest } = createTaskDto;
+    const generatedProtocol = generateProtocol() + increment;
+
+    const task = await this.prisma.task.findFirst({
+      where: { protocol: generatedProtocol },
+    });
+
+    if (task) {
+      return this.create(createTaskDto, authUserId, increment + 1);
+    }
+
     return await this.prisma.task.create({
       data: {
         ...rest,
+        protocol: generatedProtocol,
         user: {
           connect: { id: userId },
         },

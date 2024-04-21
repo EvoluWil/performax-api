@@ -1,6 +1,9 @@
 import { File, Task, TaskStatusEnum } from '@prisma/client';
 
 export class TaskEntity implements Task {
+  protocol: string;
+  internalNote: string;
+  impedimentNote: string;
   id: string;
   title: string;
   description: string;

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import { generateProtocol } from 'src/utils/generate-protocol';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 
@@ -11,7 +12,11 @@ export class BudgetService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createBudgetDto: CreateBudgetDto, userId: string) {
+  async create(
+    createBudgetDto: CreateBudgetDto,
+    userId: string,
+    increment = 1,
+  ) {
     const { clientId, typeId, ...rest } = createBudgetDto;
 
     const user = await this.prisma.user.findFirst({
@@ -38,10 +43,21 @@ export class BudgetService {
       throw new BadRequestException('Tipo não encontrado!');
     }
 
+    const generatedProtocol = generateProtocol() + increment;
+
+    const task = await this.prisma.task.findFirst({
+      where: { protocol: generatedProtocol },
+    });
+
+    if (task) {
+      return this.create(createBudgetDto, userId, increment + 1);
+    }
+
     if (rest.allClients) {
       return this.prisma.budget.create({
         data: {
           ...rest,
+          protocol: generatedProtocol,
           createdBy: { connect: { id: userId } },
           type: { connect: { id: typeId } },
         },
@@ -51,6 +67,7 @@ export class BudgetService {
     return this.prisma.budget.create({
       data: {
         ...rest,
+        protocol: generatedProtocol,
         createdBy: { connect: { id: userId } },
         client: { connect: { id: clientId } },
         type: { connect: { id: typeId } },
@@ -66,7 +83,7 @@ export class BudgetService {
   async findOne(id: string) {
     const budget = await this.prisma.budget.findFirst({
       where: { id },
-      include: { client: true, type: true },
+      include: { client: true, type: true, createdBy: true },
     });
 
     if (!budget) {

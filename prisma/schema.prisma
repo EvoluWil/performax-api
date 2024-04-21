@@ -32,10 +32,13 @@ model User {
 }
 
 model Task {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  service     String?
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  protocol       String?
+  title          String
+  description    String
+  service        String?
+  internalNote   String?
+  impedimentNote String?
 
   status TaskStatusEnum @default(OPEN)
 
@@ -201,6 +204,7 @@ model EntryType {
 
 model Budget {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  protocol    String?
   title       String           @default("Sem título")
   description String?
   value       String
