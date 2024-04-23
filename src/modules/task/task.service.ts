@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import { generateProtocol } from 'src/utils/generate-protocol';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { generateProtocol } from 'src/utils/generate-protocol';
 
 @Injectable()
 export class TaskService {
@@ -100,7 +100,11 @@ export class TaskService {
       throw new NotFoundException('Tarefa não encontrada!');
     }
 
-    if (updateTaskDto?.endDate && task.status !== 'CLOSED') {
+    if (
+      updateTaskDto?.endDate &&
+      task.status !== 'CLOSED' &&
+      !updateTaskDto.status
+    ) {
       const newStatus =
         new Date(updateTaskDto.endDate) < new Date() ? 'EXPIRED' : 'OPEN';
       updateTaskDto.status = newStatus;
