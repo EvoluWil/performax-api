@@ -7,6 +7,7 @@ import { defaultPlainToClass } from 'src/utils/default-plain-class.utils';
 import { generateHash } from 'src/utils/generate-hash.util';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindUserDto } from './dto/find-user.dto';
+import { UpdateCoordinatesDto } from './dto/update-coordinates.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -138,6 +139,24 @@ export class UserService {
     await this.prisma.user.update({
       where: { id },
       data: updateRoleDto,
+    });
+
+    return { ok: true };
+  }
+
+  async updateCoordinates(
+    id: string,
+    updateCoordinatesDto: UpdateCoordinatesDto,
+  ) {
+    const user = await this.prisma.user.findFirst({ where: { id } });
+
+    if (!user) {
+      throw new BadRequestException(`Usuário não encontrado!`);
+    }
+
+    await this.prisma.user.update({
+      where: { id },
+      data: { coordinatesId: { set: updateCoordinatesDto.coordinates } },
     });
 
     return { ok: true };

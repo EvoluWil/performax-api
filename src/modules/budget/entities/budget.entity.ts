@@ -1,6 +1,7 @@
 import { Budget, BudgetStatusEnum } from '@prisma/client';
 
 export class BudgetEntity implements Budget {
+  observation: string;
   protocol: string;
   visitedAt: Date;
   confirmed: boolean;

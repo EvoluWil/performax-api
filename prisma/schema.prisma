@@ -28,6 +28,11 @@ model User {
   entriesCreates   Entry[]
   budgets          Budget[]
 
+  coordinates    User[]   @relation("coordination", references: [id], fields: [coordinatesId])
+  coordinatesId  String[] @db.ObjectId
+  coordinators   User[]   @relation("coordination", references: [id], fields: [coordinatorsId])
+  coordinatorsId String[] @db.ObjectId
+
   @@map("users")
 }
 
@@ -207,6 +212,7 @@ model Budget {
   protocol    String?
   title       String           @default("Sem título")
   description String?
+  observation String?
   value       String
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -251,6 +257,7 @@ enum UserRoleEnum {
   USER
   GESTOR
   ATTENDANT
+  COORDINATOR
 }
 
 enum TaskStatusEnum {
@@ -260,6 +267,7 @@ enum TaskStatusEnum {
   EMERGENCY
   SCHEDULED
   IMPEDED
+  IN_PROGRESS
 }
 
 enum ChecklistRecurrenceEnum {

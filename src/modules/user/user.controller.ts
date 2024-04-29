@@ -8,6 +8,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateCoordinatesDto } from './dto/update-coordinates.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
@@ -39,6 +40,14 @@ export class UserController {
   @Put(':id/roles')
   updateRole(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
     return this.userService.updateRole(id, updateRoleDto);
+  }
+
+  @Put(':id/coordinates')
+  updateCoordinates(
+    @Param('id') id: string,
+    @Body() updateCoordinatesDto: UpdateCoordinatesDto,
+  ) {
+    return this.userService.updateCoordinates(id, updateCoordinatesDto);
   }
 
   @Delete(':id')

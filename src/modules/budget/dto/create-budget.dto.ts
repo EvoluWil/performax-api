@@ -34,4 +34,8 @@ export class CreateBudgetDto {
   @IsString()
   @IsNotEmpty()
   items: string;
+
+  @IsString()
+  @IsOptional()
+  observation: string;
 }
