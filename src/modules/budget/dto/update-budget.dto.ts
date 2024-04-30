@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsMongoId,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -35,4 +36,16 @@ export class UpdateBudgetDto {
   @IsString()
   @IsOptional()
   items: string;
+
+  @IsOptional()
+  @IsMongoId()
+  typeId: string;
+
+  @IsOptional()
+  @IsMongoId()
+  clientId: string;
+
+  @IsString()
+  @IsOptional()
+  observation: string;
 }

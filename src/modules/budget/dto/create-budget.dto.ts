@@ -1,10 +1,4 @@
-import {
-  IsBoolean,
-  IsMongoId,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateBudgetDto {
   @IsString()
@@ -18,10 +12,6 @@ export class CreateBudgetDto {
   @IsString()
   @IsNotEmpty()
   value: string;
-
-  @IsBoolean()
-  @IsOptional()
-  allClients = false;
 
   @IsNotEmpty()
   @IsMongoId()

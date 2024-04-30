@@ -75,6 +75,7 @@ export class AuthService {
   async getMe({ id }: AuthUserDto) {
     const user = await this.prisma.user.findFirst({
       where: { id },
+      include: { coordinates: true },
     });
 
     if (!user) {

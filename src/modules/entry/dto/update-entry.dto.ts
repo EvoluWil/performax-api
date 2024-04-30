@@ -1,4 +1,10 @@
-import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsMongoId,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class UpdateEntryDto {
   @IsString()
@@ -20,4 +26,16 @@ export class UpdateEntryDto {
   @IsDateString()
   @IsOptional()
   visitedAt: Date;
+
+  @IsOptional()
+  @IsMongoId()
+  typeId: string;
+
+  @IsOptional()
+  @IsMongoId()
+  clientId: string;
+
+  @IsBoolean()
+  @IsOptional()
+  allClients = false;
 }

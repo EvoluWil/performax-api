@@ -53,17 +53,6 @@ export class BudgetService {
       return this.create(createBudgetDto, userId, increment + 1);
     }
 
-    if (rest.allClients) {
-      return this.prisma.budget.create({
-        data: {
-          ...rest,
-          protocol: generatedProtocol,
-          createdBy: { connect: { id: userId } },
-          type: { connect: { id: typeId } },
-        },
-      });
-    }
-
     return this.prisma.budget.create({
       data: {
         ...rest,

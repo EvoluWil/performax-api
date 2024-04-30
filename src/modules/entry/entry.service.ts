@@ -85,9 +85,25 @@ export class EntryService {
       throw new BadRequestException('Lançamento não encontrado!');
     }
 
+    const updateEntry: any = { ...updateEntryDto };
+
+    if (updateEntry.clientId) {
+      updateEntry.client = { connect: { id: updateEntryDto.clientId } };
+      delete updateEntry.clientId;
+    }
+
+    if (updateEntry.typeId) {
+      updateEntry.type = { connect: { id: updateEntryDto.typeId } };
+      delete updateEntry.typeId;
+    }
+
+    if (updateEntry.allClients && entry?.clientId) {
+      updateEntry.client = { disconnect: true };
+    }
+
     return this.prisma.entry.update({
       where: { id },
-      data: updateEntryDto,
+      data: updateEntry,
     });
   }
 

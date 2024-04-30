@@ -284,4 +284,5 @@ enum BudgetStatusEnum {
   APPROVED
   REJECTED
   COMPLETED
+  CHARGED
 }

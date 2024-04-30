@@ -136,6 +136,19 @@ export class UserService {
       throw new BadRequestException(`Usuário não encontrado!`);
     }
 
+    if (user.role === 'COORDINATOR') {
+      if (user.coordinatesId?.length) {
+        await Promise.all(
+          user.coordinatesId.map((coordinateId) =>
+            this.prisma.user.update({
+              where: { id },
+              data: { coordinates: { disconnect: { id: coordinateId } } },
+            }),
+          ),
+        );
+      }
+    }
+
     await this.prisma.user.update({
       where: { id },
       data: updateRoleDto,
@@ -154,10 +167,25 @@ export class UserService {
       throw new BadRequestException(`Usuário não encontrado!`);
     }
 
-    await this.prisma.user.update({
-      where: { id },
-      data: { coordinatesId: { set: updateCoordinatesDto.coordinates } },
-    });
+    if (user.coordinatesId?.length) {
+      await Promise.all(
+        user.coordinatesId.map((coordinateId) =>
+          this.prisma.user.update({
+            where: { id },
+            data: { coordinates: { disconnect: { id: coordinateId } } },
+          }),
+        ),
+      );
+    }
+
+    await Promise.all(
+      updateCoordinatesDto?.coordinates.map((coordinateId) =>
+        this.prisma.user.update({
+          where: { id },
+          data: { coordinates: { connect: { id: coordinateId } } },
+        }),
+      ),
+    );
 
     return { ok: true };
   }
