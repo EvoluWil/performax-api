@@ -21,6 +21,10 @@ export class CreateBudgetDto {
   @IsMongoId()
   clientId: string;
 
+  @IsOptional()
+  @IsMongoId()
+  taskId: string;
+
   @IsString()
   @IsNotEmpty()
   items: string;

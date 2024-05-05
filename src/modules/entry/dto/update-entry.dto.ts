@@ -38,4 +38,13 @@ export class UpdateEntryDto {
   @IsBoolean()
   @IsOptional()
   allClients = false;
+
+  @IsString()
+  @IsOptional()
+  observation: string;
+
+  @IsString()
+  @IsDateString()
+  @IsOptional()
+  date: Date;
 }

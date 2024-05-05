@@ -66,6 +66,9 @@ model Task {
   createdBy   User?   @relation(fields: [updatedById], references: [id], name: "createdBy", onDelete: SetNull)
   createdById String? @db.ObjectId
 
+  budget   Budget? @relation(fields: [budgetId], references: [id])
+  budgetId String? @db.ObjectId
+
   user   User   @relation(fields: [userId], references: [id], name: "user", onDelete: Cascade)
   userId String @db.ObjectId
 
@@ -177,6 +180,8 @@ model Entry {
   description String?
   value       String
   visitedAt   DateTime?
+  date        DateTime? @default(now())
+  observation String?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -231,6 +236,7 @@ model Budget {
 
   client   Client? @relation(fields: [clientId], references: [id])
   clientId String? @db.ObjectId
+  task     Task[]
 
   @@map("budgets")
 }

@@ -19,4 +19,5 @@ export class TaskEntity implements Task {
   conclusionFiles: File[];
   clientId: string;
   typeId: string;
+  budgetId: string;
 }

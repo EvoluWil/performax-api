@@ -17,7 +17,7 @@ export class BudgetService {
     userId: string,
     increment = 1,
   ) {
-    const { clientId, typeId, ...rest } = createBudgetDto;
+    const { clientId, typeId, taskId, ...rest } = createBudgetDto;
 
     const user = await this.prisma.user.findFirst({
       where: { id: userId },
@@ -45,12 +45,18 @@ export class BudgetService {
 
     const generatedProtocol = generateProtocol() + increment;
 
-    const task = await this.prisma.task.findFirst({
+    const budget = await this.prisma.budget.findFirst({
       where: { protocol: generatedProtocol },
     });
 
-    if (task) {
+    if (budget) {
       return this.create(createBudgetDto, userId, increment + 1);
+    }
+
+    if (taskId) {
+      (rest as any).task = {
+        connect: { id: taskId },
+      };
     }
 
     return this.prisma.budget.create({
@@ -72,7 +78,7 @@ export class BudgetService {
   async findOne(id: string) {
     const budget = await this.prisma.budget.findFirst({
       where: { id },
-      include: { client: true, type: true, createdBy: true },
+      include: { client: true, type: true, createdBy: true, task: true },
     });
 
     if (!budget) {

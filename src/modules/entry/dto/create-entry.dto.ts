@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsDateString,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
@@ -18,6 +19,15 @@ export class CreateEntryDto {
   @IsString()
   @IsNotEmpty()
   value: string;
+
+  @IsString()
+  @IsDateString()
+  @IsNotEmpty()
+  date: Date;
+
+  @IsString()
+  @IsNotEmpty()
+  observation: string;
 
   @IsBoolean()
   @IsOptional()

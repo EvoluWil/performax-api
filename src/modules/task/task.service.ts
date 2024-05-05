@@ -79,7 +79,13 @@ export class TaskService {
   async findOne(id: string) {
     const task = await this.prisma.task.findFirst({
       where: { id },
-      include: { user: true, client: true, type: true, updatedBy: true },
+      include: {
+        user: true,
+        client: true,
+        type: true,
+        updatedBy: true,
+        budget: true,
+      },
     });
 
     if (!task) {
