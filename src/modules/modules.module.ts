@@ -8,6 +8,7 @@ import { EmployeeDayModule } from './employee-day/employee-day.module';
 import { EmployeeModule } from './employee/employee.module';
 import { EntryTypeModule } from './entry-types/entry-type.module';
 import { EntryModule } from './entry/entry.module';
+import { OccurrenceModule } from './occurrence/occurrence.module';
 import { TaskTypeModule } from './task-type/task-type.module';
 import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
@@ -26,6 +27,7 @@ import { UserModule } from './user/user.module';
     ChecklistModule,
     BudgetModule,
     BudgetTypeModule,
+    OccurrenceModule,
   ],
   providers: [],
   exports: [],

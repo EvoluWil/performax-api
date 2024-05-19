@@ -28,10 +28,11 @@ model User {
   entriesCreates   Entry[]
   budgets          Budget[]
 
-  coordinates    User[]   @relation("coordination", references: [id], fields: [coordinatesId])
-  coordinatesId  String[] @db.ObjectId
-  coordinators   User[]   @relation("coordination", references: [id], fields: [coordinatorsId])
-  coordinatorsId String[] @db.ObjectId
+  coordinates    User[]       @relation("coordination", references: [id], fields: [coordinatesId])
+  coordinatesId  String[]     @db.ObjectId
+  coordinators   User[]       @relation("coordination", references: [id], fields: [coordinatorsId])
+  coordinatorsId String[]     @db.ObjectId
+  occurrences    Occurrence[]
 
   @@map("users")
 }
@@ -96,9 +97,10 @@ model Client {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tasks   Task[]
-  entries Entry[]
-  budgets Budget[]
+  tasks       Task[]
+  entries     Entry[]
+  budgets     Budget[]
+  occurrences Occurrence[]
 
   @@map("clients")
 }
@@ -251,6 +253,24 @@ model BudgetType {
   entries Budget[]
 
   @@map("budgetTypes")
+}
+
+model Occurrence {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  date        DateTime
+  documents   String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String @db.ObjectId
+
+  client   Client? @relation(fields: [clientId], references: [id])
+  clientId String? @db.ObjectId
+
+  @@map("occurrences")
 }
 
 type File {
