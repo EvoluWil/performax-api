@@ -51,9 +51,10 @@ model Task {
   files           File[]
   conclusionFiles File[]
 
-  endDate   DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
 
   client   Client? @relation(fields: [clientId], references: [id])
   clientId String? @db.ObjectId

@@ -135,6 +135,10 @@ export class TaskService {
 
     (updateTaskDto as any).updatedBy = { connect: { id: authUserId } };
 
+    if (updateTaskDto?.status === 'CLOSED' && !task.completedAt) {
+      (updateTaskDto as any).completedAt = new Date();
+    }
+
     return this.prisma.task.update({
       where: { id },
       data: updateTaskDto,
