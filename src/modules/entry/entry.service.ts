@@ -101,6 +101,10 @@ export class EntryService {
       updateEntry.client = { disconnect: true };
     }
 
+    if (updateEntry.visitedAt) {
+      updateEntry.visited = true;
+    }
+
     return this.prisma.entry.update({
       where: { id },
       data: updateEntry,

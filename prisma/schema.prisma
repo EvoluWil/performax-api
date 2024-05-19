@@ -183,6 +183,7 @@ model Entry {
   description String?
   value       String
   visitedAt   DateTime?
+  visited     Boolean   @default(false)
   date        DateTime? @default(now())
   observation String?
 
