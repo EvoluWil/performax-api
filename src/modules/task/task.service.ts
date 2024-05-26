@@ -83,7 +83,8 @@ export class TaskService {
         user: true,
         client: true,
         type: true,
-        updatedBy: true,
+        updatedBy: { select: { name: true, id: true } },
+        createdBy: { select: { name: true, id: true } },
         budget: true,
       },
     });
