@@ -262,7 +262,7 @@ model Occurrence {
   title       String
   description String
   date        DateTime
-  documents   String[]
+  documents   File[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

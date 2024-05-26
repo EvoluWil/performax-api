@@ -1,8 +1,10 @@
+import { File } from '@prisma/client';
 import {
   IsArray,
   IsDateString,
   IsMongoId,
   IsNotEmpty,
+  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -20,7 +22,8 @@ export class CreateOccurrenceDto {
   date: Date;
 
   @IsArray()
-  documents: string[];
+  @IsOptional()
+  documents: File[];
 
   @IsMongoId()
   @IsNotEmpty()
