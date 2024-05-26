@@ -4,6 +4,7 @@ export class OccurrenceEntity implements Occurrence {
   id: string;
   title: string;
   description: string;
+  resolution: string;
   date: Date;
   documents: File[];
   createdAt: Date;

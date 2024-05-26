@@ -17,6 +17,10 @@ export class CreateOccurrenceDto {
   @IsNotEmpty()
   description: string;
 
+  @IsString()
+  @IsOptional()
+  resolution: string;
+
   @IsDateString()
   @IsNotEmpty()
   date: Date;

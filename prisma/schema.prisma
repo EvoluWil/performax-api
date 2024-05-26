@@ -261,6 +261,7 @@ model Occurrence {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String
+  resolution  String?
   date        DateTime
   documents   File[]
   createdAt   DateTime @default(now())
