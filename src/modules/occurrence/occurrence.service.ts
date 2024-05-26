@@ -41,6 +41,10 @@ export class OccurrenceService {
   async findOne(id: string) {
     const occurrence = await this.prisma.occurrence.findUnique({
       where: { id },
+      include: {
+        client: true,
+        createdBy: true,
+      },
     });
 
     if (!occurrence) {
