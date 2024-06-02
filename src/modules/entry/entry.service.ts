@@ -66,7 +66,11 @@ export class EntryService {
   async findOne(id: string) {
     const entry = await this.prisma.entry.findFirst({
       where: { id },
-      include: { client: true, type: true },
+      include: {
+        client: true,
+        type: true,
+        createdBy: { select: { name: true } },
+      },
     });
 
     if (!entry) {
