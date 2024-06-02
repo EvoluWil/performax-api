@@ -25,6 +25,10 @@ export class CreateBudgetDto {
   @IsMongoId()
   taskId: string;
 
+  @IsOptional()
+  @IsMongoId()
+  closeTaskId: string;
+
   @IsString()
   @IsNotEmpty()
   items: string;

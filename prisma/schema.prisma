@@ -71,6 +71,9 @@ model Task {
   budget   Budget? @relation(fields: [budgetId], references: [id])
   budgetId String? @db.ObjectId
 
+  closeBudget   Budget? @relation("closeBudget", fields: [closeBudgetId], references: [id])
+  closeBudgetId String? @db.ObjectId
+
   user   User   @relation(fields: [userId], references: [id], name: "user", onDelete: Cascade)
   userId String @db.ObjectId
 
@@ -240,7 +243,9 @@ model Budget {
 
   client   Client? @relation(fields: [clientId], references: [id])
   clientId String? @db.ObjectId
-  task     Task[]
+
+  task      Task[]
+  closeTask Task[] @relation("closeBudget")
 
   @@map("budgets")
 }

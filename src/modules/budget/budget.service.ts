@@ -17,7 +17,7 @@ export class BudgetService {
     userId: string,
     increment = 1,
   ) {
-    const { clientId, typeId, taskId, ...rest } = createBudgetDto;
+    const { clientId, typeId, taskId, closeTaskId, ...rest } = createBudgetDto;
 
     const user = await this.prisma.user.findFirst({
       where: { id: userId },
@@ -56,6 +56,12 @@ export class BudgetService {
     if (taskId) {
       (rest as any).task = {
         connect: { id: taskId },
+      };
+    }
+
+    if (closeTaskId) {
+      (rest as any).closeTask = {
+        connect: { id: closeTaskId },
       };
     }
 

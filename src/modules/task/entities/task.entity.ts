@@ -21,4 +21,5 @@ export class TaskEntity implements Task {
   completedAt: Date;
   typeId: string;
   budgetId: string;
+  closeBudgetId: string;
 }
