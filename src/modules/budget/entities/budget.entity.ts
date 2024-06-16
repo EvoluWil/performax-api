@@ -16,5 +16,6 @@ export class BudgetEntity implements Budget {
   createdById: string;
   typeId: string;
   clientId: string;
+  responsibleId: string;
   items: string;
 }

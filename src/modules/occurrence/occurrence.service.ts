@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import { generateProtocol } from 'src/utils/generate-protocol';
 import { CreateOccurrenceDto } from './dto/create-occurrence.dto';
 import { UpdateOccurrenceDto } from './dto/update-occurrence.dto';
 
@@ -25,6 +26,7 @@ export class OccurrenceService {
     await this.prisma.occurrence.create({
       data: {
         ...rest,
+        protocol: generateProtocol(),
         client: { connect: { id: clientId } },
         createdBy: { connect: { id: userId } },
       },

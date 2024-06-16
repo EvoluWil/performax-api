@@ -20,13 +20,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tasks            Task[]      @relation(name: "user")
-  taskUpdates      Task[]      @relation(name: "updatedBy")
-  taskCreates      Task[]      @relation(name: "createdBy")
-  checklistCreates Checklist[] @relation(name: "createdBy")
-  checklist        Checklist[]
-  entriesCreates   Entry[]
-  budgets          Budget[]
+  tasks              Task[]      @relation(name: "user")
+  taskUpdates        Task[]      @relation(name: "updatedBy")
+  taskCreates        Task[]      @relation(name: "createdBy")
+  checklistCreates   Checklist[] @relation(name: "createdBy")
+  checklist          Checklist[]
+  entriesCreates     Entry[]
+  entriesResponsible Entry[]     @relation(name: "entryResponsible")
+  budgetsResponsible Budget[]    @relation(name: "budgetResponsible")
+  budgets            Budget[]
 
   coordinates    User[]       @relation("coordination", references: [id], fields: [coordinatesId])
   coordinatesId  String[]     @db.ObjectId
@@ -181,25 +183,27 @@ model Checklist {
 }
 
 model Entry {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  title       String    @default("Sem título")
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  title       String          @default("Sem título")
   description String?
+  protocol    String          @unique
   value       String
-  visitedAt   DateTime?
-  visited     Boolean   @default(false)
-  date        DateTime? @default(now())
+  date        DateTime?       @default(now())
   observation String?
+  approved    Boolean
+  status      EntryStatusEnum @default(IN_PROGRESS)
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  allClients Boolean  @default(false)
-  confirmed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String @db.ObjectId
 
   type   EntryType? @relation(fields: [typeId], references: [id])
   typeId String?    @db.ObjectId
+
+  responsible   User?   @relation("entryResponsible", fields: [responsibleId], references: [id])
+  responsibleId String? @db.ObjectId
 
   client   Client? @relation(fields: [clientId], references: [id])
   clientId String? @db.ObjectId
@@ -208,8 +212,9 @@ model Entry {
 }
 
 model EntryType {
-  id   String @id @default(auto()) @map("_id") @db.ObjectId
-  name String
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  needApprove Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -247,6 +252,9 @@ model Budget {
   task      Task[]
   closeTask Task[] @relation("closeBudget")
 
+  responsible   User?   @relation("budgetResponsible", fields: [responsibleId], references: [id])
+  responsibleId String? @db.ObjectId
+
   @@map("budgets")
 }
 
@@ -266,6 +274,7 @@ model Occurrence {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String
+  protocol    String   @unique
   resolution  String?
   date        DateTime
   documents   File[]
@@ -292,6 +301,7 @@ enum UserRoleEnum {
   GESTOR
   ATTENDANT
   COORDINATOR
+  FINANCIAL
 }
 
 enum TaskStatusEnum {
@@ -319,4 +329,11 @@ enum BudgetStatusEnum {
   REJECTED
   COMPLETED
   CHARGED
+}
+
+enum EntryStatusEnum {
+  IN_PROGRESS
+  EXPIRED
+  IMPEDED
+  COMPLETED
 }

@@ -17,7 +17,8 @@ export class BudgetService {
     userId: string,
     increment = 1,
   ) {
-    const { clientId, typeId, taskId, closeTaskId, ...rest } = createBudgetDto;
+    const { clientId, typeId, taskId, closeTaskId, responsibleId, ...rest } =
+      createBudgetDto;
 
     const user = await this.prisma.user.findFirst({
       where: { id: userId },
@@ -41,6 +42,16 @@ export class BudgetService {
 
     if (!type) {
       throw new BadRequestException('Tipo não encontrado!');
+    }
+
+    if (responsibleId) {
+      const responsible = await this.prisma.user.findFirst({
+        where: { id: responsibleId },
+      });
+
+      if (!responsible) {
+        throw new BadRequestException('Responsável não encontrado!');
+      }
     }
 
     const generatedProtocol = generateProtocol() + increment;
@@ -68,6 +79,7 @@ export class BudgetService {
     return this.prisma.budget.create({
       data: {
         ...rest,
+        responsible: responsibleId ? { connect: { id: responsibleId } } : null,
         protocol: generatedProtocol,
         createdBy: { connect: { id: userId } },
         client: { connect: { id: clientId } },
@@ -84,7 +96,17 @@ export class BudgetService {
   async findOne(id: string) {
     const budget = await this.prisma.budget.findFirst({
       where: { id },
-      include: { client: true, type: true, createdBy: true, task: true },
+      include: {
+        client: true,
+        type: true,
+        createdBy: {
+          select: { id: true, name: true },
+        },
+        task: true,
+        responsible: {
+          select: { id: true, name: true },
+        },
+      },
     });
 
     if (!budget) {
@@ -94,7 +116,10 @@ export class BudgetService {
     return budget;
   }
 
-  async update(id: string, updateBudgetDto: UpdateBudgetDto) {
+  async update(
+    id: string,
+    { clientId, responsibleId, typeId, ...rest }: UpdateBudgetDto,
+  ) {
     const budget = await this.prisma.budget.findFirst({
       where: { id },
     });
@@ -103,9 +128,47 @@ export class BudgetService {
       throw new BadRequestException('Orçamento não encontrado!');
     }
 
+    const updateBudget: any = { ...rest };
+
+    if (responsibleId) {
+      const responsible = await this.prisma.user.findFirst({
+        where: { id: responsibleId },
+      });
+
+      if (!responsible) {
+        throw new BadRequestException('Responsável não encontrado!');
+      }
+
+      updateBudget.responsible = { connect: { id: responsibleId } };
+    }
+
+    if (typeId) {
+      const type = await this.prisma.budgetType.findFirst({
+        where: { id: typeId },
+      });
+
+      if (!type) {
+        throw new BadRequestException('Tipo não encontrado!');
+      }
+
+      updateBudget.type = { connect: { id: typeId } };
+    }
+
+    if (clientId) {
+      const client = await this.prisma.client.findFirst({
+        where: { id: clientId },
+      });
+
+      if (!client) {
+        throw new BadRequestException('Cliente não encontrado!');
+      }
+
+      updateBudget.client = { connect: { id: clientId } };
+    }
+
     return this.prisma.budget.update({
       where: { id },
-      data: updateBudgetDto,
+      data: updateBudget,
     });
   }
 

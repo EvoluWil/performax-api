@@ -1,19 +1,19 @@
-import { Entry } from '@prisma/client';
+import { Entry, EntryStatusEnum } from '@prisma/client';
 
 export class EntryEntity implements Entry {
-  visited: boolean;
-  visitedAt: Date;
-  confirmed: boolean;
-  date: Date;
-  observation: string;
+  protocol: string;
   id: string;
   title: string;
   description: string;
   value: string;
+  date: Date;
+  observation: string;
+  approved: boolean;
+  status: EntryStatusEnum;
   createdAt: Date;
   updatedAt: Date;
-  allClients: boolean;
   createdById: string;
   typeId: string;
+  responsibleId: string;
   clientId: string;
 }

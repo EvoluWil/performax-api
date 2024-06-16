@@ -36,4 +36,8 @@ export class CreateBudgetDto {
   @IsString()
   @IsOptional()
   observation: string;
+
+  @IsOptional()
+  @IsMongoId()
+  responsibleId: string;
 }

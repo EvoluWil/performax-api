@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import { generateProtocol } from 'src/utils/generate-protocol';
 import { CreateEntryDto } from './dto/create-entry.dto';
 import { UpdateEntryDto } from './dto/update-entry.dto';
 
@@ -12,7 +13,7 @@ export class EntryService {
   ) {}
 
   async create(createEntryDto: CreateEntryDto, userId: string) {
-    const { clientId, typeId, ...rest } = createEntryDto;
+    const { clientId, typeId, responsibleId, ...rest } = createEntryDto;
 
     const user = await this.prisma.user.findFirst({
       where: { id: userId },
@@ -38,22 +39,25 @@ export class EntryService {
       throw new BadRequestException('Tipo não encontrado!');
     }
 
-    if (rest.allClients) {
-      return this.prisma.entry.create({
-        data: {
-          ...rest,
-          createdBy: { connect: { id: userId } },
-          type: { connect: { id: typeId } },
-        },
+    if (responsibleId) {
+      const responsible = await this.prisma.user.findFirst({
+        where: { id: responsibleId },
       });
+
+      if (!responsible) {
+        throw new BadRequestException('Responsável não encontrado!');
+      }
     }
 
     return this.prisma.entry.create({
       data: {
         ...rest,
+        protocol: generateProtocol(),
+        approved: type?.needApprove ? false : true,
         createdBy: { connect: { id: userId } },
         client: { connect: { id: clientId } },
         type: { connect: { id: typeId } },
+        responsible: { connect: { id: responsibleId || userId } },
       },
     });
   }
@@ -70,6 +74,7 @@ export class EntryService {
         client: true,
         type: true,
         createdBy: { select: { name: true } },
+        responsible: { select: { name: true } },
       },
     });
 
@@ -101,12 +106,11 @@ export class EntryService {
       delete updateEntry.typeId;
     }
 
-    if (updateEntry.allClients && entry?.clientId) {
-      updateEntry.client = { disconnect: true };
-    }
-
-    if (updateEntry.visitedAt) {
-      updateEntry.visited = true;
+    if (updateEntry.responsibleId) {
+      updateEntry.responsible = {
+        connect: { id: updateEntryDto.responsibleId },
+      };
+      delete updateEntry.responsibleId;
     }
 
     return this.prisma.entry.update({

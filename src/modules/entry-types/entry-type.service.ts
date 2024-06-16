@@ -21,7 +21,10 @@ export class EntryTypeService {
     }
 
     return this.prisma.entryType.create({
-      data: createEntryTypeDto,
+      data: {
+        ...createEntryTypeDto,
+        needApprove: createEntryTypeDto.needApprove || false,
+      },
     });
   }
 
@@ -54,7 +57,10 @@ export class EntryTypeService {
 
     return this.prisma.entryType.update({
       where: { id },
-      data: updateEntryTypeDto,
+      data: {
+        ...updateEntryTypeDto,
+        needApprove: updateEntryTypeDto.needApprove || false,
+      },
     });
   }
 

@@ -48,4 +48,8 @@ export class UpdateBudgetDto {
   @IsString()
   @IsOptional()
   observation: string;
+
+  @IsOptional()
+  @IsMongoId()
+  responsibleId: string;
 }
