@@ -36,6 +36,9 @@ model User {
   coordinatorsId String[]     @db.ObjectId
   occurrences    Occurrence[]
 
+  clients    Client[] @relation(fields: [clientsIds], references: [id])
+  clientsIds String[] @default([]) @db.ObjectId
+
   @@map("users")
 }
 
@@ -107,6 +110,8 @@ model Client {
   entries     Entry[]
   budgets     Budget[]
   occurrences Occurrence[]
+  gestor      User[]       @relation(fields: [gestorId], references: [id])
+  gestorId    String[]     @default([]) @db.ObjectId
 
   @@map("clients")
 }

@@ -1,6 +1,7 @@
 import { User, UserRoleEnum } from '@prisma/client';
 
 export class UserEntity implements User {
+  clientsIds: string[];
   coordinatesId: string[];
   coordinatorsId: string[];
   id: string;
