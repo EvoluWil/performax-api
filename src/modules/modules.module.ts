@@ -12,6 +12,8 @@ import { OccurrenceModule } from './occurrence/occurrence.module';
 import { TaskTypeModule } from './task-type/task-type.module';
 import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
+import { ExpenseModule } from './expense/expense.module';
+import { ExpenseTypeModule } from './expense-type/expense-type.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { UserModule } from './user/user.module';
     BudgetModule,
     BudgetTypeModule,
     OccurrenceModule,
+    ExpenseModule,
+    ExpenseTypeModule,
   ],
   providers: [],
   exports: [],
