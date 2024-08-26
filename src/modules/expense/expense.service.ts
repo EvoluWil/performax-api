@@ -42,6 +42,7 @@ export class ExpenseService {
     return this.prisma.expense.create({
       data: {
         ...rest,
+        status: type?.needApprove ? 'PENDING' : 'APPROVED',
         protocol: generateProtocol(),
         createdBy: { connect: { id: userId } },
         client: { connect: { id: clientId } },

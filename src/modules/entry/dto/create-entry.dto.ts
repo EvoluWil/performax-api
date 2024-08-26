@@ -25,7 +25,7 @@ export class CreateEntryDto {
   date: Date;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   observation: string;
 
   @IsNotEmpty()
