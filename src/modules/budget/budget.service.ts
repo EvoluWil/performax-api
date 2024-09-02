@@ -79,7 +79,7 @@ export class BudgetService {
     return this.prisma.budget.create({
       data: {
         ...rest,
-        responsible: responsibleId ? { connect: { id: responsibleId } } : null,
+        responsible: { connect: { id: responsibleId || userId } },
         protocol: generatedProtocol,
         createdBy: { connect: { id: userId } },
         client: { connect: { id: clientId } },
