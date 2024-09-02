@@ -1,12 +1,17 @@
-import { BudgetStatusEnum } from '@prisma/client';
+import { BudgetItem, BudgetStatusEnum } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
   IsMongoId,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
+import { BudgetItemDto } from './budget-item.dto';
 
 export class UpdateBudgetDto {
   @IsString()
@@ -33,9 +38,12 @@ export class UpdateBudgetDto {
   @IsOptional()
   visitedAt: Date;
 
-  @IsString()
+  @IsArray()
   @IsOptional()
-  items: string;
+  @ArrayNotEmpty()
+  @Type(() => BudgetItemDto)
+  @ValidateNested({ each: true })
+  items: BudgetItem[];
 
   @IsOptional()
   @IsMongoId()

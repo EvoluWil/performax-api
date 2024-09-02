@@ -18,6 +18,7 @@ import { ProvidersModule } from './providers/providers.module';
 })
 export class AppModule {
   ensureAuthenticatedExclude = [
+    { path: '/v1', method: RequestMethod.GET },
     { path: '/v1/auth/sign-in', method: RequestMethod.POST },
     { path: '/v1/auth/sign-up', method: RequestMethod.POST },
     { path: '/v1/auth/forgot-password', method: RequestMethod.POST },

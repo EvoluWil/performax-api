@@ -1,4 +1,15 @@
-import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { BudgetItem } from '@prisma/client';
+import { Type } from 'class-transformer';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { BudgetItemDto } from './budget-item.dto';
 
 export class CreateBudgetDto {
   @IsString()
@@ -29,9 +40,12 @@ export class CreateBudgetDto {
   @IsMongoId()
   closeTaskId: string;
 
-  @IsString()
+  @IsArray()
   @IsNotEmpty()
-  items: string;
+  @ArrayNotEmpty()
+  @Type(() => BudgetItemDto)
+  @ValidateNested({ each: true })
+  items: BudgetItem[];
 
   @IsString()
   @IsOptional()

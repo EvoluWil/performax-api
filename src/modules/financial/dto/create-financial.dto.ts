@@ -1,12 +1,15 @@
+import { FinancialFlowEnum } from '@prisma/client';
 import {
+  IsBoolean,
   IsDateString,
+  IsEnum,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
 
-export class CreateExpenseDto {
+export class CreateFinancialDto {
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -28,6 +31,11 @@ export class CreateExpenseDto {
   @IsOptional()
   observation: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @IsEnum(FinancialFlowEnum)
+  flow: FinancialFlowEnum;
+
   @IsNotEmpty()
   @IsMongoId()
   typeId: string;
@@ -35,4 +43,16 @@ export class CreateExpenseDto {
   @IsMongoId()
   @IsNotEmpty()
   clientId: string;
+
+  @IsMongoId()
+  @IsNotEmpty()
+  methodId: string;
+
+  @IsMongoId()
+  @IsNotEmpty()
+  bankId: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isRecurring: boolean;
 }

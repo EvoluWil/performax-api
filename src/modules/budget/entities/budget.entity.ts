@@ -1,4 +1,4 @@
-import { Budget, BudgetStatusEnum } from '@prisma/client';
+import { Budget, BudgetItem, BudgetStatusEnum } from '@prisma/client';
 
 export class BudgetEntity implements Budget {
   observation: string;
@@ -17,5 +17,5 @@ export class BudgetEntity implements Budget {
   typeId: string;
   clientId: string;
   responsibleId: string;
-  items: string;
+  items: BudgetItem[];
 }

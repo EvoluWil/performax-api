@@ -1,6 +1,6 @@
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class CreateExpenseTypeDto {
+export class CreateFinancialTypeDto {
   @IsString()
   @IsNotEmpty()
   name: string;
