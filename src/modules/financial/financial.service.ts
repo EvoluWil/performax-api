@@ -57,6 +57,54 @@ export class FinancialService {
     return this.prisma.financial.findMany(query);
   }
 
+  async findData() {
+    const select = {
+      id: true,
+      name: true,
+    };
+
+    const orderBy: unknown = { name: 'asc' };
+
+    const clients = await this.prisma.client.findMany({
+      select,
+      orderBy,
+    });
+
+    const types = await this.prisma.financialType.findMany({
+      select,
+      orderBy,
+    });
+
+    const methods = await this.prisma.paymentMethod.findMany({
+      select,
+      orderBy,
+    });
+
+    const banks = await this.prisma.bank.findMany({
+      select,
+      orderBy,
+    });
+
+    const users = await this.prisma.user.findMany({
+      select,
+      orderBy,
+    });
+
+    const companies = await this.prisma.company.findMany({
+      select,
+      orderBy,
+    });
+
+    return {
+      clients,
+      types,
+      users,
+      banks,
+      methods,
+      companies,
+    };
+  }
+
   async findOne(id: string) {
     const financial = await this.prisma.financial.findFirst({
       where: { id },

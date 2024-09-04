@@ -30,6 +30,11 @@ export class FinancialController {
     return this.financialService.findAll();
   }
 
+  @Get('options/data')
+  findData() {
+    return this.financialService.findData();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.financialService.findOne(id);
