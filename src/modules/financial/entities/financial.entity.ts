@@ -21,4 +21,5 @@ export class FinancialEntity implements Financial {
   clientId: string;
   methodId: string;
   bankId: string;
+  companyId: string;
 }

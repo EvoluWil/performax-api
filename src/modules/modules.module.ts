@@ -17,6 +17,7 @@ import { TaskTypeModule } from './task-type/task-type.module';
 import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
 import { RecurringFinancialModule } from './recurring-financial/recurring-financial.module';
+import { CompanyModule } from './company/company.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { RecurringFinancialModule } from './recurring-financial/recurring-financ
     BankModule,
     PaymentMethodModule,
     RecurringFinancialModule,
+    CompanyModule,
   ],
   providers: [],
   exports: [],

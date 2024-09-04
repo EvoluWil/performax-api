@@ -258,6 +258,19 @@ model Bank {
   @@map("banks")
 }
 
+model Company {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  financial          Financial[]
+  recurringFinancial RecurringFinancial[]
+
+  @@map("conpanies")
+}
+
 model Financial {
   id          String              @id @default(auto()) @map("_id") @db.ObjectId
   title       String              @default("Sem título")
@@ -286,6 +299,9 @@ model Financial {
 
   bank   Bank   @relation(fields: [bankId], references: [id])
   bankId String @db.ObjectId
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @db.ObjectId
 
   @@map("financial")
 }
@@ -328,6 +344,9 @@ model RecurringFinancial {
 
   bank   Bank   @relation(fields: [bankId], references: [id])
   bankId String @db.ObjectId
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @db.ObjectId
 
   @@map("recurringFinancial")
 }
