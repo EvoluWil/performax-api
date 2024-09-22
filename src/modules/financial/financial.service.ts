@@ -48,7 +48,11 @@ export class FinancialService {
 
     if (isRecurring) {
       await this.prisma.recurringFinancial.create({
-        data: { ...data, endDate: recurringEndDate, lastDate: data.date },
+        data: {
+          ...data,
+          endDate: recurringEndDate || null,
+          lastDate: data.date,
+        },
       });
     }
 

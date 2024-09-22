@@ -34,7 +34,7 @@ export class CreateFinancialDto {
   @IsString()
   @IsDateString()
   @IsOptional()
-  paymentData: Date;
+  paymentDate: Date;
 
   @IsString()
   @IsOptional()
