@@ -127,6 +127,8 @@ export class FinancialService {
         createdBy: { select: { name: true } },
         method: true,
         bank: true,
+        category: true,
+        company: true,
       },
     });
 
