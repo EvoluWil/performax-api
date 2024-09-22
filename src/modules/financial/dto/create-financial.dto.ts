@@ -68,4 +68,9 @@ export class CreateFinancialDto {
   @IsBoolean()
   @IsOptional()
   isRecurring: boolean;
+
+  @IsString()
+  @IsDateString()
+  @IsOptional()
+  recurringEndDate: Date;
 }

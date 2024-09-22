@@ -3,7 +3,7 @@ import { IsDateString, IsOptional, IsString } from 'class-validator';
 import { CreateFinancialDto } from 'src/modules/financial/dto/create-financial.dto';
 
 export class UpdateRecurringFinancialDto extends PartialType(
-  OmitType(CreateFinancialDto, ['isRecurring']),
+  OmitType(CreateFinancialDto, ['isRecurring', 'recurringEndDate']),
 ) {
   @IsString()
   @IsDateString()

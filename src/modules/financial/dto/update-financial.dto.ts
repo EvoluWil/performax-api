@@ -4,7 +4,7 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { CreateFinancialDto } from './create-financial.dto';
 
 export class UpdateFinancialDto extends PartialType(
-  OmitType(CreateFinancialDto, ['isRecurring']),
+  OmitType(CreateFinancialDto, ['isRecurring', 'recurringEndDate']),
 ) {
   @IsString()
   @IsOptional()

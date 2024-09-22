@@ -12,7 +12,10 @@ export class FinancialService {
     private readonly qb: QBService,
   ) {}
 
-  async create({ isRecurring, ...rest }: CreateFinancialDto, userId: string) {
+  async create(
+    { isRecurring, recurringEndDate, ...rest }: CreateFinancialDto,
+    userId: string,
+  ) {
     const type = await this.prisma.financialType.findFirst({
       where: { id: rest.typeId },
     });
@@ -45,7 +48,7 @@ export class FinancialService {
 
     if (isRecurring) {
       await this.prisma.recurringFinancial.create({
-        data: data,
+        data: { ...data, endDate: recurringEndDate, lastDate: data.date },
       });
     }
 
