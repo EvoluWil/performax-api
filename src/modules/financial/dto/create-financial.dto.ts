@@ -65,6 +65,10 @@ export class CreateFinancialDto {
   @IsNotEmpty()
   companyId: string;
 
+  @IsMongoId()
+  @IsNotEmpty()
+  categoryId: string;
+
   @IsBoolean()
   @IsOptional()
   isRecurring: boolean;
