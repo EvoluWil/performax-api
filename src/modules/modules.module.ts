@@ -4,6 +4,7 @@ import { BudgetTypeModule } from './budget-type/budget-type.module';
 import { BudgetModule } from './budget/budget.module';
 import { ChecklistModule } from './checklist/checklist.module';
 import { ClientModule } from './client/client.module';
+import { CompanyModule } from './company/company.module';
 import { EmployeeClockModule } from './employee-clock/employee-clock.module';
 import { EmployeeDayModule } from './employee-day/employee-day.module';
 import { EmployeeModule } from './employee/employee.module';
@@ -13,11 +14,11 @@ import { FinancialTypeModule } from './financial-type/financial-type.module';
 import { FinancialModule } from './financial/financial.module';
 import { OccurrenceModule } from './occurrence/occurrence.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
+import { RecurringFinancialModule } from './recurring-financial/recurring-financial.module';
 import { TaskTypeModule } from './task-type/task-type.module';
 import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
-import { RecurringFinancialModule } from './recurring-financial/recurring-financial.module';
-import { CompanyModule } from './company/company.module';
+import { FinancialCategoryModule } from './financial-category/financial-category.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CompanyModule } from './company/company.module';
     PaymentMethodModule,
     RecurringFinancialModule,
     CompanyModule,
+    FinancialCategoryModule,
   ],
   providers: [],
   exports: [],

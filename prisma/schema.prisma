@@ -277,7 +277,9 @@ model Financial {
   description String?
   protocol    String              @unique
   value       String
+  tax         String?
   date        DateTime
+  paymentDate DateTime?
   observation String?
   status      FinancialStatusEnum @default(PENDING)
   flow        FinancialFlowEnum   @default(IN)
@@ -303,6 +305,9 @@ model Financial {
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
 
+  category   FinancialCategory @relation(fields: [categoryId], references: [id])
+  categoryId String            @db.ObjectId
+
   @@map("financial")
 }
 
@@ -320,6 +325,19 @@ model FinancialType {
   @@map("financialTypes")
 }
 
+model FinancialCategory {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  financial          Financial[]
+  recurringFinancial RecurringFinancial[]
+
+  @@map("financialCategories")
+}
+
 model RecurringFinancial {
   id          String            @id @default(auto()) @map("_id") @db.ObjectId
   title       String            @default("Sem título")
@@ -328,6 +346,7 @@ model RecurringFinancial {
   date        DateTime
   observation String?
   flow        FinancialFlowEnum @default(IN)
+  endDate     DateTime?         @default("2100-01-01T00:00:00.000Z")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -347,6 +366,9 @@ model RecurringFinancial {
 
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
+
+  category   FinancialCategory @relation(fields: [categoryId], references: [id])
+  categoryId String            @db.ObjectId
 
   @@map("recurringFinancial")
 }

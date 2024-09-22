@@ -9,4 +9,9 @@ export class UpdateRecurringFinancialDto extends PartialType(
   @IsDateString()
   @IsOptional()
   lastDate: Date;
+
+  @IsString()
+  @IsDateString()
+  @IsOptional()
+  endDate: Date;
 }

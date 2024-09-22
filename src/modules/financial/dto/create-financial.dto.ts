@@ -29,6 +29,15 @@ export class CreateFinancialDto {
 
   @IsString()
   @IsOptional()
+  tax: string;
+
+  @IsString()
+  @IsDateString()
+  @IsOptional()
+  paymentData: Date;
+
+  @IsString()
+  @IsOptional()
   observation: string;
 
   @IsString()

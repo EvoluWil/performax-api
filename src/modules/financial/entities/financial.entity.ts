@@ -10,6 +10,8 @@ export class FinancialEntity implements Financial {
   description: string;
   protocol: string;
   value: string;
+  tax: string;
+  paymentDate: Date;
   date: Date;
   observation: string;
   status: FinancialStatusEnum;
@@ -19,6 +21,7 @@ export class FinancialEntity implements Financial {
   createdById: string;
   typeId: string;
   clientId: string;
+  categoryId: string;
   methodId: string;
   bankId: string;
   companyId: string;
