@@ -95,6 +95,11 @@ export class FinancialService {
       orderBy,
     });
 
+    const categories = await this.prisma.financialCategory.findMany({
+      select,
+      orderBy,
+    });
+
     return {
       clients,
       types,
@@ -102,6 +107,7 @@ export class FinancialService {
       banks,
       methods,
       companies,
+      categories,
     };
   }
 
