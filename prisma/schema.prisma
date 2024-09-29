@@ -104,6 +104,9 @@ model Client {
   cnpj    String?
   address String?
 
+  active    Boolean @default(true)
+  recurrent Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -254,6 +257,7 @@ model Bank {
 
   financial          Financial[]
   recurringFinancial RecurringFinancial[]
+  transfers          FinancialTransfer[]
 
   @@map("banks")
 }
@@ -267,6 +271,8 @@ model Company {
 
   financial          Financial[]
   recurringFinancial RecurringFinancial[]
+  transfersIn        FinancialTransfer[]  @relation("companyIn")
+  transferOut        FinancialTransfer[]  @relation("companyOut")
 
   @@map("conpanies")
 }
@@ -336,6 +342,28 @@ model FinancialCategory {
   recurringFinancial RecurringFinancial[]
 
   @@map("financialCategories")
+}
+
+model FinancialTransfer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  value       String
+  date        DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bank   Bank   @relation(fields: [bankId], references: [id])
+  bankId String @db.ObjectId
+
+  companyIn   Company @relation("companyIn", fields: [companyInId], references: [id])
+  companyInId String  @db.ObjectId
+
+  companyOut   Company @relation("companyOut", fields: [companyOutId], references: [id])
+  companyOutId String  @db.ObjectId
+
+  @@map("financialTransfers")
 }
 
 model RecurringFinancial {

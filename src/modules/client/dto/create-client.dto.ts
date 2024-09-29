@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IsCnpj } from 'src/decorators/cnpj.decorator';
 
 export class CreateClientDto {
@@ -14,4 +14,12 @@ export class CreateClientDto {
   @IsString()
   @IsOptional()
   address: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  active: boolean;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  recurrent: boolean;
 }
