@@ -17,9 +17,5 @@ export class CreateClientDto {
 
   @IsBoolean()
   @IsNotEmpty()
-  active: boolean;
-
-  @IsBoolean()
-  @IsNotEmpty()
   recurrent: boolean;
 }
