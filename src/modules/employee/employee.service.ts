@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import { normalizeString } from 'src/utils/normalize.util';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
@@ -12,17 +13,10 @@ export class EmployeeService {
     private readonly qb: QBService,
   ) {}
   async create(createEmployeeDto: CreateEmployeeDto) {
-    const { cpf } = createEmployeeDto;
-
-    const employeeExists = await this.prisma.employee.findFirst({
-      where: { cpf },
-    });
-
-    if (employeeExists) {
-      throw new NotFoundException('Funcionário já cadastrado');
-    }
-
-    const password = await bcrypt.hash(cpf, 10);
+    const password = await bcrypt.hash(
+      normalizeString(createEmployeeDto?.name?.split(' ')[0]),
+      10,
+    );
 
     const employee = await this.prisma.employee.create({
       data: {
@@ -60,16 +54,6 @@ export class EmployeeService {
 
     if (!employee) {
       throw new NotFoundException('Funcionário não encontrado');
-    }
-
-    if (updateEmployeeDto.cpf) {
-      const cpfExists = await this.prisma.employee.findFirst({
-        where: { cpf: updateEmployeeDto.cpf },
-      });
-
-      if (cpfExists && cpfExists.id !== id) {
-        throw new NotFoundException('CPF já cadastrado');
-      }
     }
 
     await this.prisma.employee.update({

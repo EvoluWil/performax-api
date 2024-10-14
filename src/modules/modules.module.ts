@@ -20,6 +20,7 @@ import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
 import { FinancialCategoryModule } from './financial-category/financial-category.module';
 import { FinancialTransferModule } from './financial-transfer/financial-transfer.module';
+import { FinancialBalanceModule } from './financial-balance/financial-balance.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { FinancialTransferModule } from './financial-transfer/financial-transfer
     CompanyModule,
     FinancialCategoryModule,
     FinancialTransferModule,
+    FinancialBalanceModule,
   ],
   providers: [],
   exports: [],

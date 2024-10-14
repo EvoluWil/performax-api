@@ -1,10 +1,14 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class EnsureAuthenticated implements NestMiddleware {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async use(req: Request, res: Response, next: () => void) {
     const AuthHeader = req.headers.authorization;
@@ -29,6 +33,21 @@ export class EnsureAuthenticated implements NestMiddleware {
       .verifyAsync(token)
       .then(({ id, email }) => {
         req.user = { id, email };
+
+        const user = this.prisma.user.findFirst({
+          where: { id },
+        });
+
+        return user;
+      })
+      .then((user) => {
+        if (!user) {
+          return this.accessDenied(req.url, 'Usuário não autorizado', res);
+        }
+
+        if (!user.active) {
+          return this.accessDenied(req.url, 'Usuário não autorizado', res);
+        }
 
         return next();
       })
