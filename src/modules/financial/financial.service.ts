@@ -95,6 +95,7 @@ export class FinancialService {
     const users = await this.prisma.user.findMany({
       select,
       orderBy,
+      where: { active: true },
     });
 
     const companies = await this.prisma.company.findMany({
