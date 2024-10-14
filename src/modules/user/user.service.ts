@@ -122,6 +122,7 @@ export class UserService {
     await this.prisma.user.update({
       where: { id },
       data: {
+        ...rest,
         name,
         email,
         cpf,
