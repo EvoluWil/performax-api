@@ -69,7 +69,7 @@ export class UserService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const { email, name, cpf } = updateUserDto;
+    const { email, name, cpf, ...rest } = updateUserDto;
     const user = await this.prisma.user.findUnique({ where: { id: id } });
 
     if (!user) {
@@ -99,6 +99,7 @@ export class UserService {
         return this.prisma.user.update({
           where: { id },
           data: {
+            ...rest,
             name,
             email,
             resetToken: hash,
