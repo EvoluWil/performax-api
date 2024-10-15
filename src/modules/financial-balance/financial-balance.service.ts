@@ -19,7 +19,15 @@ export class FinancialBalanceService {
   }
 
   async update(id: string, data: UpdateFinancialBalanceDto) {
-    await this.prisma.financial.update({
+    const balance = await this.prisma.balance.findUnique({
+      where: { id },
+    });
+
+    if (!balance) {
+      throw new BadRequestException('Saldo não encontrado!');
+    }
+
+    await this.prisma.balance.update({
       where: { id },
       data,
     });
