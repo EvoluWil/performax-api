@@ -21,6 +21,7 @@ import { UserModule } from './user/user.module';
 import { FinancialCategoryModule } from './financial-category/financial-category.module';
 import { FinancialTransferModule } from './financial-transfer/financial-transfer.module';
 import { FinancialBalanceModule } from './financial-balance/financial-balance.module';
+import { FinancialFavoredModule } from './financial-favored/financial-favored.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { FinancialBalanceModule } from './financial-balance/financial-balance.mo
     FinancialCategoryModule,
     FinancialTransferModule,
     FinancialBalanceModule,
+    FinancialFavoredModule,
   ],
   providers: [],
   exports: [],

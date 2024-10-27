@@ -317,6 +317,9 @@ model Financial {
   category   FinancialCategory @relation(fields: [categoryId], references: [id])
   categoryId String            @db.ObjectId
 
+  favored   FinancialFavored? @relation(fields: [favoredId], references: [id])
+  favoredId String?           @db.ObjectId
+
   @@map("financial")
 }
 
@@ -345,6 +348,19 @@ model FinancialCategory {
   recurringFinancial RecurringFinancial[]
 
   @@map("financialCategories")
+}
+
+model FinancialFavored {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  financial          Financial[]
+  recurringFinancial RecurringFinancial[]
+
+  @@map("financialFavoreds")
 }
 
 model FinancialTransfer {
@@ -400,6 +416,9 @@ model RecurringFinancial {
 
   category   FinancialCategory @relation(fields: [categoryId], references: [id])
   categoryId String            @db.ObjectId
+
+  favored   FinancialFavored? @relation(fields: [favoredId], references: [id])
+  favoredId String?           @db.ObjectId
 
   @@map("recurringFinancial")
 }
