@@ -108,6 +108,11 @@ export class FinancialService {
       orderBy,
     });
 
+    const favored = await this.prisma.financialFavored.findMany({
+      select,
+      orderBy,
+    });
+
     return {
       clients,
       types,
@@ -116,6 +121,7 @@ export class FinancialService {
       methods,
       companies,
       categories,
+      favored,
     };
   }
 
