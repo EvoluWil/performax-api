@@ -136,6 +136,7 @@ export class FinancialService {
         bank: true,
         category: true,
         company: true,
+        favored: true,
       },
     });
 
