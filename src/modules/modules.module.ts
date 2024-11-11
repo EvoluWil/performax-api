@@ -22,6 +22,7 @@ import { FinancialCategoryModule } from './financial-category/financial-category
 import { FinancialTransferModule } from './financial-transfer/financial-transfer.module';
 import { FinancialBalanceModule } from './financial-balance/financial-balance.module';
 import { FinancialFavoredModule } from './financial-favored/financial-favored.module';
+import { OccurrenceTypeModule } from './occurrence-type/occurrence-type.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { FinancialFavoredModule } from './financial-favored/financial-favored.mo
     FinancialTransferModule,
     FinancialBalanceModule,
     FinancialFavoredModule,
+    OccurrenceTypeModule,
   ],
   providers: [],
   exports: [],

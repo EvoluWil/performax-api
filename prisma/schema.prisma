@@ -469,6 +469,18 @@ model BudgetType {
   @@map("budgetTypes")
 }
 
+model OccurrenceType {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  occurrences Occurrence[]
+
+  @@map("OccurrenceTypes")
+}
+
 model Occurrence {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
@@ -485,6 +497,9 @@ model Occurrence {
 
   client   Client? @relation(fields: [clientId], references: [id])
   clientId String? @db.ObjectId
+
+  type   OccurrenceType? @relation(fields: [typeId], references: [id])
+  typeId String?         @db.ObjectId
 
   @@map("occurrences")
 }
