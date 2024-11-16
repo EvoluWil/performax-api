@@ -15,5 +15,6 @@ export class EntryEntity implements Entry {
   createdById: string;
   typeId: string;
   responsibleId: string;
+  employeeId: string;
   clientId: string;
 }

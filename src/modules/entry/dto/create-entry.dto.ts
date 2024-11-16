@@ -37,6 +37,10 @@ export class CreateEntryDto {
   clientId: string;
 
   @IsOptional()
-  @IsMongoId()
+  @IsString()
   responsibleId: string;
+
+  @IsOptional()
+  @IsString()
+  employeeId: string;
 }

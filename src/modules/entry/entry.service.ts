@@ -13,23 +13,7 @@ export class EntryService {
   ) {}
 
   async create(createEntryDto: CreateEntryDto, userId: string) {
-    const { clientId, typeId, responsibleId, ...rest } = createEntryDto;
-
-    const user = await this.prisma.user.findFirst({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new BadRequestException('Usuário não encontrado!');
-    }
-
-    const client = await this.prisma.client.findFirst({
-      where: { id: clientId },
-    });
-
-    if (!client) {
-      throw new BadRequestException('Cliente não encontrado!');
-    }
+    const { typeId, responsibleId } = createEntryDto;
 
     const type = await this.prisma.entryType.findFirst({
       where: { id: typeId },
@@ -49,15 +33,30 @@ export class EntryService {
       }
     }
 
+    const data = Object.entries(createEntryDto).reduce((acc, [key, value]) => {
+      if (!value) {
+        return acc;
+      }
+
+      if (key?.includes('Id')) {
+        const newKey = key.replace('Id', '');
+        return { ...acc, [newKey]: { connect: { id: value } } };
+      }
+
+      return { ...acc, [key]: value };
+    }, {}) as any;
+
     return this.prisma.entry.create({
       data: {
-        ...rest,
+        ...data,
+        responsible: responsibleId
+          ? { connect: { id: responsibleId } }
+          : {
+              connect: { id: userId },
+            },
         protocol: generateProtocol(),
         approved: type?.needApprove ? false : true,
         createdBy: { connect: { id: userId } },
-        client: { connect: { id: clientId } },
-        type: { connect: { id: typeId } },
-        responsible: { connect: { id: responsibleId || userId } },
       },
     });
   }
@@ -75,6 +74,7 @@ export class EntryService {
         type: true,
         createdBy: { select: { name: true } },
         responsible: { select: { name: true } },
+        employee: { select: { name: true } },
       },
     });
 
@@ -111,6 +111,11 @@ export class EntryService {
         connect: { id: updateEntryDto.responsibleId },
       };
       delete updateEntry.responsibleId;
+    }
+
+    if (updateEntry.employeeId) {
+      updateEntry.employee = { connect: { id: updateEntryDto.employeeId } };
+      delete updateEntry.employeeId;
     }
 
     return this.prisma.entry.update({
