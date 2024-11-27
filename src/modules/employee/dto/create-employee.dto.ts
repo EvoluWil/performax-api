@@ -1,5 +1,4 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { IsCpf } from 'src/decorators/cpf.decorator';
 
 export class CreateEmployeeDto {
   @IsString()
@@ -8,6 +7,9 @@ export class CreateEmployeeDto {
 
   @IsString()
   @IsOptional()
-  @IsCpf()
+  role: string;
+
+  @IsString()
+  @IsOptional()
   cpf: string;
 }
