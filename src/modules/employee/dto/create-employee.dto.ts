@@ -12,4 +12,8 @@ export class CreateEmployeeDto {
   @IsString()
   @IsOptional()
   cpf: string;
+
+  @IsString()
+  @IsOptional()
+  place: string;
 }

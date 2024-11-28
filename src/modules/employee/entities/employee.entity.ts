@@ -1,6 +1,7 @@
 import { Employee } from '@prisma/client';
 
 export class EmployeeEntity implements Employee {
+  place: string;
   id: string;
   name: string;
   role: string;
