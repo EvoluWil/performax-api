@@ -140,9 +140,10 @@ model Employee {
   client   Client? @relation(fields: [clientId], references: [id])
   clientId String? @db.ObjectId
 
-  employeeDay EmployeeDay[]
-  entries     Entry[]
-  financial   Financial[]
+  employeeDay        EmployeeDay[]
+  entries            Entry[]
+  financial          Financial[]
+  recurringFinancial RecurringFinancial[]
 
   @@map("employees")
 }
@@ -433,6 +434,9 @@ model RecurringFinancial {
 
   favored   FinancialFavored? @relation(fields: [favoredId], references: [id])
   favoredId String?           @db.ObjectId
+
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  employeeId String?   @db.ObjectId
 
   @@map("recurringFinancial")
 }
