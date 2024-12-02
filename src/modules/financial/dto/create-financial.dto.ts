@@ -74,6 +74,10 @@ export class CreateFinancialDto {
   @Optional()
   favoredId: string;
 
+  @IsMongoId()
+  @Optional()
+  employeeId: string;
+
   @IsBoolean()
   @IsOptional()
   isRecurring: boolean;

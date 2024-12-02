@@ -5,6 +5,7 @@ import {
 } from '@prisma/client';
 
 export class FinancialEntity implements Financial {
+  employeeId: string;
   id: string;
   title: string;
   description: string;

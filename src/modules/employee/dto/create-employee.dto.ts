@@ -16,4 +16,8 @@ export class CreateEmployeeDto {
   @IsString()
   @IsOptional()
   place: string;
+
+  @IsString()
+  @IsOptional()
+  clientId: string;
 }

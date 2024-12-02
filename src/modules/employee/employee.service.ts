@@ -12,17 +12,22 @@ export class EmployeeService {
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
   ) {}
-  async create(createEmployeeDto: CreateEmployeeDto) {
+  async create({ clientId, ...rest }: CreateEmployeeDto) {
+    const body: any = rest;
+
     const password = await bcrypt.hash(
-      normalizeString(createEmployeeDto?.name?.split(' ')[0]),
+      normalizeString(rest?.name?.split(' ')[0]),
       10,
     );
 
+    body.password = password;
+
+    if (clientId) {
+      body.client = { connect: { id: clientId } };
+    }
+
     const employee = await this.prisma.employee.create({
-      data: {
-        ...createEmployeeDto,
-        password,
-      },
+      data: body,
     });
 
     return employee;

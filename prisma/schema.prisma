@@ -120,6 +120,7 @@ model Client {
   gestorId           String[]             @default([]) @db.ObjectId
   financial          Financial[]
   recurringFinancial RecurringFinancial[]
+  employees          Employee[]
 
   @@map("clients")
 }
@@ -136,8 +137,12 @@ model Employee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  client   Client? @relation(fields: [clientId], references: [id])
+  clientId String? @db.ObjectId
+
   employeeDay EmployeeDay[]
   entries     Entry[]
+  financial   Financial[]
 
   @@map("employees")
 }
@@ -325,6 +330,9 @@ model Financial {
 
   favored   FinancialFavored? @relation(fields: [favoredId], references: [id])
   favoredId String?           @db.ObjectId
+
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  employeeId String?   @db.ObjectId
 
   @@map("financial")
 }
