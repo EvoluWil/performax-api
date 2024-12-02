@@ -13,7 +13,7 @@ export class OccurrenceService {
   ) {}
 
   async create(createOccurrenceDto: CreateOccurrenceDto, userId: string) {
-    const { clientId, ...rest } = createOccurrenceDto;
+    const { clientId, typeId, ...rest } = createOccurrenceDto;
 
     const client = await this.prisma.client.findUnique({
       where: { id: clientId },
@@ -23,12 +23,21 @@ export class OccurrenceService {
       throw new NotFoundException('Cliente não encontrado');
     }
 
+    const type = await this.prisma.occurrenceType.findUnique({
+      where: { id: typeId },
+    });
+
+    if (!type) {
+      throw new NotFoundException('Tipo não encontrado');
+    }
+
     await this.prisma.occurrence.create({
       data: {
         ...rest,
         protocol: generateProtocol(),
         client: { connect: { id: clientId } },
         createdBy: { connect: { id: userId } },
+        type: { connect: { id: typeId } },
       },
     });
 

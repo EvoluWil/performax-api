@@ -32,4 +32,8 @@ export class CreateOccurrenceDto {
   @IsMongoId()
   @IsNotEmpty()
   clientId: string;
+
+  @IsMongoId()
+  @IsNotEmpty()
+  typeId: string;
 }
