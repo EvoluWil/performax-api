@@ -1,4 +1,3 @@
-import { Optional } from '@nestjs/common';
 import { FinancialFlowEnum } from '@prisma/client';
 import {
   IsBoolean,
@@ -70,12 +69,12 @@ export class CreateFinancialDto {
   @IsNotEmpty()
   categoryId: string;
 
-  @IsString()
-  @Optional()
+  @IsMongoId()
+  @IsOptional()
   favoredId: string;
 
-  @IsString()
-  @Optional()
+  @IsMongoId()
+  @IsOptional()
   employeeId: string;
 
   @IsBoolean()
