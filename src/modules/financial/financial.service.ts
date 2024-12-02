@@ -137,6 +137,7 @@ export class FinancialService {
         category: true,
         company: true,
         favored: true,
+        employee: true,
       },
     });
 
