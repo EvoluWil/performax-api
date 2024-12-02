@@ -55,6 +55,7 @@ export class OccurrenceService {
       include: {
         client: true,
         createdBy: true,
+        type: true,
       },
     });
 
