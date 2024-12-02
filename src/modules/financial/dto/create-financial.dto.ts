@@ -70,11 +70,11 @@ export class CreateFinancialDto {
   @IsNotEmpty()
   categoryId: string;
 
-  @IsMongoId()
+  @IsString()
   @Optional()
   favoredId: string;
 
-  @IsMongoId()
+  @IsString()
   @Optional()
   employeeId: string;
 
