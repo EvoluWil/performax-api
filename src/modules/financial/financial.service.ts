@@ -113,6 +113,11 @@ export class FinancialService {
       orderBy,
     });
 
+    const employees = await this.prisma.employee.findMany({
+      select,
+      orderBy,
+    });
+
     return {
       clients,
       types,
@@ -122,6 +127,7 @@ export class FinancialService {
       companies,
       categories,
       favored,
+      employees,
     };
   }
 
