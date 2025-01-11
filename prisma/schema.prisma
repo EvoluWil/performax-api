@@ -40,7 +40,6 @@ model User {
   clients    Client[]    @relation(fields: [clientsIds], references: [id])
   clientsIds String[]    @default([]) @db.ObjectId
   financial  Financial[]
-  balance    Balance[]
 
   @@map("users")
 }
@@ -272,7 +271,6 @@ model Bank {
 
   financial          Financial[]
   recurringFinancial RecurringFinancial[]
-  transfers          FinancialTransfer[]
 
   @@map("banks")
 }
@@ -284,10 +282,10 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  financial          Financial[]
-  recurringFinancial RecurringFinancial[]
-  transfersIn        FinancialTransfer[]  @relation("companyIn")
-  transferOut        FinancialTransfer[]  @relation("companyOut")
+  financial           Financial[]
+  recurringFinancial  RecurringFinancial[]
+  balance             CompanyBalance?
+  financialTransferIn Financial[]          @relation("companyIn")
 
   @@map("conpanies")
 }
@@ -299,6 +297,7 @@ model Financial {
   protocol    String              @unique
   value       String
   tax         String?
+  retention   String?
   date        DateTime
   paymentDate DateTime?
   observation String?
@@ -325,6 +324,9 @@ model Financial {
 
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
+
+  companyIn   Company @relation("companyIn", fields: [companyInId], references: [id])
+  companyInId String  @db.ObjectId
 
   category   FinancialCategory @relation(fields: [categoryId], references: [id])
   categoryId String            @db.ObjectId
@@ -376,28 +378,6 @@ model FinancialFavored {
   recurringFinancial RecurringFinancial[]
 
   @@map("financialFavoreds")
-}
-
-model FinancialTransfer {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String?
-  value       String
-  date        DateTime
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  bank   Bank   @relation(fields: [bankId], references: [id])
-  bankId String @db.ObjectId
-
-  companyIn   Company @relation("companyIn", fields: [companyInId], references: [id])
-  companyInId String  @db.ObjectId
-
-  companyOut   Company @relation("companyOut", fields: [companyOutId], references: [id])
-  companyOutId String  @db.ObjectId
-
-  @@map("financialTransfers")
 }
 
 model RecurringFinancial {
@@ -522,16 +502,14 @@ model Occurrence {
   @@map("occurrences")
 }
 
-model Balance {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
-  value String
+model CompanyBalance {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  initialValue String
 
-  updatedAt DateTime @updatedAt
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @unique @db.ObjectId
 
-  updatedBy   User   @relation(fields: [updatedById], references: [id])
-  updatedById String @db.ObjectId
-
-  @@map("balance")
+  @@map("companyBalance")
 }
 
 type File {
@@ -592,6 +570,7 @@ enum FinancialStatusEnum {
 enum FinancialFlowEnum {
   IN
   OUT
+  TRANSFER
 }
 
 type BudgetItem {

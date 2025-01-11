@@ -12,6 +12,7 @@ export class FinancialEntity implements Financial {
   protocol: string;
   value: string;
   tax: string;
+  retention: string;
   paymentDate: Date;
   date: Date;
   observation: string;
@@ -27,4 +28,5 @@ export class FinancialEntity implements Financial {
   favoredId: string;
   bankId: string;
   companyId: string;
+  companyInId: string;
 }

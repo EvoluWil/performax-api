@@ -32,7 +32,7 @@ async function bootstrap() {
         defaultVersion: '1',
     });
     app.setGlobalPrefix('api');
-    await app.listen(process.env.PORT || 3001);
+    await app.listen(process.env.PORT || 3003);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

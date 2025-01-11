@@ -10,19 +10,18 @@ import { EmployeeDayModule } from './employee-day/employee-day.module';
 import { EmployeeModule } from './employee/employee.module';
 import { EntryTypeModule } from './entry-types/entry-type.module';
 import { EntryModule } from './entry/entry.module';
+import { FinancialCategoryModule } from './financial-category/financial-category.module';
+import { FinancialFavoredModule } from './financial-favored/financial-favored.module';
 import { FinancialTypeModule } from './financial-type/financial-type.module';
 import { FinancialModule } from './financial/financial.module';
+import { OccurrenceTypeModule } from './occurrence-type/occurrence-type.module';
 import { OccurrenceModule } from './occurrence/occurrence.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
 import { RecurringFinancialModule } from './recurring-financial/recurring-financial.module';
 import { TaskTypeModule } from './task-type/task-type.module';
 import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
-import { FinancialCategoryModule } from './financial-category/financial-category.module';
-import { FinancialTransferModule } from './financial-transfer/financial-transfer.module';
-import { FinancialBalanceModule } from './financial-balance/financial-balance.module';
-import { FinancialFavoredModule } from './financial-favored/financial-favored.module';
-import { OccurrenceTypeModule } from './occurrence-type/occurrence-type.module';
+import { CompanyBalanceModule } from './company-balance/company-balance.module';
 
 @Module({
   imports: [
@@ -46,10 +45,9 @@ import { OccurrenceTypeModule } from './occurrence-type/occurrence-type.module';
     RecurringFinancialModule,
     CompanyModule,
     FinancialCategoryModule,
-    FinancialTransferModule,
-    FinancialBalanceModule,
     FinancialFavoredModule,
     OccurrenceTypeModule,
+    CompanyBalanceModule,
   ],
   providers: [],
   exports: [],

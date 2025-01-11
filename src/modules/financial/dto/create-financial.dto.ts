@@ -32,6 +32,10 @@ export class CreateFinancialDto {
   tax: string;
 
   @IsString()
+  @IsOptional()
+  retention: string;
+
+  @IsString()
   @IsDateString()
   @IsOptional()
   paymentDate: Date;
@@ -76,6 +80,10 @@ export class CreateFinancialDto {
   @IsMongoId()
   @IsOptional()
   employeeId: string;
+
+  @IsMongoId()
+  @IsOptional()
+  companyInId: string;
 
   @IsBoolean()
   @IsOptional()
