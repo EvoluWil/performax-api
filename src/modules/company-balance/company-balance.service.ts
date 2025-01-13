@@ -98,6 +98,7 @@ export class CompanyBalanceService {
 
   async calculateCompanyBalance(companyId: string) {
     const companyBalance = await this.prisma.companyBalance.findFirst({
+      include: { company: { select: { name: true, id: true } } },
       where: { companyId },
     });
 
