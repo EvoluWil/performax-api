@@ -160,7 +160,9 @@ export class CompanyBalanceService {
         return { ...acc, futureBalance };
       },
       {
-        ...companyBalance,
+        company: companyBalance.company,
+        id: companyBalance.id,
+        initialValue: formatCurrency(companyBalance.initialValue),
         balance: formatCurrency(companyBalance.initialValue),
         futureBalance: 0,
         total: 0,
