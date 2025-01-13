@@ -325,8 +325,8 @@ model Financial {
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
 
-  companyIn   Company @relation("companyIn", fields: [companyInId], references: [id])
-  companyInId String  @db.ObjectId
+  companyIn   Company? @relation("companyIn", fields: [companyInId], references: [id])
+  companyInId String?  @db.ObjectId
 
   category   FinancialCategory @relation(fields: [categoryId], references: [id])
   categoryId String            @db.ObjectId
