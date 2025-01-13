@@ -310,11 +310,11 @@ model Financial {
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String @db.ObjectId
 
-  type   FinancialType @relation(fields: [typeId], references: [id])
-  typeId String        @db.ObjectId
+  type   FinancialType? @relation(fields: [typeId], references: [id])
+  typeId String?        @db.ObjectId
 
-  client   Client @relation(fields: [clientId], references: [id])
-  clientId String @db.ObjectId
+  client   Client? @relation(fields: [clientId], references: [id])
+  clientId String? @db.ObjectId
 
   method   PaymentMethod @relation(fields: [methodId], references: [id])
   methodId String        @db.ObjectId
@@ -328,8 +328,8 @@ model Financial {
   companyIn   Company? @relation("companyIn", fields: [companyInId], references: [id])
   companyInId String?  @db.ObjectId
 
-  category   FinancialCategory @relation(fields: [categoryId], references: [id])
-  categoryId String            @db.ObjectId
+  category   FinancialCategory? @relation(fields: [categoryId], references: [id])
+  categoryId String?            @db.ObjectId
 
   favored   FinancialFavored? @relation(fields: [favoredId], references: [id])
   favoredId String?           @db.ObjectId

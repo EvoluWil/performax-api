@@ -49,12 +49,12 @@ export class CreateFinancialDto {
   @IsEnum(FinancialFlowEnum)
   flow: FinancialFlowEnum;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsMongoId()
   typeId: string;
 
   @IsMongoId()
-  @IsNotEmpty()
+  @IsOptional()
   clientId: string;
 
   @IsMongoId()
@@ -70,7 +70,7 @@ export class CreateFinancialDto {
   companyId: string;
 
   @IsMongoId()
-  @IsNotEmpty()
+  @IsOptional()
   categoryId: string;
 
   @IsMongoId()
