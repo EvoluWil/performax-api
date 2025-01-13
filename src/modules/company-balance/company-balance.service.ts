@@ -131,7 +131,7 @@ export class CompanyBalanceService {
           formatCurrency(transaction.retention);
 
         if (transaction.companyInId === companyId) {
-          if (transaction?.status !== 'PAID') {
+          if (transaction?.status === 'PAID') {
             const balance = acc.balance + finalValue;
 
             return { ...acc, balance };
