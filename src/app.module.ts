@@ -24,7 +24,6 @@ export class AppModule {
     { path: '/v1/auth/forgot-password', method: RequestMethod.POST },
     { path: '/v1/auth/validate-token/:token', method: RequestMethod.GET },
     { path: '/v1/auth/recovery-password/:token', method: RequestMethod.POST },
-    { path: '/v1/company-balance', method: RequestMethod.ALL },
   ];
 
   configure(consumer: MiddlewareConsumer) {

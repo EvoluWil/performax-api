@@ -142,7 +142,7 @@ export class CompanyBalanceService {
         }
 
         if (transaction.flow === 'IN') {
-          if (transaction?.status !== 'PAID') {
+          if (transaction?.status === 'PAID') {
             const balance = acc.balance + finalValue;
             return { ...acc, balance };
           }
@@ -151,7 +151,7 @@ export class CompanyBalanceService {
           return { ...acc, futureBalance };
         }
 
-        if (transaction?.status !== 'PAID') {
+        if (transaction?.status === 'PAID') {
           const balance = acc.balance - finalValue;
           return { ...acc, balance };
         }
