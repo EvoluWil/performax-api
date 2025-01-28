@@ -77,7 +77,10 @@ export class OccurrenceService {
       throw new NotFoundException('Ocorrência não encontrada');
     }
 
-    if (updateOccurrenceDto.clientId) {
+    if (
+      updateOccurrenceDto.clientId &&
+      updateOccurrenceDto.clientId !== occurrence.clientId
+    ) {
       const client = await this.prisma.client.findUnique({
         where: { id: updateOccurrenceDto.clientId },
       });
@@ -87,6 +90,21 @@ export class OccurrenceService {
       }
       delete data.clientId;
       data.client = { connect: { id: updateOccurrenceDto.clientId } };
+    }
+
+    if (
+      updateOccurrenceDto.typeId &&
+      updateOccurrenceDto.typeId !== occurrence.typeId
+    ) {
+      const type = await this.prisma.occurrenceType.findUnique({
+        where: { id: updateOccurrenceDto.typeId },
+      });
+
+      if (!type) {
+        throw new NotFoundException('Tipo não encontrado');
+      }
+      delete data.typeId;
+      data.type = { connect: { id: updateOccurrenceDto.typeId } };
     }
 
     await this.prisma.occurrence.update({
