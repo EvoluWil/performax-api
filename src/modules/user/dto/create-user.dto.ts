@@ -1,5 +1,6 @@
 import { UserRoleEnum } from '@prisma/client';
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -21,6 +22,10 @@ export class CreateUserDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  isRgSeg: boolean;
 
   @IsOptional()
   @IsString()

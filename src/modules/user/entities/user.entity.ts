@@ -1,6 +1,7 @@
 import { User, UserRoleEnum } from '@prisma/client';
 
 export class UserEntity implements User {
+  isRgSeg: boolean;
   active: boolean;
   clientsIds: string[];
   coordinatesId: string[];

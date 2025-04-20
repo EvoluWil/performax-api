@@ -11,6 +11,9 @@ export class FindUserDto {
   cpf: string;
 
   @Expose()
+  isRgSeg: boolean;
+
+  @Expose()
   name: string;
 
   @Expose()
