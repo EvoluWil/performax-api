@@ -24,7 +24,7 @@ export class CreateUserDto {
   email: string;
 
   @IsBoolean()
-  @IsNotEmpty()
+  @IsOptional()
   isRgSeg: boolean;
 
   @IsOptional()
