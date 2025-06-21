@@ -15,9 +15,12 @@ export class RecurringFinancialService {
     private readonly qb: QBService,
   ) {}
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('recurringFinancial');
-    return this.prisma.recurringFinancial.findMany(query);
+    return this.prisma.recurringFinancial.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

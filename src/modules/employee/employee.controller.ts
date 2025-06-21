@@ -11,18 +11,21 @@ import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeeService } from './employee.service';
 
-@Controller('employees')
+@Controller('companies/:companyId/employees')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
   @Post()
-  create(@Body() createEmployeeDto: CreateEmployeeDto) {
-    return this.employeeService.create(createEmployeeDto);
+  create(
+    @Body() createEmployeeDto: CreateEmployeeDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.employeeService.create(createEmployeeDto, companyId);
   }
 
   @Get()
-  findAll() {
-    return this.employeeService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.employeeService.findAll(companyId);
   }
 
   @Get(':id')

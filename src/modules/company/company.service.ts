@@ -11,9 +11,9 @@ export class CompanyService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createCompanyDto: CreateCompanyDto) {
+  async create(createCompanyDto: CreateCompanyDto, userId: string) {
     const company = await this.prisma.company.findFirst({
-      where: { name: createCompanyDto.name },
+      where: { name: createCompanyDto.name, ownerId: userId },
     });
 
     if (company) {
@@ -21,19 +21,48 @@ export class CompanyService {
     }
 
     return this.prisma.company.create({
-      data: createCompanyDto,
+      data: {
+        ...createCompanyDto,
+        owner: {
+          connect: {
+            id: userId,
+          },
+        },
+      },
     });
   }
 
-  async findAll() {
+  async findAll(userId: string) {
     const query = await this.qb.query('company');
 
-    return this.prisma.company.findMany(query);
+    return this.prisma.company.findMany({
+      where: {
+        OR: [
+          {
+            ownerId: userId,
+          },
+          {
+            usersId: { has: userId },
+          },
+        ],
+      },
+      ...query,
+    });
   }
 
-  async findOne(id: string) {
+  async findOne(companyId: string, userId: string) {
     const company = await this.prisma.company.findFirst({
-      where: { id },
+      where: {
+        id: companyId,
+        OR: [
+          {
+            ownerId: userId,
+          },
+          {
+            usersId: { has: userId },
+          },
+        ],
+      },
     });
 
     if (!company) {
@@ -43,9 +72,23 @@ export class CompanyService {
     return company;
   }
 
-  async update(id: string, updateCompanyDto: UpdateCompanyDto) {
+  async update(
+    companyId: string,
+    updateCompanyDto: UpdateCompanyDto,
+    userId: string,
+  ) {
     const company = await this.prisma.company.findFirst({
-      where: { id },
+      where: {
+        id: companyId,
+        OR: [
+          {
+            ownerId: userId,
+          },
+          {
+            usersId: { has: userId },
+          },
+        ],
+      },
     });
 
     if (!company) {
@@ -53,7 +96,7 @@ export class CompanyService {
     }
 
     return this.prisma.company.update({
-      where: { id },
+      where: { id: companyId },
       data: updateCompanyDto,
     });
   }

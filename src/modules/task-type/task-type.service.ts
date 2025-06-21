@@ -11,7 +11,7 @@ export class TaskTypeService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createTaskTypeDto: CreateTaskTypeDto) {
+  async create(createTaskTypeDto: CreateTaskTypeDto, companyId: string) {
     const taskType = await this.prisma.taskType.findFirst({
       where: { name: createTaskTypeDto.name },
     });
@@ -21,14 +21,22 @@ export class TaskTypeService {
     }
 
     return this.prisma.taskType.create({
-      data: createTaskTypeDto,
+      data: {
+        ...createTaskTypeDto,
+        company: {
+          connect: { id: companyId },
+        },
+      },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('taskType');
 
-    return this.prisma.taskType.findMany(query);
+    return this.prisma.taskType.findMany({
+      ...query,
+      where: { ...query.where, companyId },
+    });
   }
 
   async findOne(id: string) {

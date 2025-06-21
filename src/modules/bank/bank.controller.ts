@@ -3,27 +3,33 @@ import { BankService } from './bank.service';
 import { CreateBankDto } from './dto/create-bank.dto';
 import { UpdateBankDto } from './dto/update-bank.dto';
 
-@Controller('banks')
+@Controller('companies/:companyId/banks')
 export class BankController {
   constructor(private readonly bankService: BankService) {}
 
   @Post()
-  create(@Body() createBankDto: CreateBankDto) {
-    return this.bankService.create(createBankDto);
+  create(
+    @Param('companyId') companyId: string,
+    @Body() createBankDto: CreateBankDto,
+  ) {
+    return this.bankService.create(companyId, createBankDto);
   }
 
   @Get()
-  findAll() {
-    return this.bankService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.bankService.findAll(companyId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bankService.findOne(id);
+  @Get(':bankId')
+  findOne(@Param('bankId') bankId: string) {
+    return this.bankService.findOne(bankId);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateBankDto: UpdateBankDto) {
-    return this.bankService.update(id, updateBankDto);
+  @Put(':bankId')
+  update(
+    @Param('bankId') bankId: string,
+    @Body() updateBankDto: UpdateBankDto,
+  ) {
+    return this.bankService.update(bankId, updateBankDto);
   }
 }

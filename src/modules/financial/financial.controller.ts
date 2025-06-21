@@ -13,7 +13,7 @@ import { CreateFinancialDto } from './dto/create-financial.dto';
 import { UpdateFinancialDto } from './dto/update-financial.dto';
 import { FinancialService } from './financial.service';
 
-@Controller('financial')
+@Controller('companies/:companyId/financial')
 export class FinancialController {
   constructor(private readonly financialService: FinancialService) {}
 
@@ -21,13 +21,18 @@ export class FinancialController {
   create(
     @Body() createFinancialDto: CreateFinancialDto,
     @AuthUser() authUser: Request['user'],
+    @Param('companyId') companyId: string,
   ) {
-    return this.financialService.create(createFinancialDto, authUser?.id);
+    return this.financialService.create(
+      createFinancialDto,
+      authUser?.id,
+      companyId,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.financialService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.financialService.findAll(companyId);
   }
 
   @Get('options/data')

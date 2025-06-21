@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { User } from '@prisma/client';
 import { add } from 'date-fns';
 import { EmailService } from 'src/providers/email/email.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
@@ -20,7 +21,7 @@ export class UserService {
     private readonly emailService: EmailService,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto, companyId: string) {
     const { cpf, email } = createUserDto;
 
     const user = await this.prisma.user.findFirst({
@@ -42,15 +43,23 @@ export class UserService {
     const resetTokenExpiry = add(new Date(), { days: 15 });
 
     const newUser = await this.prisma.user.create({
-      data: { ...createUserDto, resetToken: hash, resetTokenExpiry },
+      data: {
+        ...createUserDto,
+        resetToken: hash,
+        resetTokenExpiry,
+        companies: { connect: { id: companyId } },
+      },
     });
 
     return defaultPlainToClass(FindUserDto, newUser);
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('user');
-    const users = await this.prisma.user.findMany(query);
+    const users = await this.prisma.user.findMany({
+      ...query,
+      where: { ...query.where, companies: { some: { id: companyId } } },
+    });
     return defaultPlainToClass(FindUserDto, users);
   }
 
@@ -132,14 +141,25 @@ export class UserService {
     return { ok: true };
   }
 
-  async updateRole(id: string, updateRoleDto: UpdateRoleDto) {
+  async updateRole(
+    id: string,
+    updateRoleDto: UpdateRoleDto,
+    companyId: string,
+  ) {
     const user = await this.prisma.user.findFirst({ where: { id } });
 
     if (!user) {
       throw new BadRequestException(`Usuário não encontrado!`);
     }
 
-    if (user.role === 'COORDINATOR') {
+    if (this.checkSameRole(user, companyId, updateRoleDto.role)) {
+      throw new BadRequestException(`Usuário já possui esse cargo!`);
+    }
+
+    if (
+      user?.coordinatorCompaniesId?.includes(companyId) &&
+      updateRoleDto.role !== 'COORDINATOR'
+    ) {
       if (user.coordinatesId?.length) {
         await Promise.all(
           user.coordinatesId.map((coordinateId) =>
@@ -154,7 +174,10 @@ export class UserService {
 
     await this.prisma.user.update({
       where: { id },
-      data: updateRoleDto,
+      data: {
+        ...this.getCurrentRoleToRemove(user, companyId),
+        ...this.getRoleData(updateRoleDto.role, companyId),
+      },
     });
 
     return { ok: true };
@@ -163,11 +186,16 @@ export class UserService {
   async updateCoordinates(
     id: string,
     updateCoordinatesDto: UpdateCoordinatesDto,
+    companyId: string,
   ) {
     const user = await this.prisma.user.findFirst({ where: { id } });
 
     if (!user) {
       throw new BadRequestException(`Usuário não encontrado!`);
+    }
+
+    if (!user.coordinatorCompaniesId?.includes(companyId)) {
+      throw new BadRequestException(`Usuário não é um coordenador!`);
     }
 
     if (user.coordinatesId?.length) {
@@ -193,14 +221,18 @@ export class UserService {
     return { ok: true };
   }
 
-  async updateClients(id: string, { clients }: UpdateClientsDto) {
+  async updateClients(
+    id: string,
+    { clients }: UpdateClientsDto,
+    companyId: string,
+  ) {
     const user = await this.prisma.user.findFirst({ where: { id } });
 
     if (!user) {
       throw new BadRequestException(`Usuário não encontrado!`);
     }
 
-    if (user.role !== 'GESTOR') {
+    if (user.gestorCompaniesId?.includes(companyId)) {
       throw new BadRequestException(`Usuário não é um gestor!`);
     }
 
@@ -223,15 +255,210 @@ export class UserService {
     return { ok: true };
   }
 
-  async remove(id: string) {
+  async remove(id: string, companyId: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
 
     if (!user) {
       throw new BadRequestException(`Usuário não encontrado!`);
     }
 
-    await this.prisma.user.delete({ where: { id } });
+    if (user?.adminCompaniesId?.includes(companyId)) {
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          adminCompanies: {
+            disconnect: { id: companyId },
+          },
+          companies: {
+            disconnect: { id: companyId },
+          },
+        },
+      });
+    }
+
+    if (user?.coordinatorCompaniesId?.includes(companyId)) {
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          coordinatorCompanies: {
+            disconnect: { id: companyId },
+          },
+          companies: {
+            disconnect: { id: companyId },
+          },
+        },
+      });
+    }
+
+    if (user?.attendantCompaniesId?.includes(companyId)) {
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          attendantCompanies: {
+            disconnect: { id: companyId },
+          },
+          companies: {
+            disconnect: { id: companyId },
+          },
+        },
+      });
+    }
+
+    if (user?.financialCompaniesId?.includes(companyId)) {
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          financialCompanies: {
+            disconnect: { id: companyId },
+          },
+          companies: {
+            disconnect: { id: companyId },
+          },
+        },
+      });
+    }
+
+    if (user?.gestorCompaniesId?.includes(companyId)) {
+      await this.prisma.user.update({
+        where: { id },
+        data: {
+          gestorCompanies: {
+            disconnect: { id: companyId },
+          },
+          companies: {
+            disconnect: { id: companyId },
+          },
+        },
+      });
+    }
 
     return { ok: true };
+  }
+
+  getCurrentRoleToRemove(user: User, companyId: string) {
+    if (user.adminCompaniesId?.includes(companyId)) {
+      return {
+        adminCompanies: {
+          disconnect: {
+            id: companyId,
+          },
+        },
+      };
+    }
+
+    if (user.coordinatorCompaniesId?.includes(companyId)) {
+      return {
+        coordinatorCompaniesId: {
+          disconnect: {
+            id: companyId,
+          },
+        },
+      };
+    }
+
+    if (user.attendantCompaniesId?.includes(companyId)) {
+      return {
+        attendantCompaniesId: {
+          disconnect: {
+            id: companyId,
+          },
+        },
+      };
+    }
+
+    if (user.financialCompaniesId?.includes(companyId)) {
+      return {
+        financialCompaniesId: {
+          disconnect: {
+            id: companyId,
+          },
+        },
+      };
+    }
+
+    if (user.gestorCompaniesId?.includes(companyId)) {
+      return {
+        clients: {
+          disconnect: {
+            id: companyId,
+          },
+        },
+      };
+    }
+  }
+
+  getRoleData(role: string, companyId: string) {
+    const roleData = {
+      ADMIN: {
+        adminCompanies: {
+          connect: {
+            id: companyId,
+          },
+        },
+      },
+      COORDINATOR: {
+        coordinatorCompaniesId: {
+          connect: {
+            id: companyId,
+          },
+        },
+      },
+      ATTENDANT: {
+        attendantCompaniesId: {
+          connect: {
+            id: companyId,
+          },
+        },
+      },
+      FINANCIAL: {
+        financialCompaniesId: {
+          connect: {
+            id: companyId,
+          },
+        },
+      },
+      GESTOR: {
+        clients: {
+          connect: {
+            id: companyId,
+          },
+        },
+      },
+    };
+
+    return roleData[role];
+  }
+
+  checkSameRole(user: User, companyId: string, role: string): boolean {
+    if (user.adminCompaniesId?.includes(companyId) && role === 'ADMIN') {
+      return true;
+    }
+
+    if (
+      user.coordinatorCompaniesId?.includes(companyId) &&
+      role === 'COORDINATOR'
+    ) {
+      return true;
+    }
+
+    if (
+      user.attendantCompaniesId?.includes(companyId) &&
+      role === 'ATTENDANT'
+    ) {
+      return true;
+    }
+
+    if (
+      user.financialCompaniesId?.includes(companyId) &&
+      role === 'FINANCIAL'
+    ) {
+      return true;
+    }
+
+    if (user.gestorCompaniesId?.includes(companyId) && role === 'GESTOR') {
+      return true;
+    }
+
+    return false;
   }
 }

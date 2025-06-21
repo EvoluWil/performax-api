@@ -1,8 +1,19 @@
-import { UserRoleEnum } from '@prisma/client';
 import { IsEnum, IsNotEmpty } from 'class-validator';
+
+export const UserRoleInCompanyEnum = {
+  ADMIN: 'ADMIN',
+  COORDINATOR: 'COORDINATOR',
+  ATTENDANT: 'ATTENDANT',
+  FINANCIAL: 'FINANCIAL',
+  GESTOR: 'GESTOR',
+  USER: 'USER',
+};
+
+export type UserRoleInCompanyEnum =
+  (typeof UserRoleInCompanyEnum)[keyof typeof UserRoleInCompanyEnum];
 
 export class UpdateRoleDto {
   @IsNotEmpty()
-  @IsEnum(UserRoleEnum)
-  role: UserRoleEnum;
+  @IsEnum(UserRoleInCompanyEnum)
+  role: UserRoleInCompanyEnum;
 }

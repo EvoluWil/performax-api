@@ -15,7 +15,7 @@ export class CompanyBalanceService {
     private readonly cache: CacheService,
   ) {}
 
-  async create({ companyId, initialValue }: CreateCompanyBalanceDto) {
+  async create(companyId: string, { initialValue }: CreateCompanyBalanceDto) {
     const company = await this.prisma.company.findFirst({
       where: { id: companyId },
     });
@@ -34,10 +34,13 @@ export class CompanyBalanceService {
     return { ok: true };
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('companyBalance');
     delete query.select;
-    const balances = await this.prisma.companyBalance.findMany(query);
+    const balances = await this.prisma.companyBalance.findMany({
+      ...query,
+      where: { companyId },
+    });
     return Promise.all(
       balances.map((balance) =>
         this.calculateCompanyBalance(balance.companyId),

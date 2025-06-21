@@ -11,10 +11,11 @@ export class ClientService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createClientDto: CreateClientDto) {
-    if (createClientDto.cnpj) {
+  async create(companyId: string, createClientDto: CreateClientDto) {
+    const { cnpj } = createClientDto;
+    if (cnpj) {
       const client = await this.prisma.client.findFirst({
-        where: { cnpj: createClientDto.cnpj },
+        where: { cnpj, companiesId: { has: companyId } },
       });
 
       if (client) {
@@ -23,14 +24,22 @@ export class ClientService {
     }
 
     return this.prisma.client.create({
-      data: createClientDto,
+      data: {
+        ...createClientDto,
+        companies: {
+          connect: { id: companyId },
+        },
+      },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('client');
 
-    return await this.prisma.client.findMany(query);
+    return await this.prisma.client.findMany({
+      where: { companiesId: { has: companyId } },
+      ...query,
+    });
   }
 
   async findOne(id: string) {

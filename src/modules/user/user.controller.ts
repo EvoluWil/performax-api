@@ -14,18 +14,21 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
 
-@Controller('users')
+@Controller('companies/:companyId/users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  create(
+    @Body() createUserDto: CreateUserDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.userService.create(createUserDto, companyId);
   }
 
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.userService.findAll(companyId);
   }
 
   @Get(':id')
@@ -39,28 +42,38 @@ export class UserController {
   }
 
   @Put(':id/roles')
-  updateRole(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-    return this.userService.updateRole(id, updateRoleDto);
+  updateRole(
+    @Param('id') id: string,
+    @Body() updateRoleDto: UpdateRoleDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.userService.updateRole(id, updateRoleDto, companyId);
   }
 
   @Put(':id/coordinates')
   updateCoordinates(
     @Param('id') id: string,
     @Body() updateCoordinatesDto: UpdateCoordinatesDto,
+    @Param('companyId') companyId: string,
   ) {
-    return this.userService.updateCoordinates(id, updateCoordinatesDto);
+    return this.userService.updateCoordinates(
+      id,
+      updateCoordinatesDto,
+      companyId,
+    );
   }
 
   @Put(':id/clients')
   updateClients(
     @Param('id') id: string,
     @Body() updateClientsDto: UpdateClientsDto,
+    @Param('companyId') companyId: string,
   ) {
-    return this.userService.updateClients(id, updateClientsDto);
+    return this.userService.updateClients(id, updateClientsDto, companyId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(id);
+  remove(@Param('id') id: string, @Param('companyId') companyId: string) {
+    return this.userService.remove(id, companyId);
   }
 }

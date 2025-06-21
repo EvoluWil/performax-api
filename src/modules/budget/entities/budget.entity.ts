@@ -13,6 +13,7 @@ export class BudgetEntity implements Budget {
   createdAt: Date;
   updatedAt: Date;
   allClients: boolean;
+  companyId: string;
   createdById: string;
   typeId: string;
   clientId: string;

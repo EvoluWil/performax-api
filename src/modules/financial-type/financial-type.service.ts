@@ -11,9 +11,12 @@ export class FinancialTypeService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createFinancialTypeDto: CreateFinancialTypeDto) {
+  async create(
+    createFinancialTypeDto: CreateFinancialTypeDto,
+    companyId: string,
+  ) {
     const financialType = await this.prisma.financialType.findFirst({
-      where: { name: createFinancialTypeDto.name },
+      where: { name: createFinancialTypeDto.name, companyId },
     });
 
     if (financialType) {
@@ -24,14 +27,18 @@ export class FinancialTypeService {
       data: {
         ...createFinancialTypeDto,
         needApprove: createFinancialTypeDto.needApprove || false,
+        company: { connect: { id: companyId } },
       },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('financialType');
 
-    return this.prisma.financialType.findMany(query);
+    return this.prisma.financialType.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

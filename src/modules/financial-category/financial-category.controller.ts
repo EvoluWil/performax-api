@@ -11,20 +11,26 @@ import { CreateFinancialCategoryDto } from './dto/create-financial-category.dto'
 import { UpdateFinancialCategoryDto } from './dto/update-financial-category.dto';
 import { FinancialCategoryService } from './financial-category.service';
 
-@Controller('financial-categories')
+@Controller('companies/:companyId/financial-categories')
 export class FinancialCategoryController {
   constructor(
     private readonly financialCategoryService: FinancialCategoryService,
   ) {}
 
   @Post()
-  create(@Body() createFinancialCategoryDto: CreateFinancialCategoryDto) {
-    return this.financialCategoryService.create(createFinancialCategoryDto);
+  create(
+    @Body() createFinancialCategoryDto: CreateFinancialCategoryDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.financialCategoryService.create(
+      createFinancialCategoryDto,
+      companyId,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.financialCategoryService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.financialCategoryService.findAll(companyId);
   }
 
   @Get(':id')

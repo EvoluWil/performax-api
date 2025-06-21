@@ -11,18 +11,24 @@ import { CompanyBalanceService } from './company-balance.service';
 import { CreateCompanyBalanceDto } from './dto/create-company-balance.dto';
 import { UpdateCompanyBalanceDto } from './dto/update-company-balance.dto';
 
-@Controller('company-balance')
+@Controller('companies/:companyId/balance')
 export class CompanyBalanceController {
   constructor(private readonly companyBalanceService: CompanyBalanceService) {}
 
   @Post()
-  create(@Body() createCompanyBalanceDto: CreateCompanyBalanceDto) {
-    return this.companyBalanceService.create(createCompanyBalanceDto);
+  create(
+    @Body() createCompanyBalanceDto: CreateCompanyBalanceDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.companyBalanceService.create(
+      companyId,
+      createCompanyBalanceDto,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.companyBalanceService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.companyBalanceService.findAll(companyId);
   }
 
   @Get(':id')

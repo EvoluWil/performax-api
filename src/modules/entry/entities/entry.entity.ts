@@ -1,7 +1,6 @@
 import { Entry, EntryStatusEnum } from '@prisma/client';
 
 export class EntryEntity implements Entry {
-  protocol: string;
   id: string;
   title: string;
   description: string;
@@ -9,10 +8,12 @@ export class EntryEntity implements Entry {
   date: Date;
   observation: string;
   approved: boolean;
+  protocol: string;
   status: EntryStatusEnum;
   createdAt: Date;
   updatedAt: Date;
   createdById: string;
+  companyId: string;
   typeId: string;
   responsibleId: string;
   employeeId: string;

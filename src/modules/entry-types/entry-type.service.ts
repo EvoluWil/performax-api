@@ -11,9 +11,9 @@ export class EntryTypeService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createEntryTypeDto: CreateEntryTypeDto) {
+  async create(createEntryTypeDto: CreateEntryTypeDto, companyId: string) {
     const entryType = await this.prisma.entryType.findFirst({
-      where: { name: createEntryTypeDto.name },
+      where: { name: createEntryTypeDto.name, companyId },
     });
 
     if (entryType) {
@@ -24,14 +24,18 @@ export class EntryTypeService {
       data: {
         ...createEntryTypeDto,
         needApprove: createEntryTypeDto.needApprove || false,
+        company: { connect: { id: companyId } },
       },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('entryType');
 
-    return this.prisma.entryType.findMany(query);
+    return this.prisma.entryType.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

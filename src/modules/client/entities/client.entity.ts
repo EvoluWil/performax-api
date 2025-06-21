@@ -8,6 +8,7 @@ export class ClientEntity implements Client {
   cnpj: string;
   address: string;
   gestorId: string[];
+  companiesId: string[];
   createdAt: Date;
   updatedAt: Date;
 }

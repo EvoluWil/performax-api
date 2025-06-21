@@ -11,18 +11,21 @@ import { CreateEntryTypeDto } from './dto/create-entry-type.dto';
 import { UpdateEntryTypeDto } from './dto/update-entry-type.dto';
 import { EntryTypeService } from './entry-type.service';
 
-@Controller('entry-types')
+@Controller('companies/:companyId/entry-types')
 export class EntryTypeController {
   constructor(private readonly entryTypeService: EntryTypeService) {}
 
   @Post()
-  create(@Body() createEntryTypeDto: CreateEntryTypeDto) {
-    return this.entryTypeService.create(createEntryTypeDto);
+  create(
+    @Body() createEntryTypeDto: CreateEntryTypeDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.entryTypeService.create(createEntryTypeDto, companyId);
   }
 
   @Get()
-  findAll() {
-    return this.entryTypeService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.entryTypeService.findAll(companyId);
   }
 
   @Get(':id')

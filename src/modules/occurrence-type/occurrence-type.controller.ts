@@ -11,18 +11,24 @@ import { CreateOccurrenceTypeDto } from './dto/create-occurrence-type.dto';
 import { UpdateOccurrenceTypeDto } from './dto/update-occurrence-type.dto';
 import { OccurrenceTypeService } from './occurrence-type.service';
 
-@Controller('occurrence-types')
+@Controller('companies/:companyId/occurrence-types')
 export class OccurrenceTypeController {
   constructor(private readonly occurrenceTypeService: OccurrenceTypeService) {}
 
   @Post()
-  create(@Body() createOccurrenceTypeDto: CreateOccurrenceTypeDto) {
-    return this.occurrenceTypeService.create(createOccurrenceTypeDto);
+  create(
+    @Body() createOccurrenceTypeDto: CreateOccurrenceTypeDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.occurrenceTypeService.create(
+      createOccurrenceTypeDto,
+      companyId,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.occurrenceTypeService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.occurrenceTypeService.findAll(companyId);
   }
 
   @Get(':id')

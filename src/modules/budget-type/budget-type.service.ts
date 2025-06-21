@@ -11,9 +11,9 @@ export class BudgetTypeService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createBudgetTypeDto: CreateBudgetTypeDto) {
+  async create(companyId: string, createBudgetTypeDto: CreateBudgetTypeDto) {
     const budgetType = await this.prisma.budgetType.findFirst({
-      where: { name: createBudgetTypeDto.name },
+      where: { name: createBudgetTypeDto.name, companyId },
     });
 
     if (budgetType) {
@@ -21,14 +21,17 @@ export class BudgetTypeService {
     }
 
     return this.prisma.budgetType.create({
-      data: createBudgetTypeDto,
+      data: { ...createBudgetTypeDto, companyId },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('budgetType');
 
-    return this.prisma.budgetType.findMany(query);
+    return this.prisma.budgetType.findMany({
+      where: { companyId },
+      ...query,
+    });
   }
 
   async findOne(id: string) {

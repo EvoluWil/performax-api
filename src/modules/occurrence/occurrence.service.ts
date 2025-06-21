@@ -12,7 +12,11 @@ export class OccurrenceService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createOccurrenceDto: CreateOccurrenceDto, userId: string) {
+  async create(
+    createOccurrenceDto: CreateOccurrenceDto,
+    userId: string,
+    companyId: string,
+  ) {
     const { clientId, typeId, ...rest } = createOccurrenceDto;
 
     const client = await this.prisma.client.findUnique({
@@ -38,15 +42,19 @@ export class OccurrenceService {
         client: { connect: { id: clientId } },
         createdBy: { connect: { id: userId } },
         type: { connect: { id: typeId } },
+        company: { connect: { id: companyId } },
       },
     });
 
     return { ok: true };
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('occurrence');
-    return this.prisma.occurrence.findMany(query);
+    return this.prisma.occurrence.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

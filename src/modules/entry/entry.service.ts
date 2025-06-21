@@ -12,7 +12,11 @@ export class EntryService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createEntryDto: CreateEntryDto, userId: string) {
+  async create(
+    createEntryDto: CreateEntryDto,
+    userId: string,
+    companyId: string,
+  ) {
     const { typeId, responsibleId } = createEntryDto;
 
     const type = await this.prisma.entryType.findFirst({
@@ -57,13 +61,17 @@ export class EntryService {
         protocol: generateProtocol(),
         approved: type?.needApprove ? false : true,
         createdBy: { connect: { id: userId } },
+        company: { connect: { id: companyId } },
       },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('entry');
-    return this.prisma.entry.findMany(query);
+    return this.prisma.entry.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

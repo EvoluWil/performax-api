@@ -11,9 +11,9 @@ export class BankService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createBankDto: CreateBankDto) {
+  async create(companyId: string, createBankDto: CreateBankDto) {
     const bank = await this.prisma.bank.findFirst({
-      where: { name: createBankDto.name },
+      where: { name: createBankDto.name, companyId },
     });
 
     if (bank) {
@@ -21,19 +21,31 @@ export class BankService {
     }
 
     return this.prisma.bank.create({
-      data: createBankDto,
+      data: {
+        ...createBankDto,
+        company: {
+          connect: {
+            id: companyId,
+          },
+        },
+      },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('bank');
 
-    return this.prisma.bank.findMany(query);
+    return this.prisma.bank.findMany({
+      where: {
+        companyId,
+      },
+      ...query,
+    });
   }
 
-  async findOne(id: string) {
+  async findOne(bankId: string) {
     const bank = await this.prisma.bank.findFirst({
-      where: { id },
+      where: { id: bankId },
     });
 
     if (!bank) {
@@ -43,9 +55,9 @@ export class BankService {
     return bank;
   }
 
-  async update(id: string, updateBankDto: UpdateBankDto) {
+  async update(bankId: string, updateBankDto: UpdateBankDto) {
     const bank = await this.prisma.bank.findFirst({
-      where: { id },
+      where: { id: bankId },
     });
 
     if (!bank) {
@@ -53,7 +65,7 @@ export class BankService {
     }
 
     return this.prisma.bank.update({
-      where: { id },
+      where: { id: bankId },
       data: updateBankDto,
     });
   }

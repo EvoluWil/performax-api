@@ -1,16 +1,17 @@
 import { File, Occurrence } from '@prisma/client';
 
 export class OccurrenceEntity implements Occurrence {
-  typeId: string;
-  protocol: string;
   id: string;
-  title: string;
-  description: string;
-  resolution: string;
   date: Date;
+  title: string;
+  protocol: string;
   documents: File[];
+  resolution: string;
+  description: string;
+  typeId: string;
+  clientId: string;
+  companyId: string;
+  createdById: string;
   createdAt: Date;
   updatedAt: Date;
-  createdById: string;
-  clientId: string;
 }

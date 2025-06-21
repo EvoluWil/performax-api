@@ -13,7 +13,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
 
-@Controller('tasks')
+@Controller('companies/:companyId/tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
@@ -21,13 +21,14 @@ export class TaskController {
   create(
     @Body() createTaskDto: CreateTaskDto,
     @AuthUser() authUser: Request['user'],
+    @Param('companyId') companyId: string,
   ) {
-    return this.taskService.create(createTaskDto, authUser?.id);
+    return this.taskService.create(createTaskDto, authUser?.id, companyId);
   }
 
   @Get()
-  findAll() {
-    return this.taskService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.taskService.findAll(companyId);
   }
 
   @Get(':id')

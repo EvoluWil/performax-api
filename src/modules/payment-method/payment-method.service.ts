@@ -11,7 +11,10 @@ export class PaymentMethodService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createPaymentMethodDto: CreatePaymentMethodDto) {
+  async create(
+    createPaymentMethodDto: CreatePaymentMethodDto,
+    companyId: string,
+  ) {
     const paymentMethod = await this.prisma.paymentMethod.findFirst({
       where: { name: createPaymentMethodDto.name },
     });
@@ -21,14 +24,20 @@ export class PaymentMethodService {
     }
 
     return this.prisma.paymentMethod.create({
-      data: createPaymentMethodDto,
+      data: {
+        ...createPaymentMethodDto,
+        company: { connect: { id: companyId } },
+      },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('paymentMethod');
 
-    return this.prisma.paymentMethod.findMany(query);
+    return this.prisma.paymentMethod.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

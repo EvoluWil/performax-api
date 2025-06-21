@@ -7,16 +7,24 @@ import { UpdateFinancialFavoredDto } from './dto/update-financial-favored.dto';
 export class FinancialFavoredService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createFinancialFavoredDto: CreateFinancialFavoredDto) {
+  async create(
+    createFinancialFavoredDto: CreateFinancialFavoredDto,
+    companyId: string,
+  ) {
     await this.prisma.financialFavored.create({
-      data: createFinancialFavoredDto,
+      data: {
+        ...createFinancialFavoredDto,
+        company: { connect: { id: companyId } },
+      },
     });
 
     return { ok: true };
   }
 
-  async findAll() {
-    return await this.prisma.financialFavored.findMany();
+  async findAll(companyId: string) {
+    return await this.prisma.financialFavored.findMany({
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

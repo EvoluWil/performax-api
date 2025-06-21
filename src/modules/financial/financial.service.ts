@@ -15,6 +15,7 @@ export class FinancialService {
   async create(
     { isRecurring, recurringEndDate, ...rest }: CreateFinancialDto,
     userId: string,
+    companyId: string,
   ) {
     const type = await this.prisma.financialType.findFirst({
       where: { id: rest.typeId },
@@ -43,6 +44,7 @@ export class FinancialService {
         status: type?.needApprove ? 'PENDING' : 'APPROVED',
         protocol: generateProtocol(),
         createdBy: { connect: { id: userId } },
+        company: { connect: { id: companyId } },
       },
     });
 
@@ -52,6 +54,7 @@ export class FinancialService {
           ...data,
           endDate: recurringEndDate || null,
           lastDate: data.date,
+          company: { connect: { id: companyId } },
         },
       });
     }
@@ -59,9 +62,12 @@ export class FinancialService {
     return { ok: true };
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('financial');
-    return this.prisma.financial.findMany(query);
+    return this.prisma.financial.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findData() {

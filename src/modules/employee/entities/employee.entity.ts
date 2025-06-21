@@ -9,6 +9,7 @@ export class EmployeeEntity implements Employee {
   password: string;
   place: string;
   clientId: string;
+  companyId: string;
   createdAt: Date;
   updatedAt: Date;
 }

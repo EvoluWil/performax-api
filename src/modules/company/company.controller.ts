@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Request } from 'express';
+import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -8,22 +10,36 @@ export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
 
   @Post()
-  create(@Body() createCompanyDto: CreateCompanyDto) {
-    return this.companyService.create(createCompanyDto);
+  create(
+    @Body() createCompanyDto: CreateCompanyDto,
+    @AuthUser() authUser: Request['user'],
+  ) {
+    return this.companyService.create(createCompanyDto, authUser?.id);
   }
 
   @Get()
-  findAll() {
-    return this.companyService.findAll();
+  findAll(@AuthUser() authUser: Request['user']) {
+    return this.companyService.findAll(authUser?.id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.companyService.findOne(id);
+  @Get(':companyId')
+  findOne(
+    @Param('companyId') companyId: string,
+    @AuthUser() authUser: Request['user'],
+  ) {
+    return this.companyService.findOne(companyId, authUser?.id);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companyService.update(id, updateCompanyDto);
+  @Put(':companyId')
+  update(
+    @Param('companyId') companyId: string,
+    @Body() updateCompanyDto: UpdateCompanyDto,
+    @AuthUser() authUser: Request['user'],
+  ) {
+    return this.companyService.update(
+      companyId,
+      updateCompanyDto,
+      authUser?.id,
+    );
   }
 }

@@ -11,9 +11,12 @@ export class FinancialCategoryService {
     private readonly qb: QBService,
   ) {}
 
-  async create(createFinancialCategoryDto: CreateFinancialCategoryDto) {
+  async create(
+    createFinancialCategoryDto: CreateFinancialCategoryDto,
+    companyId: string,
+  ) {
     const financialCategory = await this.prisma.financialCategory.findFirst({
-      where: { name: createFinancialCategoryDto.name },
+      where: { name: createFinancialCategoryDto.name, companyId },
     });
 
     if (financialCategory) {
@@ -21,14 +24,20 @@ export class FinancialCategoryService {
     }
 
     return this.prisma.financialCategory.create({
-      data: createFinancialCategoryDto,
+      data: {
+        ...createFinancialCategoryDto,
+        company: { connect: { id: companyId } },
+      },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('financialCategory');
 
-    return this.prisma.financialCategory.findMany(query);
+    return this.prisma.financialCategory.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

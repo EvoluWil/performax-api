@@ -13,21 +13,22 @@ import { BudgetService } from './budget.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 
-@Controller('budgets')
+@Controller('companies/:companyId/budgets')
 export class BudgetController {
   constructor(private readonly budgetService: BudgetService) {}
 
   @Post()
   create(
+    @Param('companyId') companyId: string,
     @Body() createBudgetDto: CreateBudgetDto,
     @AuthUser() authUser: Request['user'],
   ) {
-    return this.budgetService.create(createBudgetDto, authUser?.id);
+    return this.budgetService.create(companyId, createBudgetDto, authUser?.id);
   }
 
   @Get()
-  findAll() {
-    return this.budgetService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.budgetService.findAll(companyId);
   }
 
   @Get(':id')

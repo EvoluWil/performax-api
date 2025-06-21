@@ -11,20 +11,26 @@ import { CreateFinancialFavoredDto } from './dto/create-financial-favored.dto';
 import { UpdateFinancialFavoredDto } from './dto/update-financial-favored.dto';
 import { FinancialFavoredService } from './financial-favored.service';
 
-@Controller('financial-favored')
+@Controller('companies/:companyId/financial-favored')
 export class FinancialFavoredController {
   constructor(
     private readonly financialFavoredService: FinancialFavoredService,
   ) {}
 
   @Post()
-  create(@Body() createFinancialFavoredDto: CreateFinancialFavoredDto) {
-    return this.financialFavoredService.create(createFinancialFavoredDto);
+  create(
+    @Body() createFinancialFavoredDto: CreateFinancialFavoredDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.financialFavoredService.create(
+      createFinancialFavoredDto,
+      companyId,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.financialFavoredService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.financialFavoredService.findAll(companyId);
   }
 
   @Get(':id')

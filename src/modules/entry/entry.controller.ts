@@ -13,7 +13,7 @@ import { CreateEntryDto } from './dto/create-entry.dto';
 import { UpdateEntryDto } from './dto/update-entry.dto';
 import { EntryService } from './entry.service';
 
-@Controller('entries')
+@Controller('companies/:companyId/entries')
 export class EntryController {
   constructor(private readonly entryService: EntryService) {}
 
@@ -21,13 +21,14 @@ export class EntryController {
   create(
     @Body() createEntryDto: CreateEntryDto,
     @AuthUser() authUser: Request['user'],
+    @Param('companyId') companyId: string,
   ) {
-    return this.entryService.create(createEntryDto, authUser?.id);
+    return this.entryService.create(createEntryDto, authUser?.id, companyId);
   }
 
   @Get()
-  findAll() {
-    return this.entryService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.entryService.findAll(companyId);
   }
 
   @Get(':id')

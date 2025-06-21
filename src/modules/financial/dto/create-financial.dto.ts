@@ -66,10 +66,6 @@ export class CreateFinancialDto {
   bankId: string;
 
   @IsMongoId()
-  @IsNotEmpty()
-  companyId: string;
-
-  @IsMongoId()
   @IsOptional()
   categoryId: string;
 

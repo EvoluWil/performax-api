@@ -10,18 +10,27 @@ export class OccurrenceTypeService {
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
   ) {}
-  async create(createOccurrenceTypeDto: CreateOccurrenceTypeDto) {
+  async create(
+    createOccurrenceTypeDto: CreateOccurrenceTypeDto,
+    companyId: string,
+  ) {
     await this.prisma.occurrenceType.create({
-      data: createOccurrenceTypeDto,
+      data: {
+        ...createOccurrenceTypeDto,
+        company: { connect: { id: companyId } },
+      },
     });
 
     return { ok: true };
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('occurrenceType');
 
-    return this.prisma.occurrenceType.findMany(query);
+    return this.prisma.occurrenceType.findMany({
+      ...query,
+      where: { companyId },
+    });
   }
 
   async findOne(id: string) {

@@ -13,7 +13,7 @@ import { CreateOccurrenceDto } from './dto/create-occurrence.dto';
 import { UpdateOccurrenceDto } from './dto/update-occurrence.dto';
 import { OccurrenceService } from './occurrence.service';
 
-@Controller('occurrences')
+@Controller('companies/:companyId/occurrences')
 export class OccurrenceController {
   constructor(private readonly occurrenceService: OccurrenceService) {}
 
@@ -21,13 +21,18 @@ export class OccurrenceController {
   create(
     @Body() createOccurrenceDto: CreateOccurrenceDto,
     @AuthUser() user: Request['user'],
+    @Param('companyId') companyId: string,
   ) {
-    return this.occurrenceService.create(createOccurrenceDto, user?.id);
+    return this.occurrenceService.create(
+      createOccurrenceDto,
+      user?.id,
+      companyId,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.occurrenceService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.occurrenceService.findAll(companyId);
   }
 
   @Get(':id')

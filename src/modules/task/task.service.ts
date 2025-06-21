@@ -16,6 +16,7 @@ export class TaskService {
   async create(
     createTaskDto: CreateTaskDto,
     authUserId: string,
+    companyId: string,
     increment = 1,
   ) {
     const { clientId, typeId, userId, ...rest } = createTaskDto;
@@ -26,7 +27,7 @@ export class TaskService {
     });
 
     if (task) {
-      return this.create(createTaskDto, authUserId, increment + 1);
+      return this.create(createTaskDto, authUserId, companyId, increment + 1);
     }
 
     return await this.prisma.task.create({
@@ -45,15 +46,19 @@ export class TaskService {
         createdBy: {
           connect: { id: authUserId },
         },
+        company: {
+          connect: { id: companyId },
+        },
       },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('task');
 
     await this.prisma.task.updateMany({
       where: {
+        companyId,
         AND: [
           {
             endDate: {

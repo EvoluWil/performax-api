@@ -2,15 +2,15 @@ import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { UpdateRecurringFinancialDto } from './dto/update-recurring-financial.dto';
 import { RecurringFinancialService } from './recurring-financial.service';
 
-@Controller('recurring-financial')
+@Controller('companies/:companyId/recurring-financial')
 export class RecurringFinancialController {
   constructor(
     private readonly recurringFinancialService: RecurringFinancialService,
   ) {}
 
   @Get()
-  findAll() {
-    return this.recurringFinancialService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.recurringFinancialService.findAll(companyId);
   }
 
   @Get(':id')

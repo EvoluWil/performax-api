@@ -11,18 +11,21 @@ import { CreateFinancialTypeDto } from './dto/create-financial-type.dto';
 import { UpdateFinancialTypeDto } from './dto/update-financial-type.dto';
 import { FinancialTypeService } from './financial-type.service';
 
-@Controller('financial-types')
+@Controller('companies/:companyId/financial-types')
 export class FinancialTypeController {
   constructor(private readonly financialTypeService: FinancialTypeService) {}
 
   @Post()
-  create(@Body() createFinancialTypeDto: CreateFinancialTypeDto) {
-    return this.financialTypeService.create(createFinancialTypeDto);
+  create(
+    @Body() createFinancialTypeDto: CreateFinancialTypeDto,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.financialTypeService.create(createFinancialTypeDto, companyId);
   }
 
   @Get()
-  findAll() {
-    return this.financialTypeService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.financialTypeService.findAll(companyId);
   }
 
   @Get(':id')

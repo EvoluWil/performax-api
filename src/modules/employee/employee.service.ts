@@ -1,8 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
-import { normalizeString } from 'src/utils/normalize.util';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
@@ -12,30 +10,24 @@ export class EmployeeService {
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
   ) {}
-  async create({ clientId, ...rest }: CreateEmployeeDto) {
-    const body: any = rest;
-
-    const password = await bcrypt.hash(
-      normalizeString(rest?.name?.split(' ')[0]),
-      10,
-    );
-
-    body.password = password;
-
-    if (clientId) {
-      body.client = { connect: { id: clientId } };
-    }
-
+  async create({ clientId, ...rest }: CreateEmployeeDto, companyId: string) {
     const employee = await this.prisma.employee.create({
-      data: body,
+      data: {
+        ...rest,
+        company: { connect: { id: companyId } },
+        client: clientId ? { connect: { id: clientId } } : undefined,
+      },
     });
 
     return employee;
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('employee');
-    const employees = await this.prisma.employee.findMany(query);
+    const employees = await this.prisma.employee.findMany({
+      ...query,
+      where: { companyId },
+    });
     return employees;
   }
 
@@ -48,7 +40,6 @@ export class EmployeeService {
       throw new NotFoundException('Funcionário não encontrado');
     }
 
-    delete employee.password;
     return employee;
   }
 

@@ -13,6 +13,7 @@ export class BudgetService {
   ) {}
 
   async create(
+    companyId: string,
     createBudgetDto: CreateBudgetDto,
     userId: string,
     increment = 1,
@@ -28,8 +29,15 @@ export class BudgetService {
       throw new BadRequestException('Usuário não encontrado!');
     }
 
+    if (!user?.companiesId?.includes(companyId)) {
+      throw new BadRequestException('Usuário não pertence à empresa!');
+    }
+
     const client = await this.prisma.client.findFirst({
-      where: { id: clientId },
+      where: {
+        id: clientId,
+        companiesId: { has: companyId },
+      },
     });
 
     if (!client) {
@@ -37,7 +45,7 @@ export class BudgetService {
     }
 
     const type = await this.prisma.budgetType.findFirst({
-      where: { id: typeId },
+      where: { id: typeId, companyId },
     });
 
     if (!type) {
@@ -46,7 +54,7 @@ export class BudgetService {
 
     if (responsibleId) {
       const responsible = await this.prisma.user.findFirst({
-        where: { id: responsibleId },
+        where: { id: responsibleId, companiesId: { has: companyId } },
       });
 
       if (!responsible) {
@@ -61,7 +69,7 @@ export class BudgetService {
     });
 
     if (budget) {
-      return this.create(createBudgetDto, userId, increment + 1);
+      return this.create(companyId, createBudgetDto, userId, increment + 1);
     }
 
     if (taskId) {
@@ -84,13 +92,17 @@ export class BudgetService {
         createdBy: { connect: { id: userId } },
         client: { connect: { id: clientId } },
         type: { connect: { id: typeId } },
+        company: { connect: { id: companyId } },
       },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     const query = await this.qb.query('budget');
-    return this.prisma.budget.findMany(query);
+    return this.prisma.budget.findMany({
+      where: { companyId },
+      ...query,
+    });
   }
 
   async findOne(id: string) {
