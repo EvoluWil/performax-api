@@ -4,9 +4,9 @@ import { BudgetTypeModule } from './budget-type/budget-type.module';
 import { BudgetModule } from './budget/budget.module';
 import { ChecklistModule } from './checklist/checklist.module';
 import { ClientModule } from './client/client.module';
+import { CompanyBalanceModule } from './company-balance/company-balance.module';
 import { CompanyModule } from './company/company.module';
-import { EmployeeClockModule } from './employee-clock/employee-clock.module';
-import { EmployeeDayModule } from './employee-day/employee-day.module';
+import { UserModule } from './company/user/user.module';
 import { EmployeeModule } from './employee/employee.module';
 import { EntryTypeModule } from './entry-types/entry-type.module';
 import { EntryModule } from './entry/entry.module';
@@ -14,14 +14,13 @@ import { FinancialCategoryModule } from './financial-category/financial-category
 import { FinancialFavoredModule } from './financial-favored/financial-favored.module';
 import { FinancialTypeModule } from './financial-type/financial-type.module';
 import { FinancialModule } from './financial/financial.module';
+import { ModuleModule } from './module/module.module';
 import { OccurrenceTypeModule } from './occurrence-type/occurrence-type.module';
 import { OccurrenceModule } from './occurrence/occurrence.module';
 import { PaymentMethodModule } from './payment-method/payment-method.module';
 import { RecurringFinancialModule } from './recurring-financial/recurring-financial.module';
 import { TaskTypeModule } from './task-type/task-type.module';
 import { TaskModule } from './task/task.module';
-import { UserModule } from './user/user.module';
-import { CompanyBalanceModule } from './company-balance/company-balance.module';
 
 @Module({
   imports: [
@@ -31,8 +30,6 @@ import { CompanyBalanceModule } from './company-balance/company-balance.module';
     TaskTypeModule,
     EntryTypeModule,
     EmployeeModule,
-    EmployeeClockModule,
-    EmployeeDayModule,
     EntryModule,
     ChecklistModule,
     BudgetModule,
@@ -48,6 +45,7 @@ import { CompanyBalanceModule } from './company-balance/company-balance.module';
     FinancialFavoredModule,
     OccurrenceTypeModule,
     CompanyBalanceModule,
+    ModuleModule,
   ],
   providers: [],
   exports: [],

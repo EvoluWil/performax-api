@@ -10,7 +10,7 @@ export function IsMatch(
   property: string,
   validationOptions?: ValidationOptions,
 ) {
-  return (object: any, propertyName: string) => {
+  return (object: unknown, propertyName: string) => {
     registerDecorator({
       target: object.constructor,
       propertyName,
@@ -23,13 +23,13 @@ export function IsMatch(
 
 @ValidatorConstraint({ name: 'Match' })
 export class MatchConstraint implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
+  validate(value: string, args: ValidationArguments) {
     const [relatedPropertyName] = args.constraints;
-    const relatedValue = (args.object as any)[relatedPropertyName];
+    const relatedValue = (args.object as unknown)[relatedPropertyName];
     return value === relatedValue;
   }
 
   defaultMessage() {
-    return `Senha e confirmação de senha não conferem!`;
+    return 'Senha e confirmação de senha não conferem!';
   }
 }

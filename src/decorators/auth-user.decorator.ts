@@ -1,11 +1,11 @@
 import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import { AuthUserDto } from 'src/providers/auth/dto/auth-user.dto';
+import { FindUserDto } from 'src/modules/company/user/dto/find-user.dto';
 
 export const AuthUser = createParamDecorator(
-  (_data, ctx: ExecutionContext): AuthUserDto => {
+  (_data, ctx: ExecutionContext): FindUserDto => {
     const request = ctx.switchToHttp().getRequest();
 
-    return plainToClass(AuthUserDto, request.user);
+    return plainToClass(FindUserDto, request.user);
   },
 );

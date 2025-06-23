@@ -4,7 +4,7 @@ import { JwtModule } from './jwt/jwt.modules';
 
 import { AuthModule } from './auth/auth.module';
 import { CacheModule } from './cache/cache.module';
-import { EmailModule } from './email/email.module';
+import { MailModule } from './mail/mail.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -12,7 +12,7 @@ import { PrismaModule } from './prisma/prisma.module';
     ScheduleModule.forRoot(),
     JwtModule,
     PrismaModule,
-    EmailModule,
+    MailModule,
     AuthModule,
     CacheModule,
   ],

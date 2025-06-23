@@ -7,7 +7,7 @@ import {
 import { isValidCPF } from 'src/utils/cpf-validate.util';
 
 export function IsCpf(validationOptions?: ValidationOptions) {
-  return (object, propertyName: string) => {
+  return (object: unknown, propertyName: string) => {
     registerDecorator({
       target: object.constructor,
       propertyName,
@@ -19,11 +19,11 @@ export function IsCpf(validationOptions?: ValidationOptions) {
 
 @ValidatorConstraint({ name: 'IsCpf' })
 export class MatchConstraint implements ValidatorConstraintInterface {
-  validate(value: any) {
+  validate(value: string) {
     return isValidCPF(value);
   }
 
   defaultMessage() {
-    return `CPF inválido`;
+    return 'CPF inválido';
   }
 }

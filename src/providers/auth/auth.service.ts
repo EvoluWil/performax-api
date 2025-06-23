@@ -1,81 +1,141 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, LoggerService } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { add } from 'date-fns';
-import { FindUserDto } from 'src/modules/user/dto/find-user.dto';
+import { randomBytes } from 'crypto';
+import { addDays, differenceInMilliseconds, isPast } from 'date-fns';
+import { FindUserDto } from 'src/modules/company/user/dto/find-user.dto';
 import { defaultPlainToClass } from 'src/utils/default-plain-class.utils';
+import { generateCode } from 'src/utils/generate-code.util';
 import { generateHash } from 'src/utils/generate-hash.util';
-import { EmailService } from '../email/email.service';
+import { MailTypeEnum } from '../mail/dto/send-mail.dto';
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthUserDto } from './dto/auth-user.dto';
+import { CredentialDto } from './dto/credentials.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+
+const SIXTY_MINUTES = 60 * 60 * 1000; // 60 minutes in milliseconds
+const FIFTEEN_DAYS = 15 * 24 * 60 * 60 * 1000; // 15 days in milliseconds
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly emailService: EmailService,
+    private readonly mailService: MailService,
+    private readonly logger: LoggerService,
   ) {}
-  private generateToken(id: string, email: string) {
-    const payload = { id, email };
-
+  private generateAccessToken(id: string) {
+    const payload = { id };
     const token = this.jwtService.sign(payload);
-
     return token;
   }
 
-  async auth(signInDto: SignInDto) {
-    const { email, password } = signInDto;
+  private async createSession(userId: string) {
+    const accessToken = this.generateAccessToken(userId);
+    const refreshToken = randomBytes(64).toString('hex');
 
-    const user = await this.prisma.user.findFirst({
+    await this.prisma.userSession.deleteMany({
+      where: { userId },
+    });
+
+    await this.prisma.userSession.create({
+      data: {
+        accessToken,
+        refreshToken,
+        userId,
+      },
+    });
+    return { accessToken, refreshToken };
+  }
+
+  private async validateUserCredentials(
+    email: string,
+    password: string,
+  ): Promise<FindUserDto | null> {
+    const user = await this.prisma.user.findUnique({
       where: { email: email },
+      include: { credential: true },
     });
 
     if (!user) {
       throw new BadRequestException('Email ou senha incorretos');
     }
 
-    const passwordMatched = await bcrypt.compare(password, user.password);
+    const passwordMatched = await bcrypt.compare(
+      password,
+      user?.credential?.password,
+    );
 
     if (!passwordMatched) {
       throw new BadRequestException('Email ou senha incorretos');
     }
 
-    const token = this.generateToken(user.id, user.email);
+    return defaultPlainToClass(FindUserDto, user);
+  }
 
-    return { user: defaultPlainToClass(FindUserDto, user), token };
+  async signIn(signInDto: SignInDto) {
+    const user = await this.validateUserCredentials(
+      signInDto.email,
+      signInDto.password,
+    );
+
+    const session = await this.createSession(user.id);
+
+    return {
+      user,
+      ...session,
+    };
   }
 
   async signUp(signUpDto: SignUpDto) {
-    const { cpf, email } = signUpDto;
-
+    const {
+      profile,
+      credentials: { password },
+    } = signUpDto;
     const user = await this.prisma.user.findFirst({
-      where: { OR: [{ cpf }, { email }] },
+      where: {
+        OR: [{ cpf: profile.cpf }, { email: profile.email }],
+      },
     });
 
     if (user) {
-      throw new BadRequestException('CPF e/ou e-mail já cadastrado!');
+      throw new BadRequestException('E-mail ou CPF já cadastrado');
     }
 
-    const password = await bcrypt.hash(signUpDto.password, 10);
+    const hash = await bcrypt.hash(password, 10);
 
-    delete signUpDto.passwordConfirmation;
-
-    const newUser = await this.prisma.user.create({
-      data: { ...signUpDto, password },
+    await this.prisma.user.create({
+      data: {
+        ...profile,
+        credential: { create: { password: hash } },
+      },
     });
 
-    return defaultPlainToClass(FindUserDto, newUser);
+    const emailData = {
+      username: profile.name?.split(' ')[0],
+    };
+
+    try {
+      await this.mailService.sendMail({
+        to: profile.email,
+        subject: 'Boas vindas ao Performax!',
+        type: MailTypeEnum.WELCOME,
+        ...emailData,
+      });
+    } catch (err) {
+      this.logger.warn(`Erro ao enviar email: ${err?.message}`);
+    }
+
+    return { ok: true };
   }
 
-  async getMe({ id }: AuthUserDto) {
-    const user = await this.prisma.user.findFirst({
+  async getMe({ id }: User) {
+    const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { coordinates: true },
     });
 
     if (!user) {
@@ -85,76 +145,190 @@ export class AuthService {
     return defaultPlainToClass(FindUserDto, user);
   }
 
-  async updatePassword({ id }: AuthUserDto, { password }: UpdatePasswordDto) {
+  async updatePassword(
+    { id }: User,
+    { password, currentPassword }: UpdatePasswordDto,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { credential: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    const passwordMatched = await bcrypt.compare(
+      currentPassword,
+      user?.credential?.password,
+    );
+
+    if (!passwordMatched) {
+      throw new BadRequestException('Senha atual incorreta');
+    }
+
     const newPassword = await bcrypt.hash(password, 10);
 
-    const user = await this.prisma.user.update({
-      where: { id },
+    await this.prisma.userCredential.update({
+      where: { id: user.credential?.id },
       data: { password: newPassword },
     });
 
-    return defaultPlainToClass(FindUserDto, user);
+    return { ok: true };
   }
 
   async forgotPassword({ email }: ForgotPasswordDto) {
-    const user = await this.prisma.user.findFirst({
+    const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
     if (!user) {
-      return { ok: true };
+      throw new BadRequestException('Usuário não encontrado');
+    }
+
+    const code = generateCode();
+
+    const emailData = {
+      username: user.name?.split(' ')[0],
+      code,
+      email: user.email,
+    };
+
+    try {
+      await this.mailService.sendMail({
+        to: user.email,
+        subject: 'Recuperação de senha - Performax',
+        type: MailTypeEnum.FORGOT_PASSWORD,
+        ...emailData,
+      });
+    } catch {
+      throw new BadRequestException(
+        'Erro ao enviar email de recuperação de senha',
+      );
+    }
+
+    await this.prisma.userRecoveryPassword.deleteMany({
+      where: { userId: user.id },
+    });
+
+    await this.prisma.userRecoveryPassword.create({
+      data: {
+        code,
+        user: { connect: { id: user.id } },
+      },
+    });
+
+    return { ok: true };
+  }
+
+  async validateCode(code: string, { email }: ForgotPasswordDto) {
+    const recovery = await this.prisma.userRecoveryPassword.findFirst({
+      where: { code, user: { email } },
+      include: { user: { include: { credential: true } } },
+    });
+
+    if (!recovery) {
+      throw new BadRequestException('Código inválido');
+    }
+
+    const hasCredential = !!recovery.user?.credential;
+
+    const tokenExpireIn = hasCredential ? SIXTY_MINUTES : FIFTEEN_DAYS;
+
+    if (
+      differenceInMilliseconds(new Date(recovery?.createdAt), new Date()) >
+      tokenExpireIn
+    ) {
+      await this.prisma.userRecoveryPassword.delete({
+        where: { id: recovery.id },
+      });
+
+      throw new BadRequestException('Código expirado');
     }
 
     const hash = generateHash();
 
-    await this.emailService.forgotPasswordEmail({
-      email,
-      name: user.name,
-      hash,
+    await this.prisma.userRecoveryPassword.update({
+      where: { id: recovery.id },
+      data: { resetToken: hash, code: null },
     });
 
-    const resetTokenExpiry = add(new Date(), { hours: 1 });
-
-    await this.prisma.user.update({
-      where: { email },
-      data: { resetToken: hash, resetTokenExpiry },
-    });
-
-    return { ok: true };
+    return { token: hash };
   }
 
-  async validateToken(token: string) {
-    const user = await this.prisma.user.findFirst({
-      where: { resetToken: token, resetTokenExpiry: { gt: new Date() } },
+  async recoveryPassword(token: string, { password }: CredentialDto) {
+    const recovery = await this.prisma.userRecoveryPassword.findFirst({
+      where: {
+        resetToken: token,
+      },
+      include: { user: { select: { credential: true } } },
     });
 
-    if (!user) {
+    if (!recovery) {
       throw new BadRequestException('Token inválido');
     }
 
-    return { ok: true };
-  }
+    await this.prisma.userRecoveryPassword.delete({
+      where: { id: recovery.id },
+    });
 
-  async recoveryPassword(token: string, { password }: UpdatePasswordDto) {
+    if (
+      differenceInMilliseconds(new Date(recovery?.createdAt), new Date()) >
+      SIXTY_MINUTES
+    ) {
+      throw new BadRequestException('Token expirado');
+    }
+
     const newPassword = await bcrypt.hash(password, 10);
 
-    const user = await this.prisma.user.findFirst({
-      where: {
-        AND: [{ resetToken: token }, { resetTokenExpiry: { gt: new Date() } }],
-      },
+    await this.prisma.userCredential.update({
+      where: { id: recovery?.user?.credential?.id },
+      data: { password: newPassword },
     });
 
-    if (!user) {
-      throw new BadRequestException('Token inválido');
+    return { ok: true };
+  }
+
+  async deleteAccount(signInDto: SignInDto) {
+    const user = await this.validateUserCredentials(
+      signInDto.email,
+      signInDto.password,
+    );
+
+    if (user) {
+      await this.prisma.user.delete({
+        where: { id: user.id },
+      });
+      return { ok: true };
+    }
+    throw new BadRequestException('Usuário não encontrado');
+  }
+
+  async refreshAccessToken(refreshToken: string) {
+    const session = await this.prisma.userSession.findFirst({
+      where: { refreshToken },
+      include: { user: true },
+    });
+
+    if (!session || isPast(new Date(addDays(session.createdAt, 7)))) {
+      throw new BadRequestException('Refresh token inválido ou expirado');
     }
 
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: { password: newPassword, resetToken: null },
+    const newSession = this.createSession(session.userId);
+
+    return newSession;
+  }
+
+  async signOut(userId: string) {
+    const session = await this.prisma.userSession.findUnique({
+      where: { userId },
     });
 
+    if (!session) {
+      throw new BadRequestException('Sessão não encontrada');
+    }
+
+    await this.prisma.userSession.delete({ where: { id: session.id } });
     return { ok: true };
   }
 }

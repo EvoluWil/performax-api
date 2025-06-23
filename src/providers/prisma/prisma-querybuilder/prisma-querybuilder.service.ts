@@ -13,9 +13,8 @@ export class QBService {
     return this.querybuilder
       .query()
       .then(async (query) => {
-        delete query.take;
-        await this.prisma[model].count({ where: query.where });
-        return query;
+        const count = await this.prisma[model].count({ where: query.where });
+        return { query, count };
       })
       .catch((err) => {
         if (err.response?.message)

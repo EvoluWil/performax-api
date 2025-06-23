@@ -1,39 +1,18 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsString,
-  IsStrongPassword,
-} from 'class-validator';
-import { IsCpf } from 'src/decorators/cpf.decorator';
-import { IsMatch } from 'src/decorators/match.decorator';
+import { Type } from 'class-transformer';
+import { IsNotEmpty, IsObject, ValidateNested } from 'class-validator';
+import { CredentialDto } from './credentials.dto';
+import { ProfileDto } from './profile.dto';
 
 export class SignUpDto {
-  @IsString()
-  @IsCpf()
   @IsNotEmpty()
-  cpf: string;
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ProfileDto)
+  profile: ProfileDto;
 
-  @IsString()
   @IsNotEmpty()
-  name: string;
-
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
-
-  @IsString()
-  @IsStrongPassword({
-    minLength: 8,
-    minLowercase: 1,
-    minUppercase: 1,
-    minNumbers: 1,
-    minSymbols: 1,
-  })
-  @IsNotEmpty()
-  password: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsMatch('password')
-  passwordConfirmation: string;
+  @IsObject()
+  @ValidateNested()
+  @Type(() => CredentialDto)
+  credentials: CredentialDto;
 }
