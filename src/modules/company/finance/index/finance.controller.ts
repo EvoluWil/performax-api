@@ -1,0 +1,58 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
+import { User } from '@prisma/client';
+import { AuthUser } from 'src/decorators/auth-user.decorator';
+import { CreateFinanceDto } from './dto/create-finance.dto';
+import { UpdateFinanceDto } from './dto/update-finance.dto';
+import { FinanceService } from './finance.service';
+
+@Controller('companies/:companyId/finance')
+export class FinanceController {
+  constructor(private readonly financeService: FinanceService) {}
+
+  @Post()
+  create(
+    @Body() createFinanceDto: CreateFinanceDto,
+    @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.financeService.create(createFinanceDto, companyId, user?.id);
+  }
+
+  @Get()
+  findAll(@Param('companyId') companyId: string) {
+    return this.financeService.findAll(companyId);
+  }
+
+  @Get(':financeId')
+  findOne(
+    @Param('financeId') financeId: string,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.financeService.findOne(financeId, companyId);
+  }
+
+  @Put(':financeId')
+  update(
+    @Param('financeId') financeId: string,
+    @Param('companyId') companyId: string,
+    @Body() updateFinanceDto: UpdateFinanceDto,
+  ) {
+    return this.financeService.update(financeId, companyId, updateFinanceDto);
+  }
+
+  @Delete(':financeId')
+  remove(
+    @Param('financeId') financeId: string,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.financeService.remove(financeId, companyId);
+  }
+}

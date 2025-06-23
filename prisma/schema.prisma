@@ -120,7 +120,7 @@ model Company {
   financeIn           CompanyFinance[]              @relation("companyIn")
   financeCategories   CompanyFinanceCategory[]
   financePayee        CompanyFinancePayee[]
-  recurringFinancials CompanyRecurringFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
   @@map("company")
 }
@@ -210,7 +210,7 @@ model CompanyClient {
   tasks               CompanyTask[]
   occurrences         CompanyOccurrence[]
   financials          CompanyFinance[]
-  recurringFinancials CompanyRecurringFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
   users   CompanyUserRole[] @relation(fields: [userIds], references: [id])
   userIds String[]          @default([]) @db.ObjectId
@@ -235,7 +235,7 @@ model CompanyEmployee {
 
   entries             CompanyEntry[]
   financials          CompanyFinance[]
-  recurringFinancials CompanyRecurringFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
   @@map("company_employee")
 }
@@ -500,7 +500,7 @@ model CompanyFinanceType {
   companyId String  @db.ObjectId
 
   financials          CompanyFinance[]
-  recurringFinancials CompanyRecurringFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
   @@map("company_finance_type")
 }
@@ -518,6 +518,7 @@ model CompanyFinance {
   observation String?
   status      FinanceStatusEnum @default(PENDING)
   flow        FinanceFlowEnum   @default(IN)
+  deleted     Boolean           @default(false)
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
@@ -576,9 +577,9 @@ model CompanyFinancePaymentMethod {
   company             Company                   @relation(fields: [companyId], references: [id])
   companyId           String                    @db.ObjectId
   financials          CompanyFinance[]
-  recurringFinancials CompanyRecurringFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
-  @@map("company_finance_payment_methods")
+  @@map("company_finance_payment_method")
 }
 
 model CompanyFinanceBank {
@@ -592,7 +593,7 @@ model CompanyFinanceBank {
   company             Company                   @relation(fields: [companyId], references: [id])
   companyId           String                    @db.ObjectId
   financials          CompanyFinance[]
-  recurringFinancials CompanyRecurringFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
   @@map("company_finance_bank")
 }
@@ -605,7 +606,7 @@ model CompanyFinanceCategory {
   deleted   Boolean  @default(false)
 
   financials          CompanyFinance[]
-  recurringFinancials CompanyRecurringFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
@@ -621,7 +622,7 @@ model CompanyFinancePayee {
   deleted   Boolean  @default(false)
 
   financials          CompanyFinance[]
-  recurringFinancials CompanyRecurringFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
@@ -629,7 +630,7 @@ model CompanyFinancePayee {
   @@map("company_finance_payee")
 }
 
-model CompanyRecurringFinance {
+model CompanyFinanceRecurring {
   id          String          @id @default(auto()) @map("_id") @db.ObjectId
   title       String          @default("Sem título")
   description String?
@@ -667,7 +668,7 @@ model CompanyRecurringFinance {
   employee   CompanyEmployee? @relation(fields: [employeeId], references: [id])
   employeeId String?          @db.ObjectId
 
-  @@map("company_recurring_finance")
+  @@map("company_finance_recurring")
 }
 
 model AuditLog {
