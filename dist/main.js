@@ -14,7 +14,7 @@ async function bootstrap() {
         credentials: true,
         preflightContinue: false,
         optionsSuccessStatus: 204,
-        origin: ['http://localhost:3000', 'https://controller-api.vercel.app'],
+        origin: [process.env.CLIENT_URL],
         allowedHeaders: [
             'X-Requested-With',
             'X-HTTP-Method-Override',
@@ -29,7 +29,7 @@ async function bootstrap() {
     });
     app.enableVersioning({
         type: common_1.VersioningType.URI,
-        defaultVersion: '1',
+        defaultVersion: '2',
     });
     app.setGlobalPrefix('api');
     await app.listen(process.env.PORT || 3001);

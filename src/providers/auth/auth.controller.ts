@@ -39,6 +39,7 @@ export class AuthController {
     return this.authService.updatePassword(authUser, updatePasswordDto);
   }
 
+  @IsPublic()
   @Post('forgot-password')
   forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPasswordDto);

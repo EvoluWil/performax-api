@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
-import { generateProtocol } from 'src/utils/generate-protocol';
+import { UtilService } from 'src/providers/util/util.service';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
 import { CreateFinanceDto } from './dto/create-finance.dto';
 import { UpdateFinanceDto } from './dto/update-finance.dto';
@@ -11,6 +11,7 @@ export class FinanceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
+    private readonly util: UtilService,
   ) {}
 
   async create(
@@ -23,12 +24,13 @@ export class FinanceService {
     });
 
     const data = normalizeRelations(rest) as any;
+    const protocol = await this.util.generateUniqueProtocol('companyFinance');
 
     const finance = await this.prisma.companyFinance.create({
       data: {
         ...data,
+        protocol,
         status: type?.needApprove ? 'PENDING' : 'APPROVED',
-        protocol: generateProtocol(),
         createdBy: { connect: { id: userId } },
         company: { connect: { id: companyId } },
       },
@@ -56,7 +58,7 @@ export class FinanceService {
     });
 
     return {
-      financials,
+      data: financials,
       count,
     };
   }

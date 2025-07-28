@@ -31,6 +31,7 @@ model User {
   occurrencesResponsible CompanyOccurrence[]   @relation("occurrenceResponsible")
   occurrences            CompanyOccurrence[]
   financials             CompanyFinance[]
+  companies              Company[]
 
   supervisedBy    CompanyUserRole[] @relation("targetUsers", fields: [supervisedByIds], references: [id])
   supervisedByIds String[]          @default([]) @db.ObjectId
@@ -91,13 +92,14 @@ model Module {
 }
 
 model Company {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  name       String
-  logo       String?
-  logoReport String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  deleted    Boolean  @default(false)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
+
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId String @db.ObjectId
 
   roles               CompanyRole[]
   modules             CompanyModule[]
@@ -121,6 +123,7 @@ model Company {
   financeCategories   CompanyFinanceCategory[]
   financePayee        CompanyFinancePayee[]
   recurringFinancials CompanyFinanceRecurring[]
+  whiteLabel          CompanyWhiteLabel?
 
   @@map("company")
 }
@@ -136,6 +139,23 @@ model CompanyModule {
 
   @@unique([moduleId, companyId])
   @@map("company_module")
+}
+
+model CompanyWhiteLabel {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  logo           String
+  banner         String
+  primaryColor   String
+  secondaryColor String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @unique @db.ObjectId
+
+  @@map("company_white_label")
 }
 
 model CompanyRolePermission {
@@ -170,8 +190,7 @@ model CompanyRole {
 }
 
 model CompanyUserRole {
-  id      String  @id @default(auto()) @map("_id") @db.ObjectId
-  isOwner Boolean @default(false)
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
   user   User   @relation(fields: [userId], references: [id])
   userId String @db.ObjectId
@@ -201,8 +220,8 @@ model CompanyClient {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  companies   Company @relation(fields: [companiesId], references: [id])
-  companiesId String  @db.ObjectId
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @db.ObjectId
 
   employees           CompanyEmployee[]
   entries             CompanyEntry[]
@@ -264,7 +283,7 @@ model CompanyEntry {
   protocol    String          @unique
   value       Int             @default(0)
   date        DateTime        @default(now())
-  approved    Boolean
+  deleted     Boolean         @default(false)
   status      EntryStatusEnum @default(PENDING)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -313,6 +332,7 @@ model CompanyBudget {
   description String?
   observation String?
   value       Int      @default(0)
+  deleted     Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -365,6 +385,7 @@ model CompanyOccurrence {
   protocol    String           @unique
   date        DateTime
   documents   File[]
+  deleted     Boolean          @default(false)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   status      BudgetStatusEnum @default(PENDING)
@@ -409,8 +430,8 @@ model CompanyTask {
   protocol        String         @unique
   title           String
   description     String?
-  service         String?
   internalNote    String?
+  deleted         Boolean        @default(false)
   impedimentNote  String?
   status          TaskStatusEnum @default(OPEN)
   files           File[]

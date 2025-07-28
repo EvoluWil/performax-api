@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, LoggerService } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -26,7 +26,6 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
-    private readonly logger: LoggerService,
   ) {}
   private generateAccessToken(id: string) {
     const payload = { id };
@@ -37,6 +36,7 @@ export class AuthService {
   private async createSession(userId: string) {
     const accessToken = this.generateAccessToken(userId);
     const refreshToken = randomBytes(64).toString('hex');
+    const accessTokenExpires = Date.now() + SIXTY_MINUTES;
 
     await this.prisma.userSession.deleteMany({
       where: { userId },
@@ -49,7 +49,7 @@ export class AuthService {
         userId,
       },
     });
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, accessTokenExpires };
   }
 
   private async validateUserCredentials(
@@ -87,7 +87,7 @@ export class AuthService {
 
     return {
       user,
-      ...session,
+      session,
     };
   }
 
@@ -112,6 +112,11 @@ export class AuthService {
       data: {
         ...profile,
         credential: { create: { password: hash } },
+        companies: {
+          create: {
+            name: signUpDto.company.name,
+          },
+        },
       },
     });
 
@@ -127,7 +132,7 @@ export class AuthService {
         ...emailData,
       });
     } catch (err) {
-      this.logger.warn(`Erro ao enviar email: ${err?.message}`);
+      console.warn(`Erro ao enviar email: ${err?.message}`);
     }
 
     return { ok: true };
@@ -136,6 +141,14 @@ export class AuthService {
   async getMe({ id }: User) {
     const user = await this.prisma.user.findUnique({
       where: { id },
+      include: {
+        companies: true,
+        companyUser: {
+          include: {
+            company: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -316,7 +329,10 @@ export class AuthService {
 
     const newSession = this.createSession(session.userId);
 
-    return newSession;
+    return {
+      session: newSession,
+      user: defaultPlainToClass(FindUserDto, session.user),
+    };
   }
 
   async signOut(userId: string) {

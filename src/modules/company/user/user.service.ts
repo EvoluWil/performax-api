@@ -1,7 +1,6 @@
 import {
   ConflictException,
   Injectable,
-  LoggerService,
   NotFoundException,
 } from '@nestjs/common';
 import { MailTypeEnum } from 'src/providers/mail/dto/send-mail.dto';
@@ -19,7 +18,6 @@ export class UserService {
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
     private readonly mailService: MailService,
-    private readonly logger: LoggerService,
   ) {}
 
   async create(createUserDto: CreateUserDto, companyId: string) {
@@ -102,7 +100,7 @@ export class UserService {
 
         return defaultPlainToClass(FindUserDto, updatedUser);
       } catch {
-        this.logger.error('Erro ao enviar email de convite', {
+        console.warn('Erro ao enviar email de convite', {
           userId: updatedUser.id,
           companyId,
         });
@@ -138,7 +136,7 @@ export class UserService {
         ...emailData,
       });
     } catch {
-      this.logger.error('Erro ao enviar email de cadastro', {
+      console.warn('Erro ao enviar email de cadastro', {
         userId: newUser.id,
         companyId,
       });
@@ -151,9 +149,24 @@ export class UserService {
     const { count, query } = await this.qb.query('user');
     const users = await this.prisma.user.findMany({
       ...query,
-      where: { ...query.where, companyUser: { some: { companyId } } },
+      where: {
+        ...query.where,
+        OR: [
+          {
+            companyUser: {
+              some: { companyId },
+            },
+          },
+          {
+            companies: {
+              some: { id: companyId },
+            },
+          },
+        ],
+      },
     });
-    return { users: defaultPlainToClass(FindUserDto, users), count };
+
+    return { data: defaultPlainToClass(FindUserDto, users), count };
   }
 
   async findOne(userId: string, companyId: string) {

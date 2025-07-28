@@ -5,7 +5,7 @@ export function recoveryPasswordTemplate(
 ): string {
   const url = process.env.CLIENT_URL;
   const logoUrl = process.env.LOGO_URL;
-  const recoveryUrl = `${process.env.CLIENT_URL}/auth/code-validation/${email}`;
+  const recoveryUrl = `${process.env.CLIENT_URL}/auth/email-validation/${email}`;
 
   return `
     <!DOCTYPE html>
