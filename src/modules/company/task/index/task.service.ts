@@ -25,17 +25,15 @@ export class TaskService {
       data.checklist = {
         create: {
           modules: {
-            createMany: {
-              data: checklistDto.modules.map((checklistModule) => ({
-                name: checklistModule.name,
-                items: {
-                  create: checklistModule.items.map((item) => ({
-                    question: item.question,
-                    expectedType: item.expectedType,
-                  })),
-                },
-              })),
-            },
+            create: checklistDto.modules.map((checklistModule) => ({
+              name: checklistModule.name,
+              items: {
+                create: checklistModule.items.map((item) => ({
+                  question: item.question,
+                  expectedType: item.expectedType,
+                })),
+              },
+            })),
           },
         },
       };
@@ -76,12 +74,99 @@ export class TaskService {
   ) {
     await this.findOne(taskId, companyId);
 
-    const data = normalizeRelations(updateTaskDto);
+    const data = normalizeRelations(updateTaskDto) as any;
 
+    // If a checklist is provided in the update DTO, overwrite the existing
+    // checklist by upserting: on update delete all modules and recreate from
+    // the incoming payload. This ensures the checklist is fully replaced.
+    const checklistDto = (updateTaskDto as any).checklist;
+
+    // Remove checklist from the main data object so we can handle it with
+    // explicit operations (delete old -> create new) to avoid relation
+    // integrity errors.
+    if (checklistDto) {
+      delete data.checklist;
+    }
+
+    // Update the task fields first (without checklist)
     await this.prisma.companyTask.update({
       where: { id: taskId },
       data,
     });
+
+    // If checklist present, fully replace existing checklist (if any) with
+    // a freshly created one. We perform deletes in the correct order to
+    // avoid violating required relations: items -> modules -> checklist,
+    // then create a new checklist connected to the task.
+    if (checklistDto) {
+      const taskWithChecklist = await this.prisma.companyTask.findUnique({
+        where: { id: taskId },
+        include: {
+          checklist: {
+            include: {
+              modules: {
+                include: { items: true },
+              },
+            },
+          },
+        },
+      });
+
+      const ops: any[] = [];
+
+      if (taskWithChecklist?.checklist) {
+        const checklist = taskWithChecklist.checklist;
+
+        const moduleIds = (checklist.modules || []).map((m) => m.id);
+
+        if (moduleIds.length) {
+          // delete items that belong to these modules
+          ops.push(
+            this.prisma.companyTaskChecklistItem.deleteMany({
+              where: { moduleId: { in: moduleIds } },
+            }),
+          );
+        }
+
+        // delete modules
+        ops.push(
+          this.prisma.companyTaskChecklistModule.deleteMany({
+            where: { checklistId: checklist.id },
+          }),
+        );
+
+        // delete the checklist record itself
+        ops.push(
+          this.prisma.companyTaskChecklist.delete({
+            where: { id: checklist.id },
+          }),
+        );
+      }
+
+      // After removal (or if none existed) create a fresh checklist and
+      // connect it to the task
+      const modulesCreate = (checklistDto.modules || []).map((module) => ({
+        name: module.name,
+        items: {
+          create: (module.items || []).map((item) => ({
+            question: item.question,
+            expectedType: item.expectedType,
+          })),
+        },
+      }));
+
+      // create checklist connected to the task
+      ops.push(
+        this.prisma.companyTaskChecklist.create({
+          data: {
+            task: { connect: { id: taskId } },
+            modules: { create: modulesCreate },
+          },
+        }),
+      );
+
+      await this.prisma.$transaction(ops);
+    }
 
     return { ok: true };
   }
