@@ -34,9 +34,7 @@ export class ModuleService {
   }
 
   findAll(companyId: string) {
-    console.log('companyId', companyId);
     this.prisma.companyModule.findMany().then((modules) => {
-      console.log('modules', modules);
       return modules;
     });
 

@@ -26,9 +26,6 @@ export class ClientService {
       where: { ...query.where, companyId, deleted: false },
     });
 
-    console.log('Query executed:', query);
-    console.log('Total clients found:', count);
-    console.log('Clients:', clients);
     return { count, data: clients };
   }
 

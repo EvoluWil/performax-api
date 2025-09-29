@@ -58,6 +58,23 @@ export class TaskService {
   async findOne(taskId: string, companyId: string) {
     const task = await this.prisma.companyTask.findFirst({
       where: { id: taskId, companyId, deleted: false },
+      include: {
+        checklist: {
+          include: {
+            modules: {
+              include: { items: true },
+            },
+          },
+        },
+        createdBy: { select: { id: true, name: true, email: true } },
+        budget: true,
+        client: true,
+        closeBudget: true,
+        company: true,
+        responsible: { select: { id: true, name: true, email: true } },
+        type: true,
+        updatedBy: { select: { id: true, name: true, email: true } },
+      },
     });
 
     if (!task) {
