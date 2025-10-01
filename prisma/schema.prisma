@@ -553,6 +553,7 @@ enum BudgetStatusEnum {
   COMPLETED
   CHARGED
   PAID
+  FINANCED
 }
 
 enum EntryStatusEnum {
