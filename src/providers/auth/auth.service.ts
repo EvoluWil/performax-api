@@ -146,6 +146,15 @@ export class AuthService {
         companyUser: {
           include: {
             company: true,
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    module: true,
+                  },
+                },
+              },
+            },
           },
         },
       },

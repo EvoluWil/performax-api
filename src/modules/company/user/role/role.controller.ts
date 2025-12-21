@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import {
   AssignUserClientsDto,
   AssignUserRoleDto,
@@ -9,6 +9,14 @@ import { RoleService } from './role.service';
 @Controller('companies/:companyId/users/:userId/roles')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
+
+  @Get()
+  getUserRole(
+    @Param('companyId') companyId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.roleService.getUserRoleInCompany(userId, companyId);
+  }
 
   @Post()
   assignUserRole(
