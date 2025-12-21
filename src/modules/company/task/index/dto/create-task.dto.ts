@@ -54,4 +54,8 @@ export class CreateTaskDto {
   @IsOptional()
   @ValidateNested()
   checklist: ChecklistDto;
+
+  @IsString()
+  @IsOptional()
+  recurrence?: string;
 }

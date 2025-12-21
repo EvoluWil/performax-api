@@ -426,20 +426,25 @@ model CompanyTaskType {
 }
 
 model CompanyTask {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
-  protocol        String         @unique
-  title           String
-  description     String?
-  internalNote    String?
-  deleted         Boolean        @default(false)
-  impedimentNote  String?
-  status          TaskStatusEnum @default(OPEN)
-  files           File[]
-  conclusionFiles File[]
-  date            DateTime?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  completedAt     DateTime?
+  id                     String         @id @default(auto()) @map("_id") @db.ObjectId
+  protocol               String         @unique
+  title                  String
+  description            String?
+  internalNote           String?
+  deleted                Boolean        @default(false)
+  impedimentNote         String?
+  conclusionNote         String?
+  status                 TaskStatusEnum @default(OPEN)
+  files                  File[]
+  conclusionFiles        File[]
+  date                   DateTime?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  completedAt            DateTime?
+  recurrence             String?
+  recurrenceMasterId     String?        @db.ObjectId
+  recurrenceOriginalDate DateTime?
+  recurrenceIsGenerated  Boolean        @default(false)
 
   client   CompanyClient? @relation(fields: [clientId], references: [id])
   clientId String?        @db.ObjectId
@@ -755,6 +760,7 @@ enum BudgetStatusEnum {
   REJECTED
   COMPLETED
   CHARGED
+  FINANCIAL
   PAID
 }
 
@@ -790,7 +796,7 @@ enum FinanceFlowEnum {
 
 type BudgetItem {
   label    String
-  value    String
+  value    Int
   quantity Int
   type     ItemTypeEnum
 }

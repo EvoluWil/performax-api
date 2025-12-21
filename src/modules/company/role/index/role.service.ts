@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -13,7 +14,7 @@ export class RoleService {
   async create({ permissions, ...rest }: CreateRoleDto, companyId: string) {
     const role = await this.prisma.companyRole.findFirst({
       where: {
-        id: companyId,
+        companyId: companyId,
         name: rest.name,
       },
     });
@@ -23,6 +24,28 @@ export class RoleService {
         `Já existe um cargo com o nome "${rest.name}" para esta empresa.`,
       );
     }
+
+    if (permissions && permissions.length > 0) {
+      const moduleIds = permissions.map((p) => p.moduleId).filter(Boolean);
+      if (moduleIds.length > 0) {
+        const validModules = await this.prisma.module.findMany({
+          where: { id: { in: moduleIds }, deleted: false },
+          select: { id: true },
+        });
+
+        const validModuleIds = validModules.map((m) => m.id);
+        const invalidIds = moduleIds.filter(
+          (id) => !validModuleIds.includes(id),
+        );
+
+        if (invalidIds.length > 0) {
+          throw new BadRequestException(
+            `Invalid module IDs: ${invalidIds.join(', ')}`,
+          );
+        }
+      }
+    }
+
     const hasPermissions = permissions && permissions.length > 0;
     return this.prisma.companyRole.create({
       data: {
@@ -49,7 +72,11 @@ export class RoleService {
         companyId,
       },
       include: {
-        permissions: true,
+        permissions: {
+          include: {
+            module: true,
+          },
+        },
       },
       orderBy: {
         name: 'asc',

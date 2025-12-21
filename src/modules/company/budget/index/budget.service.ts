@@ -26,7 +26,7 @@ export class BudgetService {
       data: {
         ...data,
         company: { connect: { id: companyId } },
-        user: { connect: { id: userId } },
+        createdBy: { connect: { id: userId } },
         protocol,
       },
     });
@@ -35,7 +35,7 @@ export class BudgetService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('budget');
+    const { count, query } = await this.qb.query('companyBudget');
     const budgets = await this.prisma.companyBudget.findMany({
       ...query,
       where: { ...query.where, companyId, deleted: false },
@@ -46,6 +46,12 @@ export class BudgetService {
   async findOne(budgetId: string, companyId: string) {
     const budget = await this.prisma.companyBudget.findUnique({
       where: { id: budgetId, companyId },
+      include: {
+        client: { select: { id: true, name: true } },
+        createdBy: { select: { id: true, name: true } },
+        type: true,
+        responsible: { select: { id: true, name: true } },
+      },
     });
 
     if (!budget) {

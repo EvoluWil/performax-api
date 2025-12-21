@@ -8,6 +8,7 @@ export class Task implements CompanyTask {
   service: string;
   internalNote: string;
   impedimentNote: string;
+  conclusionNote: string;
   status: TaskStatusEnum;
   date: Date;
   createdAt: Date;
@@ -20,6 +21,10 @@ export class Task implements CompanyTask {
   createdById: string;
   budgetId: string;
   deleted: boolean;
+  recurrenceMasterId: string;
+  recurrenceOriginalDate: Date;
+  recurrenceIsGenerated: boolean;
+  recurrence: string;
   closeBudgetId: string;
   responsibleId: string;
   files: File[];

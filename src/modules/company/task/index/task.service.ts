@@ -51,6 +51,16 @@ export class TaskService {
     const tasks = await this.prisma.companyTask.findMany({
       ...query,
       where: { ...query.where, companyId, deleted: false },
+      select: {
+        ...query.select,
+        checklist: {
+          include: {
+            modules: {
+              include: { items: true },
+            },
+          },
+        },
+      },
     });
     return { count, data: tasks };
   }
@@ -89,32 +99,39 @@ export class TaskService {
     companyId: string,
     updateTaskDto: UpdateTaskDto,
   ) {
-    await this.findOne(taskId, companyId);
+    const original = await this.findOne(taskId, companyId);
 
-    const data = normalizeRelations(updateTaskDto) as any;
+    const data: any = normalizeRelations(updateTaskDto);
 
-    // If a checklist is provided in the update DTO, overwrite the existing
-    // checklist by upserting: on update delete all modules and recreate from
-    // the incoming payload. This ensures the checklist is fully replaced.
-    const checklistDto = (updateTaskDto as any).checklist;
+    const recurrenceValue = updateTaskDto.recurrence;
+    const checklistDto = updateTaskDto.checklist;
 
-    // Remove checklist from the main data object so we can handle it with
-    // explicit operations (delete old -> create new) to avoid relation
-    // integrity errors.
+    const isMaster = !original?.recurrenceIsGenerated;
+    const now = new Date();
+
+    if (isMaster) {
+      if (
+        recurrenceValue !== undefined &&
+        recurrenceValue !== original?.recurrence
+      ) {
+        await this.prisma.companyTask.deleteMany({
+          where: {
+            recurrenceMasterId: taskId,
+            recurrenceOriginalDate: { gte: now },
+            recurrenceIsGenerated: true,
+          },
+        });
+
+        data.recurrenceOriginalDate = null;
+      }
+    }
+
     if (checklistDto) {
       delete data.checklist;
     }
 
-    // Update the task fields first (without checklist)
-    await this.prisma.companyTask.update({
-      where: { id: taskId },
-      data,
-    });
+    await this.prisma.companyTask.update({ where: { id: taskId }, data });
 
-    // If checklist present, fully replace existing checklist (if any) with
-    // a freshly created one. We perform deletes in the correct order to
-    // avoid violating required relations: items -> modules -> checklist,
-    // then create a new checklist connected to the task.
     if (checklistDto) {
       const taskWithChecklist = await this.prisma.companyTask.findUnique({
         where: { id: taskId },
@@ -137,7 +154,6 @@ export class TaskService {
         const moduleIds = (checklist.modules || []).map((m) => m.id);
 
         if (moduleIds.length) {
-          // delete items that belong to these modules
           ops.push(
             this.prisma.companyTaskChecklistItem.deleteMany({
               where: { moduleId: { in: moduleIds } },
@@ -145,14 +161,12 @@ export class TaskService {
           );
         }
 
-        // delete modules
         ops.push(
           this.prisma.companyTaskChecklistModule.deleteMany({
             where: { checklistId: checklist.id },
           }),
         );
 
-        // delete the checklist record itself
         ops.push(
           this.prisma.companyTaskChecklist.delete({
             where: { id: checklist.id },
@@ -160,8 +174,6 @@ export class TaskService {
         );
       }
 
-      // After removal (or if none existed) create a fresh checklist and
-      // connect it to the task
       const modulesCreate = (checklistDto.modules || []).map((module) => ({
         name: module.name,
         items: {
@@ -172,7 +184,6 @@ export class TaskService {
         },
       }));
 
-      // create checklist connected to the task
       ops.push(
         this.prisma.companyTaskChecklist.create({
           data: {
@@ -183,6 +194,61 @@ export class TaskService {
       );
 
       await this.prisma.$transaction(ops);
+    }
+
+    if (isMaster) {
+      const propagable = [
+        'title',
+        'description',
+        'internalNote',
+        'typeId',
+        'clientId',
+        'responsibleId',
+        'date',
+        'status',
+        'files',
+        'conclusionNote',
+        'impedimentNote',
+      ];
+
+      const fieldsToPropagate = Object.keys(updateTaskDto).filter((k) =>
+        propagable.includes(k),
+      );
+
+      if (fieldsToPropagate.length) {
+        const futureEvents = await this.prisma.companyTask.findMany({
+          where: {
+            recurrenceMasterId: taskId,
+            recurrenceOriginalDate: { gte: now },
+            recurrenceIsGenerated: true,
+          },
+        });
+
+        const ops = [];
+
+        for (const ev of futureEvents) {
+          const updateData = {};
+
+          for (const key of fieldsToPropagate) {
+            if (key.endsWith('Id')) {
+              const relKey = key.replace(/Id$/, '');
+              const val = updateTaskDto[key];
+              updateData[relKey] = val ? { connect: { id: val } } : null;
+            } else {
+              updateData[key] = updateTaskDto[key];
+            }
+          }
+
+          ops.push(
+            this.prisma.companyTask.update({
+              where: { id: ev.id },
+              data: updateData,
+            }),
+          );
+        }
+
+        if (ops.length) await Promise.all(ops);
+      }
     }
 
     return { ok: true };

@@ -4,7 +4,7 @@ import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { addDays, differenceInMilliseconds, isPast } from 'date-fns';
-import { FindUserDto } from 'src/modules/company/user/dto/find-user.dto';
+import { FindUserDto } from 'src/modules/company/user/index/dto/find-user.dto';
 import { defaultPlainToClass } from 'src/utils/default-plain-class.utils';
 import { generateCode } from 'src/utils/generate-code.util';
 import { generateHash } from 'src/utils/generate-hash.util';

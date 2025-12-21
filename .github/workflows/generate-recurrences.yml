@@ -1,0 +1,30 @@
+name: Generate Recurrence Events
+
+on:
+  schedule:
+    - cron: '* 1 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call recurrence generate endpoint
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          COMPANY_ID: ${{ secrets.COMPANY_ID }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          if [ -z "$API_URL" ] || [ -z "$COMPANY_ID" ] || [ -z "$API_TOKEN" ]; then
+            echo "Missing required secrets: API_URL, COMPANY_ID, API_TOKEN"
+            exit 1
+          fi
+
+          echo "Calling generate-week for company $COMPANY_ID"
+          curl -sSf -X POST "$API_URL/companies/$COMPANY_ID/tasks/recurring/generate-week" \
+            -H "Authorization: Bearer $API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -o response.json || true
+
+          echo "Response:"
+          cat response.json
