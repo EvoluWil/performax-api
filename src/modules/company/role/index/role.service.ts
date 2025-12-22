@@ -109,6 +109,15 @@ export class RoleService {
   ) {
     await this.findOne(roleId, companyId);
     const hasPermissions = permissions && permissions.length > 0;
+
+    const sanitizedPermissions = hasPermissions
+      ? permissions.map(({ scope, permission, moduleId }) => ({
+          scope,
+          permission,
+          moduleId,
+        }))
+      : [];
+
     return this.prisma.companyRole.update({
       where: {
         id: roleId,
@@ -120,7 +129,7 @@ export class RoleService {
           deleteMany: {},
           createMany: hasPermissions
             ? {
-                data: permissions,
+                data: sanitizedPermissions,
               }
             : undefined,
         },
