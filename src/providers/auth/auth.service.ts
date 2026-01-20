@@ -142,10 +142,18 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
-        companies: true,
+        companies: {
+          include: {
+            whiteLabel: true,
+          },
+        },
         companyUser: {
           include: {
-            company: true,
+            company: {
+              include: {
+                whiteLabel: true,
+              },
+            },
             role: {
               include: {
                 permissions: {

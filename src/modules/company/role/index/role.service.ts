@@ -58,7 +58,11 @@ export class RoleService {
         permissions: hasPermissions
           ? {
               createMany: {
-                data: permissions,
+                data: permissions.map(({ moduleId, permission, scope }) => ({
+                  moduleId,
+                  permission,
+                  scope,
+                })),
               },
             }
           : undefined,
