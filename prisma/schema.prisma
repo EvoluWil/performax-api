@@ -434,6 +434,7 @@ model CompanyTask {
   deleted                Boolean        @default(false)
   impedimentNote         String?
   conclusionNote         String?
+  value                  Int            @default(0)
   status                 TaskStatusEnum @default(OPEN)
   files                  File[]
   conclusionFiles        File[]

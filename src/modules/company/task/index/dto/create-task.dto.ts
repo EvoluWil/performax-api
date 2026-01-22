@@ -4,6 +4,7 @@ import {
   IsArray,
   IsDateString,
   IsEnum,
+  IsInt,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
@@ -58,4 +59,8 @@ export class CreateTaskDto {
   @IsString()
   @IsOptional()
   recurrence?: string;
+
+  @IsInt()
+  @IsOptional()
+  value: number;
 }

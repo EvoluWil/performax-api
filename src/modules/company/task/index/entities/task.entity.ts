@@ -9,6 +9,7 @@ export class Task implements CompanyTask {
   internalNote: string;
   impedimentNote: string;
   conclusionNote: string;
+  value: number;
   status: TaskStatusEnum;
   date: Date;
   createdAt: Date;
