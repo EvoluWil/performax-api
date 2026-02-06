@@ -291,16 +291,12 @@ export class AuthService {
       where: {
         resetToken: token,
       },
-      include: { user: { select: { credential: true } } },
+      include: { user: { select: { id: true, credential: true } } },
     });
 
     if (!recovery) {
       throw new BadRequestException('Token inválido');
     }
-
-    await this.prisma.userRecoveryPassword.delete({
-      where: { id: recovery.id },
-    });
 
     if (
       differenceInMilliseconds(new Date(recovery?.createdAt), new Date()) >
@@ -311,9 +307,20 @@ export class AuthService {
 
     const newPassword = await bcrypt.hash(password, 10);
 
-    await this.prisma.userCredential.update({
-      where: { id: recovery?.user?.credential?.id },
-      data: { password: newPassword },
+    if (recovery.user?.credential?.id) {
+      await this.prisma.userCredential.update({
+        where: { id: recovery.user.credential.id },
+        data: { password: newPassword },
+      });
+    } else if (recovery.user?.id) {
+      await this.prisma.user.update({
+        where: { id: recovery.user.id },
+        data: { credential: { create: { password: newPassword } } },
+      });
+    }
+
+    await this.prisma.userRecoveryPassword.delete({
+      where: { id: recovery.id },
     });
 
     return { ok: true };
