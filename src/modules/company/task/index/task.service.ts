@@ -47,10 +47,11 @@ export class TaskService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('companyTask');
+    const where = { companyId, deleted: false };
+    const { count, query } = await this.qb.query('companyTask', where);
+
     const tasks = await this.prisma.companyTask.findMany({
       ...query,
-      where: { ...query.where, companyId, deleted: false },
       select: {
         ...query.select,
         checklist: {
@@ -88,7 +89,7 @@ export class TaskService {
     });
 
     if (!task) {
-      throw new NotFoundException('Tarefa não encontrada!');
+      throw new NotFoundException('OS não encontrada!');
     }
 
     return task;

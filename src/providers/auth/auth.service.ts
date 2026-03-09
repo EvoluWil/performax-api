@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { User, UserRoleEnum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { addDays, differenceInMilliseconds, isPast } from 'date-fns';
@@ -170,6 +170,13 @@ export class AuthService {
 
     if (!user) {
       throw new BadRequestException('Usuário não encontrado');
+    }
+
+    if (user.role === UserRoleEnum.SYSTEM_ADMIN) {
+      const companies = await this.prisma.company.findMany({
+        include: { whiteLabel: true },
+      });
+      user.companies = companies;
     }
 
     return defaultPlainToClass(FindUserDto, user);
@@ -347,11 +354,11 @@ export class AuthService {
       include: { user: true },
     });
 
-    if (!session || isPast(new Date(addDays(session.createdAt, 7)))) {
+    if (!session || isPast(new Date(addDays(session.createdAt, 2)))) {
       throw new BadRequestException('Refresh token inválido ou expirado');
     }
 
-    const newSession = this.createSession(session.userId);
+    const newSession = await this.createSession(session.userId);
 
     return {
       session: newSession,

@@ -35,10 +35,10 @@ export class BudgetService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('companyBudget');
+    const where = { companyId, deleted: false };
+    const { count, query } = await this.qb.query('companyBudget', where);
     const budgets = await this.prisma.companyBudget.findMany({
       ...query,
-      where: { ...query.where, companyId, deleted: false },
     });
     return { count, data: budgets };
   }

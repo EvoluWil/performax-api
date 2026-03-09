@@ -36,12 +36,11 @@ export class OccurrenceService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('occurrence');
+    const where = { companyId, deleted: false };
+    const { count, query } = await this.qb.query('occurrence', where);
     const occurrences = await this.prisma.companyOccurrence.findMany({
       ...query,
-      where: { ...query.where, companyId, deleted: false },
     });
-
     return { count, data: occurrences };
   }
 

@@ -146,24 +146,15 @@ export class UserService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('user');
+    const where = {
+      OR: [
+        { companyUser: { some: { companyId } } },
+        { companies: { some: { id: companyId } } },
+      ],
+    };
+    const { count, query } = await this.qb.query('user', where);
     const users = await this.prisma.user.findMany({
       ...query,
-      where: {
-        ...query.where,
-        OR: [
-          {
-            companyUser: {
-              some: { companyId },
-            },
-          },
-          {
-            companies: {
-              some: { id: companyId },
-            },
-          },
-        ],
-      },
     });
 
     return { data: defaultPlainToClass(FindUserDto, users), count };

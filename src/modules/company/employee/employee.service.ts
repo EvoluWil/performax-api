@@ -32,10 +32,10 @@ export class EmployeeService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('employee');
+    const where = { companyId, deleted: false };
+    const { count, query } = await this.qb.query('employee', where);
     const employees = await this.prisma.companyEmployee.findMany({
       ...query,
-      where: { ...query.where, companyId, deleted: false },
     });
     return { count, data: employees };
   }

@@ -51,12 +51,11 @@ export class FinanceService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('finance');
+    const where = { companyId, deleted: false };
+    const { count, query } = await this.qb.query('finance', where);
     const financials = await this.prisma.companyFinance.findMany({
       ...query,
-      where: { ...query.where, companyId, deleted: false },
     });
-
     return {
       data: financials,
       count,

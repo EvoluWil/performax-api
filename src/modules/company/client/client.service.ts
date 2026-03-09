@@ -20,10 +20,10 @@ export class ClientService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('companyClient');
+    const where = { companyId, deleted: false };
+    const { count, query } = await this.qb.query('companyClient', where);
     const clients = await this.prisma.companyClient.findMany({
       ...query,
-      where: { ...query.where, companyId, deleted: false },
     });
 
     return { count, data: clients };

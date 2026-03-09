@@ -32,10 +32,10 @@ export class EntryService {
   }
 
   async findAll(companyId: string) {
-    const { count, query } = await this.qb.query('entry');
+    const where = { companyId, deleted: false };
+    const { count, query } = await this.qb.query('entry', where);
     const entries = await this.prisma.companyEntry.findMany({
       ...query,
-      where: { ...query.where, companyId, deleted: false },
     });
     return { count, data: entries };
   }

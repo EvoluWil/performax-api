@@ -9,12 +9,16 @@ export class QBService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async query(model: string) {
+  async query(model: string, baseWhere = {}) {
     return this.querybuilder
       .query()
       .then(async (query) => {
-        const count = await this.prisma[model].count({ where: query.where });
-        return { query, count };
+        const where = { ...query.where, ...baseWhere };
+        const normalizedQuery = { ...query, where };
+        const count = await this.prisma[model].count({
+          where,
+        });
+        return { query: normalizedQuery, count };
       })
       .catch((err) => {
         if (err.response?.message)
