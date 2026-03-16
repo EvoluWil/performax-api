@@ -378,17 +378,17 @@ model CompanyOccurrenceType {
 }
 
 model CompanyOccurrence {
-  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
   observation String?
-  protocol    String           @unique
+  protocol    String               @unique
   date        DateTime
   documents   File[]
-  deleted     Boolean          @default(false)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  status      BudgetStatusEnum @default(PENDING)
+  deleted     Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  status      OccurrenceStatusEnum @default(PENDING)
 
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String @db.ObjectId

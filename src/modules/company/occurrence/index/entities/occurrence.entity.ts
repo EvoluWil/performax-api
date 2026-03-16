@@ -1,4 +1,4 @@
-import { BudgetStatusEnum, CompanyOccurrence, File } from '@prisma/client';
+import { CompanyOccurrence, File, OccurrenceStatusEnum } from '@prisma/client';
 
 export class Occurrence implements CompanyOccurrence {
   id: string;
@@ -9,7 +9,7 @@ export class Occurrence implements CompanyOccurrence {
   date: Date;
   createdAt: Date;
   updatedAt: Date;
-  status: BudgetStatusEnum;
+  status: OccurrenceStatusEnum;
   createdById: string;
   clientId: string;
   typeId: string;

@@ -37,7 +37,7 @@ export class OccurrenceService {
 
   async findAll(companyId: string) {
     const where = { companyId, deleted: false };
-    const { count, query } = await this.qb.query('occurrence', where);
+    const { count, query } = await this.qb.query('companyOccurrence', where);
     const occurrences = await this.prisma.companyOccurrence.findMany({
       ...query,
     });
@@ -47,6 +47,12 @@ export class OccurrenceService {
   async findOne(occurrenceId: string, companyId: string) {
     const occurrence = await this.prisma.companyOccurrence.findFirst({
       where: { id: occurrenceId, companyId, deleted: false },
+      include: {
+        client: true,
+        createdBy: { select: { id: true, name: true } },
+        type: true,
+        responsible: { select: { id: true, name: true } },
+      },
     });
 
     if (!occurrence) {

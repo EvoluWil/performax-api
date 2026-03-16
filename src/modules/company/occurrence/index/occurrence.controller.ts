@@ -40,7 +40,7 @@ export class OccurrenceController {
     @Param('companyId') companyId: string,
     @Param('occurrenceId') occurrenceId: string,
   ) {
-    return this.occurrenceService.findOne(companyId, occurrenceId);
+    return this.occurrenceService.findOne(occurrenceId, companyId);
   }
 
   @Put(':occurrenceId')
@@ -50,8 +50,8 @@ export class OccurrenceController {
     @Body() updateOccurrenceDto: UpdateOccurrenceDto,
   ) {
     return this.occurrenceService.update(
-      companyId,
       occurrenceId,
+      companyId,
       updateOccurrenceDto,
     );
   }
@@ -61,6 +61,6 @@ export class OccurrenceController {
     @Param('companyId') companyId: string,
     @Param('occurrenceId') occurrenceId: string,
   ) {
-    return this.occurrenceService.remove(companyId, occurrenceId);
+    return this.occurrenceService.remove(occurrenceId, companyId);
   }
 }

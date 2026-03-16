@@ -21,6 +21,7 @@ export class QBService {
         return { query: normalizedQuery, count };
       })
       .catch((err) => {
+        console.log('QueryBuilder error:', err);
         if (err.response?.message)
           throw new BadRequestException(err.response?.message);
 
