@@ -8,6 +8,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { BudgetService } from './budget.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
@@ -46,6 +47,16 @@ export class BudgetController {
     @Body() updateBudgetDto: UpdateBudgetDto,
   ) {
     return this.budgetService.update(budgetId, companyId, updateBudgetDto);
+  }
+
+  @AdminOnly()
+  @Put(':budgetId/approve')
+  approve(
+    @Param('budgetId') budgetId: string,
+    @Param('companyId') companyId: string,
+    @Body('approved') approved: boolean,
+  ) {
+    return this.budgetService.approve(budgetId, companyId, approved);
   }
 
   @Delete(':budgetId')

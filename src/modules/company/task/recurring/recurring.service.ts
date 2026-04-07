@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { TaskStatusEnum } from '@prisma/client';
 import { RRule, rrulestr } from 'rrule';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -54,6 +55,11 @@ export class RecurringService {
           const protocol = await this.util.generateUniqueProtocol(
             'companyTask',
           );
+          const taskType = master.typeId
+            ? await this.prisma.companyTaskType.findUnique({
+                where: { id: master.typeId },
+              })
+            : null;
 
           const existing = await this.prisma.companyTask.findFirst({
             where: {
@@ -89,6 +95,8 @@ export class RecurringService {
             responsible: master.responsibleId
               ? { connect: { id: master.responsibleId } }
               : undefined,
+            status: TaskStatusEnum.PENDING,
+            approved: taskType?.needApprove ? false : true,
             recurrenceMasterId: master.id,
             recurrenceOriginalDate: next,
             recurrenceIsGenerated: true,
@@ -142,6 +150,12 @@ export class RecurringService {
         const occurrences = rule.between(now, windowEnd, true) as Date[];
         if (!occurrences || occurrences.length === 0) continue;
 
+        const taskType = master.typeId
+          ? await this.prisma.companyTaskType.findUnique({
+              where: { id: master.typeId },
+            })
+          : null;
+
         let lastCreated: Date | null = null;
 
         for (const occ of occurrences) {
@@ -176,6 +190,8 @@ export class RecurringService {
             responsible: master.responsibleId
               ? { connect: { id: master.responsibleId } }
               : undefined,
+            status: TaskStatusEnum.PENDING,
+            approved: taskType?.needApprove ? false : true,
             recurrenceMasterId: master.id,
             recurrenceOriginalDate: occ,
             recurrenceIsGenerated: true,

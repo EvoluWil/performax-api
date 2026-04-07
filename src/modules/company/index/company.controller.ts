@@ -27,6 +27,11 @@ export class CompanyController {
     return this.companyService.findAll(user.id);
   }
 
+  @Get('owned')
+  findOwned(@AuthUser() user: User) {
+    return this.companyService.findOwned(user.id);
+  }
+
   @Get(':companyId')
   findOne(@Param('companyId') companyId: string, @AuthUser() user: User) {
     return this.companyService.findOne(companyId, user.id);
@@ -39,6 +44,28 @@ export class CompanyController {
     @Body() updateCompanyDto: UpdateCompanyDto,
   ) {
     return this.companyService.update(companyId, user.id, updateCompanyDto);
+  }
+
+  @Post(':companyId/link')
+  linkCompanies(
+    @Param('companyId') companyId: string,
+    @Body('targetCompanyId') targetCompanyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.companyService.linkCompanies(
+      companyId,
+      targetCompanyId,
+      user.id,
+    );
+  }
+
+  @Delete(':companyId/link/:targetCompanyId')
+  unlinkCompany(
+    @Param('companyId') companyId: string,
+    @Param('targetCompanyId') targetCompanyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.companyService.unlinkCompany(targetCompanyId, user.id);
   }
 
   @Delete(':companyId')

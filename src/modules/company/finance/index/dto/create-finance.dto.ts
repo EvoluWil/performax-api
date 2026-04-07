@@ -25,12 +25,12 @@ export class CreateFinanceDto {
   value: number;
 
   @IsInt()
-  @IsNotEmpty()
-  tax: number;
+  @IsOptional()
+  tax?: number = 0;
 
   @IsInt()
-  @IsNotEmpty()
-  retention: number;
+  @IsOptional()
+  retention?: number = 0;
 
   @IsDateString()
   @IsNotEmpty()
@@ -77,8 +77,16 @@ export class CreateFinanceDto {
   categoryId: string;
 
   @IsMongoId()
+  @IsNotEmpty()
+  segmentId: string;
+
+  @IsMongoId()
   @IsOptional()
   payeeId: string;
+
+  @IsMongoId()
+  @IsOptional()
+  responsibleId: string;
 
   @IsMongoId()
   @IsOptional()
@@ -92,4 +100,8 @@ export class CreateFinanceDto {
   @IsDateString()
   @IsOptional()
   recurringEndDate: Date;
+
+  @IsString()
+  @IsOptional()
+  recurrence?: string;
 }

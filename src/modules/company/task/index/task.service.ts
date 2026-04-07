@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { TaskStatusEnum } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -18,6 +19,12 @@ export class TaskService {
     companyId: string,
     userId: string,
   ) {
+    const taskType = createTaskDto.typeId
+      ? await this.prisma.companyTaskType.findUnique({
+          where: { id: createTaskDto.typeId },
+        })
+      : null;
+
     const data = normalizeRelations(createTaskDto) as any;
 
     if (createTaskDto.checklist) {
@@ -42,6 +49,8 @@ export class TaskService {
     data.createdBy = { connect: { id: userId } };
     data.company = { connect: { id: companyId } };
     data.protocol = await this.util.generateUniqueProtocol('companyTask');
+    data.status = TaskStatusEnum.PENDING;
+    data.approved = taskType?.needApprove ? false : true;
 
     return this.prisma.companyTask.create({ data });
   }
@@ -253,6 +262,17 @@ export class TaskService {
     }
 
     return { ok: true };
+  }
+
+  async approve(taskId: string, companyId: string, approved: boolean) {
+    await this.findOne(taskId, companyId);
+
+    return this.prisma.companyTask.update({
+      where: { id: taskId },
+      data: approved
+        ? { approved: true }
+        : { approved: true, status: TaskStatusEnum.REJECTED },
+    });
   }
 
   async remove(taskId: string, companyId: string) {

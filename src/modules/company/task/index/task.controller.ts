@@ -8,6 +8,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -46,6 +47,16 @@ export class TaskController {
     @Body() updateTaskDto: UpdateTaskDto,
   ) {
     return this.taskService.update(taskId, companyId, updateTaskDto);
+  }
+
+  @AdminOnly()
+  @Put(':taskId/approve')
+  approve(
+    @Param('taskId') taskId: string,
+    @Param('companyId') companyId: string,
+    @Body('approved') approved: boolean,
+  ) {
+    return this.taskService.approve(taskId, companyId, approved);
   }
 
   @Delete(':taskId')

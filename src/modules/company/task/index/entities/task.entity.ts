@@ -11,6 +11,7 @@ export class Task implements CompanyTask {
   conclusionNote: string;
   value: number;
   status: TaskStatusEnum;
+  approved: boolean;
   date: Date;
   createdAt: Date;
   updatedAt: Date;

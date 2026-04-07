@@ -1,4 +1,5 @@
-import { Body, Controller, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { UpdateWalletDto } from './dto/update-wallet.dto';
 import { WalletService } from './wallet.service';
@@ -6,6 +7,17 @@ import { WalletService } from './wallet.service';
 @Controller('companies/:companyId/finance-wallets')
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
+
+  @Get()
+  getWallet(@Param('companyId') companyId: string) {
+    return this.walletService.getWallet(companyId);
+  }
+
+  @AdminOnly()
+  @Post('recalculate')
+  recalculate(@Param('companyId') companyId: string) {
+    return this.walletService.recalculate(companyId);
+  }
 
   @Post()
   create(

@@ -20,6 +20,7 @@ export class ChangelogService {
     return this.prisma.changelog.findMany({
       where: { deleted: false },
       orderBy: { date: 'desc' },
+      take: 5,
     });
   }
 

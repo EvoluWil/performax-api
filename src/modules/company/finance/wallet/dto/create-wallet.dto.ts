@@ -1,7 +1,11 @@
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 
 export class CreateWalletDto {
   @IsNumber()
-  @IsNotEmpty()
-  amount: number;
+  @IsOptional()
+  amount?: number;
+
+  @IsNumber()
+  @IsOptional()
+  initialValue?: number;
 }

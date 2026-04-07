@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EntryStatusEnum } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -19,11 +20,17 @@ export class EntryService {
     companyId: string,
     userId: string,
   ) {
+    const entryType = await this.prisma.companyEntryType.findUnique({
+      where: { id: createEntryDto.typeId },
+    });
+
     const data = normalizeRelations(createEntryDto) as any;
     const protocol = await this.util.generateUniqueProtocol('companyEntry');
     return this.prisma.companyEntry.create({
       data: {
         ...data,
+        status: EntryStatusEnum.PENDING,
+        approved: entryType?.needApprove ? false : true,
         company: { connect: { id: companyId } },
         createdBy: { connect: { id: userId } },
         protocol,

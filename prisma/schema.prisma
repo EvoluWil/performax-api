@@ -31,6 +31,7 @@ model User {
   occurrencesResponsible CompanyOccurrence[]   @relation("occurrenceResponsible")
   occurrences            CompanyOccurrence[]
   financials             CompanyFinance[]
+  financialsResponsible  CompanyFinance[]      @relation("financeResponsible")
   companies              Company[]
 
   supervisedBy    CompanyUserRole[] @relation("targetUsers", fields: [supervisedByIds], references: [id])
@@ -121,11 +122,27 @@ model Company {
   financials          CompanyFinance[]
   financeIn           CompanyFinance[]              @relation("companyIn")
   financeCategories   CompanyFinanceCategory[]
+  financeSegments     CompanyFinanceSegment[]
   financePayee        CompanyFinancePayee[]
   recurringFinancials CompanyFinanceRecurring[]
   whiteLabel          CompanyWhiteLabel?
 
+  group   CompanyGroup? @relation(fields: [groupId], references: [id])
+  groupId String?       @db.ObjectId
+
   @@map("company")
+}
+
+model CompanyGroup {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companies Company[]
+
+  @@map("company_group")
 }
 
 model CompanyModule {
@@ -285,6 +302,7 @@ model CompanyEntry {
   date        DateTime        @default(now())
   deleted     Boolean         @default(false)
   status      EntryStatusEnum @default(PENDING)
+  approved    Boolean         @default(true)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -336,7 +354,8 @@ model CompanyBudget {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  status BudgetStatusEnum @default(PENDING)
+  status   BudgetStatusEnum @default(PENDING)
+  approved Boolean          @default(true)
 
   items BudgetItem[]
 
@@ -389,6 +408,7 @@ model CompanyOccurrence {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   status      OccurrenceStatusEnum @default(PENDING)
+  approved    Boolean              @default(true)
 
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String @db.ObjectId
@@ -435,7 +455,8 @@ model CompanyTask {
   impedimentNote         String?
   conclusionNote         String?
   value                  Int            @default(0)
-  status                 TaskStatusEnum @default(OPEN)
+  status                 TaskStatusEnum @default(PENDING)
+  approved               Boolean        @default(true)
   files                  File[]
   conclusionFiles        File[]
   date                   DateTime?
@@ -533,21 +554,23 @@ model CompanyFinanceType {
 }
 
 model CompanyFinance {
-  id          String            @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String?
-  protocol    String            @unique
-  value       Int               @default(0)
-  tax         Int               @default(0)
-  retention   Int               @default(0)
-  date        DateTime
-  paymentDate DateTime?
-  observation String?
-  status      FinanceStatusEnum @default(PENDING)
-  flow        FinanceFlowEnum   @default(IN)
-  deleted     Boolean           @default(false)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id                 String            @id @default(auto()) @map("_id") @db.ObjectId
+  title              String
+  description        String?
+  protocol           String            @unique
+  value              Int               @default(0)
+  tax                Int               @default(0)
+  retention          Int               @default(0)
+  date               DateTime
+  paymentDate        DateTime?
+  observation        String?
+  status             FinanceStatusEnum @default(PENDING)
+  approved           Boolean           @default(true)
+  flow               FinanceFlowEnum   @default(IN)
+  deleted            Boolean           @default(false)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  recurrenceMasterId String?           @db.ObjectId
 
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String @db.ObjectId
@@ -576,17 +599,28 @@ model CompanyFinance {
   payee   CompanyFinancePayee? @relation(fields: [payeeId], references: [id])
   payeeId String?              @db.ObjectId
 
+  segment   CompanyFinanceSegment? @relation(fields: [segmentId], references: [id])
+  segmentId String?                @db.ObjectId
+
   employee   CompanyEmployee? @relation(fields: [employeeId], references: [id])
   employeeId String?          @db.ObjectId
+
+  responsible   User?   @relation("financeResponsible", fields: [responsibleId], references: [id])
+  responsibleId String? @db.ObjectId
+
+  linkedFinance   CompanyFinance?  @relation("FinanceLink", fields: [linkedFinanceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  linkedFinanceId String?          @db.ObjectId
+  linkedBy        CompanyFinance[] @relation("FinanceLink")
 
   @@map("company_finance")
 }
 
 model CompanyFinanceWallet {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  amount    Int      @default(0)
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  amount       Int      @default(0)
+  initialValue Int      @default(0)
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
 
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyId String  @unique @db.ObjectId
@@ -641,6 +675,21 @@ model CompanyFinanceCategory {
   @@map("company_finance_category")
 }
 
+model CompanyFinanceSegment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
+
+  financials CompanyFinance[]
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @db.ObjectId
+
+  @@map("company_finance_segment")
+}
+
 model CompanyFinancePayee {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -666,6 +715,7 @@ model CompanyFinanceRecurring {
   observation String?
   flow        FinanceFlowEnum @default(IN)
   endDate     DateTime?       @default("2100-01-01T00:00:00.000Z")
+  recurrence  String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -674,8 +724,8 @@ model CompanyFinanceRecurring {
   type   CompanyFinanceType @relation(fields: [typeId], references: [id])
   typeId String             @db.ObjectId
 
-  client   CompanyClient @relation(fields: [clientId], references: [id])
-  clientId String        @db.ObjectId
+  client   CompanyClient? @relation(fields: [clientId], references: [id])
+  clientId String?        @db.ObjectId
 
   method   CompanyFinancePaymentMethod @relation(fields: [methodId], references: [id])
   methodId String                      @db.ObjectId
@@ -801,6 +851,7 @@ enum FinanceStatusEnum {
   PENDING
   APPROVED
   PAID
+  REJECTED
 }
 
 enum FinanceFlowEnum {

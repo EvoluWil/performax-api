@@ -5,6 +5,7 @@ import {
 } from '@prisma/client';
 
 export class Finance implements CompanyFinance {
+  responsibleId: string;
   id: string;
   title: string;
   description: string;
@@ -16,6 +17,7 @@ export class Finance implements CompanyFinance {
   paymentDate: Date;
   observation: string;
   status: FinanceStatusEnum;
+  approved: boolean;
   flow: FinanceFlowEnum;
   createdAt: Date;
   updatedAt: Date;
@@ -30,4 +32,7 @@ export class Finance implements CompanyFinance {
   categoryId: string;
   payeeId: string;
   employeeId: string;
+  linkedFinanceId: string;
+  recurrenceMasterId: string;
+  segmentId: string;
 }

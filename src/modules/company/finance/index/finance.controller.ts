@@ -8,8 +8,10 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { CreateFinanceDto } from './dto/create-finance.dto';
+import { CreateTransferDto } from './dto/create-transfer.dto';
 import { UpdateFinanceDto } from './dto/update-finance.dto';
 import { FinanceService } from './finance.service';
 
@@ -23,7 +25,16 @@ export class FinanceController {
     @Param('companyId') companyId: string,
     @AuthUser() user: User,
   ) {
-    return this.financeService.create(createFinanceDto, companyId, user?.id);
+    return this.financeService.create(createFinanceDto, user?.id, companyId);
+  }
+
+  @Post('transfer')
+  transfer(
+    @Body() createTransferDto: CreateTransferDto,
+    @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.financeService.transfer(createTransferDto, companyId, user?.id);
   }
 
   @Get()
@@ -54,5 +65,15 @@ export class FinanceController {
     @Param('companyId') companyId: string,
   ) {
     return this.financeService.remove(financeId, companyId);
+  }
+
+  @AdminOnly()
+  @Put(':financeId/approve')
+  approve(
+    @Param('financeId') financeId: string,
+    @Param('companyId') companyId: string,
+    @Body('approved') approved: boolean,
+  ) {
+    return this.financeService.approve(financeId, companyId, approved);
   }
 }

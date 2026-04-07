@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { BudgetStatusEnum } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -19,12 +20,18 @@ export class BudgetService {
     companyId: string,
     userId: string,
   ) {
+    const budgetType = await this.prisma.companyBudgetType.findUnique({
+      where: { id: createBudgetDto.typeId },
+    });
+
     const data = normalizeRelations(createBudgetDto) as any;
     const protocol = await this.util.generateUniqueProtocol('companyBudget');
 
     const budget = await this.prisma.companyBudget.create({
       data: {
         ...data,
+        status: BudgetStatusEnum.PENDING,
+        approved: budgetType?.needApprove ? false : true,
         company: { connect: { id: companyId } },
         createdBy: { connect: { id: userId } },
         protocol,
@@ -71,6 +78,17 @@ export class BudgetService {
     return this.prisma.companyBudget.update({
       where: { id: budgetId },
       data: updateBudgetDto,
+    });
+  }
+
+  async approve(budgetId: string, companyId: string, approved: boolean) {
+    await this.findOne(budgetId, companyId);
+
+    return this.prisma.companyBudget.update({
+      where: { id: budgetId },
+      data: approved
+        ? { approved: true }
+        : { approved: true, status: BudgetStatusEnum.REJECTED },
     });
   }
 

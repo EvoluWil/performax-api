@@ -8,6 +8,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { CreateOccurrenceDto } from './dto/create-occurrence.dto';
 import { UpdateOccurrenceDto } from './dto/update-occurrence.dto';
@@ -54,6 +55,16 @@ export class OccurrenceController {
       companyId,
       updateOccurrenceDto,
     );
+  }
+
+  @AdminOnly()
+  @Put(':occurrenceId/approve')
+  approve(
+    @Param('occurrenceId') occurrenceId: string,
+    @Param('companyId') companyId: string,
+    @Body('approved') approved: boolean,
+  ) {
+    return this.occurrenceService.approve(occurrenceId, companyId, approved);
   }
 
   @Delete(':occurrenceId')

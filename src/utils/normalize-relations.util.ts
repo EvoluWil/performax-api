@@ -5,6 +5,7 @@ export const normalizeRelations = <T>(data: T): object => {
     }
 
     if (key?.includes('Id')) {
+      if (!value) return acc;
       const newKey = key.replace('Id', '');
       return { ...acc, [newKey]: { connect: { id: value } } };
     }

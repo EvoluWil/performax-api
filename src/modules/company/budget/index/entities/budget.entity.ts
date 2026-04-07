@@ -10,6 +10,7 @@ export class Budget implements CompanyBudget {
   createdAt: Date;
   updatedAt: Date;
   status: BudgetStatusEnum;
+  approved: boolean;
   createdById: string;
   typeId: string;
   clientId: string;

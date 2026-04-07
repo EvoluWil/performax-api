@@ -10,6 +10,7 @@ export class Occurrence implements CompanyOccurrence {
   createdAt: Date;
   updatedAt: Date;
   status: OccurrenceStatusEnum;
+  approved: boolean;
   createdById: string;
   clientId: string;
   typeId: string;

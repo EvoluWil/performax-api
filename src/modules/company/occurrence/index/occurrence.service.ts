@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { OccurrenceStatusEnum } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -18,6 +19,10 @@ export class OccurrenceService {
     companyId: string,
     userId: string,
   ) {
+    const occurrenceType = await this.prisma.companyOccurrenceType.findUnique({
+      where: { id: createOccurrenceDto.typeId },
+    });
+
     const data = normalizeRelations(createOccurrenceDto) as any;
     const protocol = await this.util.generateUniqueProtocol(
       'companyOccurrence',
@@ -26,6 +31,8 @@ export class OccurrenceService {
     const occurrence = await this.prisma.companyOccurrence.create({
       data: {
         ...data,
+        status: OccurrenceStatusEnum.PENDING,
+        approved: occurrenceType?.needApprove ? false : true,
         protocol,
         company: { connect: { id: companyId } },
         createdBy: { connect: { id: userId } },
@@ -76,6 +83,17 @@ export class OccurrenceService {
     });
 
     return { ok: true };
+  }
+
+  async approve(occurrenceId: string, companyId: string, approved: boolean) {
+    await this.findOne(occurrenceId, companyId);
+
+    return this.prisma.companyOccurrence.update({
+      where: { id: occurrenceId },
+      data: approved
+        ? { approved: true }
+        : { approved: true, status: OccurrenceStatusEnum.REJECTED },
+    });
   }
 
   async remove(occurrenceId: string, companyId: string) {

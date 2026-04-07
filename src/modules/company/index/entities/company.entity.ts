@@ -7,4 +7,5 @@ export class CompanyEntity implements Company {
   createdAt: Date;
   updatedAt: Date;
   deleted: boolean;
+  groupId: string;
 }

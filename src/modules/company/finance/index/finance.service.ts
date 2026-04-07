@@ -1,9 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
+import { FinanceFlowEnum, FinanceStatusEnum } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
+import { WalletService } from '../wallet/wallet.service';
 import { CreateFinanceDto } from './dto/create-finance.dto';
+import { CreateTransferDto } from './dto/create-transfer.dto';
 import { UpdateFinanceDto } from './dto/update-finance.dto';
 
 @Injectable()
@@ -12,10 +19,11 @@ export class FinanceService {
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
     private readonly util: UtilService,
+    private readonly walletService: WalletService,
   ) {}
 
   async create(
-    { isRecurring, recurringEndDate, ...rest }: CreateFinanceDto,
+    { isRecurring, recurringEndDate, recurrence, ...rest }: CreateFinanceDto,
     userId: string,
     companyId: string,
   ) {
@@ -30,20 +38,42 @@ export class FinanceService {
       data: {
         ...data,
         protocol,
-        status: type?.needApprove ? 'PENDING' : 'APPROVED',
+        status: FinanceStatusEnum.PENDING,
+        approved: type?.needApprove ? false : true,
         createdBy: { connect: { id: userId } },
+        responsible: {
+          connect: { id: data.responsible?.connect?.id ?? userId },
+        },
         company: { connect: { id: companyId } },
       },
     });
 
-    if (isRecurring) {
-      await this.prisma.companyFinanceRecurring.create({
+    if (isRecurring || recurrence) {
+      const recurring = await this.prisma.companyFinanceRecurring.create({
         data: {
-          ...data,
+          title: data.title,
+          description: data.description,
+          value: data.value,
+          date: data.date,
+          observation: data.observation,
+          flow: data.flow,
+          type: data.type,
+          method: data.method,
+          bank: data.bank,
+          category: data.category,
+          ...(data.client ? { client: data.client } : {}),
+          ...(data.payee ? { payee: data.payee } : {}),
+          ...(data.employee ? { employee: data.employee } : {}),
+          recurrence: recurrence || null,
           endDate: recurringEndDate || null,
           lastDate: data.date,
           company: { connect: { id: companyId } },
         },
+      });
+
+      await this.prisma.companyFinance.update({
+        where: { id: finance.id },
+        data: { recurrenceMasterId: recurring.id },
       });
     }
 
@@ -52,7 +82,7 @@ export class FinanceService {
 
   async findAll(companyId: string) {
     const where = { companyId, deleted: false };
-    const { count, query } = await this.qb.query('finance', where);
+    const { count, query } = await this.qb.query('companyFinance', where);
     const financials = await this.prisma.companyFinance.findMany({
       ...query,
     });
@@ -155,7 +185,16 @@ export class FinanceService {
       throw new BadRequestException('Lançamento não encontrado!');
     }
 
-    return finance;
+    const result: any = { ...finance };
+    if (finance.recurrenceMasterId) {
+      result.recurringMaster =
+        await this.prisma.companyFinanceRecurring.findUnique({
+          where: { id: finance.recurrenceMasterId },
+          select: { id: true, recurrence: true },
+        });
+    }
+
+    return result;
   }
 
   async update(
@@ -171,12 +210,41 @@ export class FinanceService {
       throw new BadRequestException('Despesa não encontrada!');
     }
 
-    const data = normalizeRelations(updateFinanceDto);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { recurrence: _recurrence, ...rest } = updateFinanceDto as any;
+    const data = normalizeRelations(rest);
+
+    const wasNotPaid = finance.status !== FinanceStatusEnum.PAID;
+    const willBePaid = (data as any).status === FinanceStatusEnum.PAID;
+    const wasPaid = finance.status === FinanceStatusEnum.PAID;
+    const willNotBePaid =
+      (data as any).status !== undefined &&
+      (data as any).status !== FinanceStatusEnum.PAID;
 
     await this.prisma.companyFinance.update({
       where: { id: financeId },
       data,
     });
+
+    // Transfer PAID cascade: mark the linked entry as PAID too
+    if (wasNotPaid && willBePaid && finance.linkedFinanceId) {
+      const linked = await this.prisma.companyFinance.findUnique({
+        where: { id: finance.linkedFinanceId },
+        select: { companyId: true },
+      });
+
+      if (linked) {
+        await this.prisma.companyFinance.update({
+          where: { id: finance.linkedFinanceId },
+          data: { status: FinanceStatusEnum.PAID },
+        });
+        await this.walletService.recalculate(linked.companyId);
+      }
+    }
+
+    if ((wasNotPaid && willBePaid) || (wasPaid && willNotBePaid)) {
+      await this.walletService.recalculate(companyId);
+    }
 
     return { ok: true };
   }
@@ -194,5 +262,102 @@ export class FinanceService {
       where: { id: financeId },
       data: { deleted: true },
     });
+  }
+
+  async approve(financeId: string, companyId: string, approved: boolean) {
+    const finance = await this.prisma.companyFinance.findFirst({
+      where: { id: financeId, companyId },
+    });
+
+    if (!finance) {
+      throw new BadRequestException('Lançamento não encontrado!');
+    }
+
+    return this.prisma.companyFinance.update({
+      where: { id: financeId },
+      data: approved
+        ? { approved: true }
+        : { approved: true, status: FinanceStatusEnum.REJECTED },
+    });
+  }
+
+  async transfer(dto: CreateTransferDto, companyId: string, userId: string) {
+    // Security: verify both companies are in the same CompanyGroup
+    const [sourceCompany, destCompany] = await Promise.all([
+      this.prisma.company.findUnique({
+        where: { id: companyId },
+        select: { groupId: true },
+      }),
+      this.prisma.company.findUnique({
+        where: { id: dto.companyInId },
+        select: { groupId: true },
+      }),
+    ]);
+
+    if (
+      !sourceCompany?.groupId ||
+      !destCompany?.groupId ||
+      sourceCompany.groupId !== destCompany.groupId
+    ) {
+      throw new ForbiddenException(
+        'Transferência não permitida: as empresas não pertencem ao mesmo grupo',
+      );
+    }
+
+    const [protocolOut, protocolIn] = await Promise.all([
+      this.util.generateUniqueProtocol('companyFinance'),
+      this.util.generateUniqueProtocol('companyFinance'),
+    ]);
+
+    const commonData = {
+      title: dto.title,
+      description: dto.description,
+      value: dto.value,
+      tax: dto.tax ?? 0,
+      retention: dto.retention ?? 0,
+      date: dto.date,
+      status: FinanceStatusEnum.PENDING,
+      approved: true,
+      ...(dto.bankId && { bank: { connect: { id: dto.bankId } } }),
+      ...(dto.methodId && { method: { connect: { id: dto.methodId } } }),
+      ...(dto.categoryId && { category: { connect: { id: dto.categoryId } } }),
+      createdBy: { connect: { id: userId } },
+    };
+
+    // Create both entries in a transaction
+    const [outEntry, inEntry] = await this.prisma.$transaction([
+      this.prisma.companyFinance.create({
+        data: {
+          ...(commonData as any),
+          protocol: protocolOut,
+          flow: FinanceFlowEnum.OUT,
+          company: { connect: { id: companyId } },
+          companyIn: { connect: { id: dto.companyInId } },
+        },
+      }),
+      this.prisma.companyFinance.create({
+        data: {
+          ...(commonData as any),
+          protocol: protocolIn,
+          flow: FinanceFlowEnum.IN,
+          company: { connect: { id: dto.companyInId } },
+          companyIn: { connect: { id: companyId } },
+        },
+      }),
+    ]);
+
+    // Link both entries to each other
+    await this.prisma.$transaction([
+      this.prisma.companyFinance.update({
+        where: { id: outEntry.id },
+        data: { linkedFinanceId: inEntry.id },
+      }),
+      this.prisma.companyFinance.update({
+        where: { id: inEntry.id },
+        data: { linkedFinanceId: outEntry.id },
+      }),
+    ]);
+
+    return outEntry;
   }
 }
