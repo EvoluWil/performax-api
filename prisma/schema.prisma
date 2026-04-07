@@ -646,7 +646,7 @@ model CompanyFinancePaymentMethod {
 model CompanyFinanceBank {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  code      String   @unique
+  code      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deleted   Boolean  @default(false)
