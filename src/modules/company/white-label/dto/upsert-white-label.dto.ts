@@ -20,4 +20,8 @@ export class UpsertWhiteLabelDto {
   @IsString()
   @IsOptional()
   secondaryColor?: string;
+
+  @IsString()
+  @IsOptional()
+  favicon?: string;
 }

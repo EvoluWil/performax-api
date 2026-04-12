@@ -29,6 +29,7 @@ export class WhiteLabelService {
         name: '',
         logo: '',
         banner: '',
+        favicon: '',
         primaryColor: '#1976d2',
         secondaryColor: '#9c27b0',
         ...dto,

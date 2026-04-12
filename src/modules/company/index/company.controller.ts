@@ -37,6 +37,11 @@ export class CompanyController {
     return this.companyService.findOne(companyId, user.id);
   }
 
+  @Get(':companyId/group')
+  findGroup(@Param('companyId') companyId: string, @AuthUser() user: User) {
+    return this.companyService.findGroup(companyId, user);
+  }
+
   @Put(':companyId')
   update(
     @Param('companyId') companyId: string,

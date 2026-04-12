@@ -7,14 +7,12 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 export class CategoryService {
   constructor(private readonly prisma: PrismaService) {}
   create(createCategoryDto: CreateCategoryDto, companyId: string) {
+    const { segmentId, ...rest } = createCategoryDto;
     return this.prisma.companyFinanceCategory.create({
       data: {
-        ...createCategoryDto,
-        company: {
-          connect: {
-            id: companyId,
-          },
-        },
+        ...rest,
+        company: { connect: { id: companyId } },
+        ...(segmentId ? { segment: { connect: { id: segmentId } } } : {}),
       },
     });
   }
@@ -54,11 +52,13 @@ export class CategoryService {
   ) {
     await this.findOne(categoryId, companyId);
 
+    const { segmentId, ...rest } = updateCategoryDto as any;
     return this.prisma.companyFinanceCategory.update({
-      where: {
-        id: categoryId,
+      where: { id: categoryId },
+      data: {
+        ...rest,
+        ...(segmentId ? { segment: { connect: { id: segmentId } } } : {}),
       },
-      data: updateCategoryDto,
     });
   }
 

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { UserRoleEnum } from '@prisma/client';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -124,6 +125,36 @@ export class CompanyService {
     return this.prisma.company.update({
       where: { id: targetCompanyId },
       data: { group: { disconnect: true } },
+    });
+  }
+
+  async findGroup(companyId: string, user: { id: string; role: UserRoleEnum }) {
+    const isSystemAdmin = user.role === UserRoleEnum.SYSTEM_ADMIN;
+
+    let groupId: string | null = null;
+
+    if (isSystemAdmin) {
+      const company = await this.prisma.company.findFirst({
+        where: { id: companyId, deleted: false },
+        select: { groupId: true },
+      });
+      if (!company) throw new NotFoundException('Empresa não encontrada');
+      groupId = company.groupId;
+    } else {
+      const company = await this.findOne(companyId, user.id);
+      groupId = company.groupId;
+    }
+
+    if (!groupId) return null;
+
+    return this.prisma.companyGroup.findUnique({
+      where: { id: groupId },
+      include: {
+        companies: {
+          where: { deleted: false },
+          select: { id: true, name: true },
+        },
+      },
     });
   }
 
