@@ -162,6 +162,7 @@ model CompanyWhiteLabel {
   id             String  @id @default(auto()) @map("_id") @db.ObjectId
   name           String?
   logo           String?
+  logoContrast   String?
   banner         String?
   favicon        String?
   primaryColor   String?

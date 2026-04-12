@@ -11,6 +11,10 @@ export class UpsertWhiteLabelDto {
 
   @IsString()
   @IsOptional()
+  logoContrast?: string;
+
+  @IsString()
+  @IsOptional()
   banner?: string;
 
   @IsString()

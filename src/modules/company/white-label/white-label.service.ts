@@ -28,6 +28,7 @@ export class WhiteLabelService {
       data: {
         name: '',
         logo: '',
+        logoContrast: '',
         banner: '',
         favicon: '',
         primaryColor: '#1976d2',
