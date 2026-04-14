@@ -31,7 +31,6 @@ export class FormResourcesService {
                 ...(nameFilter ? { name: nameFilter } : {}),
               },
               select: { id: true, name: true },
-              take: 10,
               orderBy: { name: 'asc' },
             });
             result.users = users;
@@ -46,7 +45,6 @@ export class FormResourcesService {
                 ...(nameFilter ? { name: nameFilter } : {}),
               },
               select: { id: true, name: true },
-              take: 10,
               orderBy: { name: 'asc' },
             });
             result.clients = clients;
@@ -61,7 +59,6 @@ export class FormResourcesService {
                 ...(nameFilter ? { name: nameFilter } : {}),
               },
               select: { id: true, name: true, needApprove: true },
-              take: 10,
               orderBy: { name: 'asc' },
             });
             result.financeTypes = types;
@@ -76,7 +73,6 @@ export class FormResourcesService {
                 ...(nameFilter ? { name: nameFilter } : {}),
               },
               select: { id: true, name: true, code: true },
-              take: 10,
               orderBy: { name: 'asc' },
             });
             result.financeBanks = banks;
@@ -92,7 +88,6 @@ export class FormResourcesService {
                   ...(nameFilter ? { name: nameFilter } : {}),
                 },
                 select: { id: true, name: true, segmentId: true },
-                take: 10,
                 orderBy: { name: 'asc' },
               });
             result.financeCategories = categories;
@@ -107,7 +102,6 @@ export class FormResourcesService {
                 ...(nameFilter ? { name: nameFilter } : {}),
               },
               select: { id: true, name: true },
-              take: 10,
               orderBy: { name: 'asc' },
             });
             result.financeSegments = segments;
@@ -122,7 +116,6 @@ export class FormResourcesService {
                 ...(nameFilter ? { name: nameFilter } : {}),
               },
               select: { id: true, name: true },
-              take: 10,
               orderBy: { name: 'asc' },
             });
             result.financePayees = payees;
@@ -138,7 +131,6 @@ export class FormResourcesService {
                   ...(nameFilter ? { name: nameFilter } : {}),
                 },
                 select: { id: true, name: true },
-                take: 10,
                 orderBy: { name: 'asc' },
               });
             result.financePaymentMethods = methods;
@@ -153,7 +145,6 @@ export class FormResourcesService {
                 ...(nameFilter ? { name: nameFilter } : {}),
               },
               select: { id: true, name: true },
-              take: 10,
               orderBy: { name: 'asc' },
             });
             result.taskTypes = taskTypes;
@@ -168,7 +159,6 @@ export class FormResourcesService {
                 ...(nameFilter ? { name: nameFilter } : {}),
               },
               select: { id: true, name: true },
-              take: 10,
               orderBy: { name: 'asc' },
             });
             result.employees = employees;
