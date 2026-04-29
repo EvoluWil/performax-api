@@ -59,6 +59,14 @@ export class FinanceController {
     return this.financeService.update(financeId, companyId, updateFinanceDto);
   }
 
+  @Put(':financeId/revert-payment')
+  revertPayment(
+    @Param('financeId') financeId: string,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.financeService.revertPayment(financeId, companyId);
+  }
+
   @Delete(':financeId')
   remove(
     @Param('financeId') financeId: string,

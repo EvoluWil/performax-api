@@ -264,6 +264,67 @@ export class FinanceService {
     });
   }
 
+  async revertPayment(financeId: string, companyId: string) {
+    const finance = await this.prisma.companyFinance.findFirst({
+      where: { id: financeId, companyId, deleted: false },
+      select: {
+        id: true,
+        companyId: true,
+        status: true,
+        linkedFinanceId: true,
+      },
+    });
+
+    if (!finance) {
+      throw new BadRequestException('Lançamento não encontrado!');
+    }
+
+    if (finance.status !== FinanceStatusEnum.PAID) {
+      throw new BadRequestException(
+        'Apenas lançamentos pagos podem ter pagamento revertido!',
+      );
+    }
+
+    let linkedCompanyId: string | null = null;
+
+    await this.prisma.companyFinance.update({
+      where: { id: finance.id },
+      data: {
+        status: FinanceStatusEnum.PENDING,
+        paymentDate: null,
+        tax: 0,
+        retention: 0,
+      },
+    });
+
+    if (finance.linkedFinanceId) {
+      const linked = await this.prisma.companyFinance.findUnique({
+        where: { id: finance.linkedFinanceId },
+        select: { id: true, companyId: true, status: true },
+      });
+
+      if (linked && linked.status === FinanceStatusEnum.PAID) {
+        linkedCompanyId = linked.companyId;
+        await this.prisma.companyFinance.update({
+          where: { id: linked.id },
+          data: {
+            status: FinanceStatusEnum.PENDING,
+            paymentDate: null,
+            tax: 0,
+            retention: 0,
+          },
+        });
+      }
+    }
+
+    await this.walletService.recalculate(companyId);
+    if (linkedCompanyId && linkedCompanyId !== companyId) {
+      await this.walletService.recalculate(linkedCompanyId);
+    }
+
+    return { ok: true };
+  }
+
   async approve(financeId: string, companyId: string, approved: boolean) {
     const finance = await this.prisma.companyFinance.findFirst({
       where: { id: financeId, companyId },
