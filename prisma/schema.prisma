@@ -674,9 +674,6 @@ model CompanyFinanceCategory {
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
 
-  segment   CompanyFinanceSegment? @relation(fields: [segmentId], references: [id])
-  segmentId String?                @db.ObjectId
-
   @@map("company_finance_category")
 }
 
@@ -688,7 +685,6 @@ model CompanyFinanceSegment {
   deleted   Boolean  @default(false)
 
   financials CompanyFinance[]
-  categories CompanyFinanceCategory[]
 
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId

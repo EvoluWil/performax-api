@@ -73,11 +73,11 @@ export class CreateFinanceDto {
   companyInId: string;
 
   @IsMongoId()
-  @IsNotEmpty()
+  @IsOptional()
   categoryId: string;
 
   @IsMongoId()
-  @IsNotEmpty()
+  @IsOptional()
   segmentId: string;
 
   @IsMongoId()
