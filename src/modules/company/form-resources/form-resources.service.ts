@@ -87,7 +87,7 @@ export class FormResourcesService {
                   deleted: false,
                   ...(nameFilter ? { name: nameFilter } : {}),
                 },
-                select: { id: true, name: true, segmentId: true },
+                select: { id: true, name: true },
                 orderBy: { name: 'asc' },
               });
             result.financeCategories = categories;
