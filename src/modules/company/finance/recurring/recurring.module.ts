@@ -5,5 +5,6 @@ import { RecurringController } from './recurring.controller';
 @Module({
   controllers: [RecurringController],
   providers: [RecurringService],
+  exports: [RecurringService],
 })
 export class RecurringModule {}

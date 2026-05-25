@@ -2,12 +2,14 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { FinanceFlowEnum, FinanceStatusEnum } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
+import { RecurringService } from '../recurring/recurring.service';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateFinanceDto } from './dto/create-finance.dto';
 import { CreateTransferDto } from './dto/create-transfer.dto';
@@ -15,11 +17,14 @@ import { UpdateFinanceDto } from './dto/update-finance.dto';
 
 @Injectable()
 export class FinanceService {
+  private readonly logger = new Logger(FinanceService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
     private readonly util: UtilService,
     private readonly walletService: WalletService,
+    private readonly recurringService: RecurringService,
   ) {}
 
   async create(
@@ -81,6 +86,15 @@ export class FinanceService {
   }
 
   async findAll(companyId: string) {
+    try {
+      await this.recurringService.generateForNextDays(companyId, 30);
+    } catch (err) {
+      this.logger.error(
+        `Failed to lazy-generate finance recurrences for company ${companyId}`,
+        err,
+      );
+    }
+
     const where = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyFinance', where);
     const financials = await this.prisma.companyFinance.findMany({

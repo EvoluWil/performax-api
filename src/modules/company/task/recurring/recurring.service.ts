@@ -4,6 +4,8 @@ import { RRule, rrulestr } from 'rrule';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class RecurringService {
   private readonly logger = new Logger(RecurringService.name);
@@ -52,9 +54,6 @@ export class RecurringService {
         if (!next) continue;
 
         if (next.getTime() <= now.getTime()) {
-          const protocol = await this.util.generateUniqueProtocol(
-            'companyTask',
-          );
           const taskType = master.typeId
             ? await this.prisma.companyTaskType.findUnique({
                 where: { id: master.typeId },
@@ -83,7 +82,6 @@ export class RecurringService {
             description: master.description,
             internalNote: master.internalNote,
             date: next,
-            protocol,
             company: { connect: { id: master.companyId } },
             createdBy: { connect: { id: master.createdById } },
             type: master.typeId
@@ -102,9 +100,10 @@ export class RecurringService {
             recurrenceIsGenerated: true,
           };
 
-          const created = await this.prisma.companyTask.create({
-            data: taskCreateData,
-          });
+          const created = await this.util.createWithUniqueProtocol(
+            'companyTask',
+            taskCreateData,
+          );
 
           await this.prisma.companyTask.update({
             where: { id: master.id },
@@ -121,9 +120,18 @@ export class RecurringService {
     return createdTasks;
   }
 
-  async generateForNextDays(companyId: string, days = 7) {
+  /**
+   * Lazy generation: cria todas as ocorrências de tarefas-recorrentes que
+   * deveriam existir na janela [now, now + days].
+   *
+   * Idempotente: já existindo a ocorrência (`recurrenceMasterId` +
+   * `recurrenceOriginalDate`), pula. Após cada master, atualiza o
+   * `recurrenceOriginalDate` do master para servir de high-water mark e
+   * evitar reprocessar masters já cobertos em chamadas seguintes.
+   */
+  async generateForNextDays(companyId: string, days = 30) {
     const now = new Date();
-    const windowEnd = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    const windowEnd = new Date(now.getTime() + days * DAY_MS);
 
     const masters = await this.prisma.companyTask.findMany({
       where: {
@@ -131,8 +139,13 @@ export class RecurringService {
         deleted: false,
         recurrence: { not: null },
         recurrenceIsGenerated: false,
+        OR: [
+          { recurrenceOriginalDate: null },
+          { recurrenceOriginalDate: { lt: windowEnd } },
+        ],
       },
     });
+
     const createdTasks = [];
 
     for (const master of masters) {
@@ -147,8 +160,40 @@ export class RecurringService {
           continue;
         }
 
-        const occurrences = rule.between(now, windowEnd, true) as Date[];
-        if (!occurrences || occurrences.length === 0) continue;
+        const baseline =
+          master.recurrenceOriginalDate ?? master.date ?? master.createdAt;
+        const occurrences = (
+          rule.between(baseline, windowEnd, true) as Date[]
+        ).filter((d) =>
+          master.recurrenceOriginalDate
+            ? d.getTime() > master.recurrenceOriginalDate.getTime()
+            : true,
+        );
+
+        if (occurrences.length === 0) {
+          await this.prisma.companyTask.update({
+            where: { id: master.id },
+            data: { recurrenceOriginalDate: windowEnd },
+          });
+          continue;
+        }
+
+        const existingItems = await this.prisma.companyTask.findMany({
+          where: {
+            recurrenceMasterId: master.id,
+            recurrenceIsGenerated: true,
+            recurrenceOriginalDate: { in: occurrences },
+          },
+          select: { recurrenceOriginalDate: true },
+        });
+        const existingTimes = new Set(
+          existingItems
+            .map((e) => e.recurrenceOriginalDate?.getTime())
+            .filter((t): t is number => t !== undefined),
+        );
+        const toCreate = occurrences.filter(
+          (o) => !existingTimes.has(o.getTime()),
+        );
 
         const taskType = master.typeId
           ? await this.prisma.companyTaskType.findUnique({
@@ -156,31 +201,16 @@ export class RecurringService {
             })
           : null;
 
-        let lastCreated: Date | null = null;
-
-        for (const occ of occurrences) {
-          const existing = await this.prisma.companyTask.findFirst({
-            where: {
-              recurrenceMasterId: master.id,
-              recurrenceOriginalDate: occ,
-              recurrenceIsGenerated: true,
-            },
-          });
-
-          if (existing) continue;
-
-          const protocol = await this.util.generateUniqueProtocol(
-            'companyTask',
-          );
-
+        for (const occ of toCreate) {
           const taskCreateData = {
             title: master.title,
             description: master.description,
             internalNote: master.internalNote,
             date: occ,
-            protocol,
             company: { connect: { id: master.companyId } },
-            createdBy: { connect: { id: master.createdById } },
+            createdBy: master.createdById
+              ? { connect: { id: master.createdById } }
+              : undefined,
             type: master.typeId
               ? { connect: { id: master.typeId } }
               : undefined,
@@ -197,23 +227,23 @@ export class RecurringService {
             recurrenceIsGenerated: true,
           };
 
-          const created = await this.prisma.companyTask.create({
-            data: taskCreateData,
-          });
+          const created = await this.util.createWithUniqueProtocol(
+            'companyTask',
+            taskCreateData,
+          );
           createdTasks.push(created);
-
-          lastCreated = occ;
         }
 
-        if (lastCreated) {
-          await this.prisma.companyTask.update({
-            where: { id: master.id },
-            data: { recurrenceOriginalDate: lastCreated },
-          });
-        }
+        const lastOcc = occurrences[occurrences.length - 1];
+        const newMarker =
+          lastOcc.getTime() > windowEnd.getTime() ? lastOcc : windowEnd;
+        await this.prisma.companyTask.update({
+          where: { id: master.id },
+          data: { recurrenceOriginalDate: newMarker },
+        });
       } catch (err) {
         this.logger.error(
-          'Error generating weekly recurrences for ' + master.id,
+          'Error generating recurrences for ' + master.id,
           err,
         );
       }

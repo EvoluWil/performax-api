@@ -1,18 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TaskStatusEnum } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
+import { RecurringService } from '../recurring/recurring.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
 @Injectable()
 export class TaskService {
+  private readonly logger = new Logger(TaskService.name);
+
   constructor(
     private readonly qb: QBService,
     private readonly prisma: PrismaService,
     private readonly util: UtilService,
+    private readonly recurringService: RecurringService,
   ) {}
   async create(
     createTaskDto: CreateTaskDto,
@@ -56,6 +60,15 @@ export class TaskService {
   }
 
   async findAll(companyId: string) {
+    try {
+      await this.recurringService.generateForNextDays(companyId, 30);
+    } catch (err) {
+      this.logger.error(
+        `Failed to lazy-generate task recurrences for company ${companyId}`,
+        err,
+      );
+    }
+
     const where = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyTask', where);
 
