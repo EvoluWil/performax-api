@@ -15,7 +15,9 @@
     "dev": "nest start --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "postinstall": "npx prisma generate && nest build"
+    "postinstall": "npx prisma generate && nest build",
+    "prisma:generate": "prisma generate",
+    "backfill:recurrences": "ts-node -r tsconfig-paths/register scripts/backfill-recurrences.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

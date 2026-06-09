@@ -1,15 +1,16 @@
 import { FinanceFlowEnum } from '@prisma/client';
 import {
-  IsDateString,
   IsEnum,
   IsInt,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
+  Min,
 } from 'class-validator';
 
-export class CreateRecurringDto {
+export class CreateReceivableDto {
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -22,33 +23,30 @@ export class CreateRecurringDto {
   @IsOptional()
   observation?: string;
 
+  /** Total value in cents */
   @IsInt()
   @IsNotEmpty()
-  value: number;
+  totalValue: number;
 
+  /** Number of monthly installments (1–360) */
   @IsInt()
-  @IsOptional()
-  tax?: number;
+  @Min(1)
+  @Max(360)
+  installmentCount: number;
 
-  @IsInt()
-  @IsOptional()
-  retention?: number;
-
-  @IsDateString()
+  /** First installment due date (ISO string) — subsequent ones +30 days each */
+  @IsString()
   @IsNotEmpty()
-  date: Date;
+  firstDueDate: string;
 
-  @IsNotEmpty()
   @IsEnum(FinanceFlowEnum)
   flow: FinanceFlowEnum;
 
-  @IsString()
-  @IsOptional()
-  recurrence?: string;
+  @IsMongoId()
+  bankId: string;
 
-  @IsDateString()
-  @IsOptional()
-  endDate?: Date;
+  @IsMongoId()
+  methodId: string;
 
   @IsMongoId()
   @IsOptional()
@@ -56,15 +54,11 @@ export class CreateRecurringDto {
 
   @IsMongoId()
   @IsOptional()
-  bankId?: string;
-
-  @IsMongoId()
-  @IsOptional()
-  methodId?: string;
-
-  @IsMongoId()
-  @IsOptional()
   categoryId?: string;
+
+  @IsMongoId()
+  @IsOptional()
+  segmentId?: string;
 
   @IsMongoId()
   @IsOptional()
@@ -73,4 +67,12 @@ export class CreateRecurringDto {
   @IsMongoId()
   @IsOptional()
   clientId?: string;
+
+  @IsMongoId()
+  @IsOptional()
+  employeeId?: string;
+
+  @IsMongoId()
+  @IsOptional()
+  responsibleId?: string;
 }

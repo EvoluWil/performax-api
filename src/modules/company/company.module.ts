@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BudgetModule } from './budget/budget.module';
 import { ClientModule } from './client/client.module';
+import { ContractModule } from './contract/contract.module';
 import { EmployeeModule } from './employee/employee.module';
 import { EntryModule } from './entry/entry.module';
 import { FinanceModule } from './finance/finance.module';
@@ -25,6 +26,7 @@ import { WhiteLabelModule } from './white-label/white-label.module';
     EntryModule,
     ModuleModule,
     ClientModule,
+    ContractModule,
     EmployeeModule,
     FormResourcesModule,
     WhiteLabelModule,

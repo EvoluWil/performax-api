@@ -5,6 +5,12 @@ import {
 } from '@prisma/client';
 
 export class Finance implements CompanyFinance {
+  receivableId: string;
+  receivableInstallment: number;
+  isInstallment: boolean;
+  advanceId: string;
+  paidFromAdvance: boolean;
+  isAdvanceDeposit: boolean;
   responsibleId: string;
   id: string;
   title: string;
