@@ -7,6 +7,8 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { User } from '@prisma/client';
+import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { ClientService } from './client.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -19,8 +21,9 @@ export class ClientController {
   create(
     @Body() createClientDto: CreateClientDto,
     @Param('companyId') companyId: string,
+    @AuthUser() user: User,
   ) {
-    return this.clientService.create(createClientDto, companyId);
+    return this.clientService.create(createClientDto, companyId, user.id);
   }
 
   @Get()

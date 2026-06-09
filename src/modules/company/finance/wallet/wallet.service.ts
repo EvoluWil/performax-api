@@ -26,7 +26,13 @@ export class WalletService {
 
   async recalculate(companyId: string) {
     const paid = await this.prisma.companyFinance.findMany({
-      where: { companyId, status: FinanceStatusEnum.PAID, deleted: false },
+      where: {
+        companyId,
+        status: FinanceStatusEnum.PAID,
+        deleted: false,
+        isInstallment: false,
+        paidFromAdvance: false,
+      },
       select: { flow: true, value: true, tax: true, retention: true },
     });
 

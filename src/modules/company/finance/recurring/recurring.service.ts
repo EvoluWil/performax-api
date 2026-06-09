@@ -1,11 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { FinanceStatusEnum } from '@prisma/client';
+import {
+  CompanyFinanceRecurring,
+  FinanceStatusEnum,
+} from '@prisma/client';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
 import { UpdateRecurringDto } from './dto/update-recurring.dto';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_EAGER = 100;
 
 @Injectable()
 export class RecurringService {
@@ -15,30 +18,210 @@ export class RecurringService {
     private readonly prisma: PrismaService,
     private readonly util: UtilService,
   ) {}
-  async findAll(companyId: string) {
-    const recurring = await this.prisma.companyFinanceRecurring.findMany({
-      where: {
-        companyId: companyId,
-      },
-    });
 
-    return recurring;
+  async findAll(companyId: string) {
+    return this.prisma.companyFinanceRecurring.findMany({
+      where: { companyId },
+    });
   }
 
   async findOne(recurringId: string, companyId: string) {
     const recurring = await this.prisma.companyFinanceRecurring.findFirst({
-      where: {
-        id: recurringId,
-        companyId: companyId,
-      },
+      where: { id: recurringId, companyId },
     });
 
-    if (!recurring) {
-      throw new NotFoundException('Recorrência não encontrada');
-    }
-
+    if (!recurring) throw new NotFoundException('Recorrência não encontrada');
     return recurring;
   }
+
+  // ---------------------------------------------------------------------------
+  // Eager generation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generates all occurrences for a single recurring master, up to MAX_EAGER
+   * when there is no endDate, or all occurrences up to endDate otherwise.
+   *
+   * Idempotent: existing (recurrenceMasterId, date) pairs are skipped.
+   * Updates `lastDate` on the master after each run.
+   */
+  async generateEager(
+    recurring: CompanyFinanceRecurring,
+    createdById: string,
+    responsibleId: string | null,
+  ): Promise<{ created: number; protocols: string[] }> {
+    if (!recurring.recurrence) return { created: 0, protocols: [] };
+
+    const { RRule } = await import('rrule');
+
+    let rule: InstanceType<typeof RRule>;
+    try {
+      rule = RRule.fromString(recurring.recurrence);
+    } catch {
+      this.logger.warn(
+        `Invalid RRULE on recurring ${recurring.id}, skipping eager generation`,
+      );
+      return { created: 0, protocols: [] };
+    }
+
+    // Determine the full set of occurrences to target
+    let occurrences: Date[];
+    if (recurring.endDate) {
+      occurrences = rule.between(
+        recurring.date,
+        recurring.endDate,
+        true,
+      ) as Date[];
+    } else {
+      occurrences = rule.all((_, len) => len < MAX_EAGER) as Date[];
+    }
+
+    if (occurrences.length === 0) return { created: 0, protocols: [] };
+
+    // Skip already-existing ones (idempotency)
+    const existing = await this.prisma.companyFinance.findMany({
+      where: {
+        recurrenceMasterId: recurring.id,
+        date: { in: occurrences },
+        deleted: false,
+      },
+      select: { date: true },
+    });
+    const existingTimes = new Set(existing.map((e) => e.date.getTime()));
+    const toCreate = occurrences.filter(
+      (d) => !existingTimes.has(d.getTime()),
+    );
+
+    if (toCreate.length === 0) return { created: 0, protocols: [] };
+
+    const protocols = await this.util.generateUniqueProtocols(
+      'companyFinance',
+      toCreate.length,
+    );
+
+    await this.prisma.companyFinance.createMany({
+      data: toCreate.map((dueDate, index) => ({
+        title: recurring.title,
+        description: recurring.description ?? undefined,
+        value: recurring.value,
+        date: dueDate,
+        flow: recurring.flow,
+        observation: recurring.observation ?? undefined,
+        status: FinanceStatusEnum.PENDING,
+        approved: true,
+        recurrenceMasterId: recurring.id,
+        createdById,
+        companyId: recurring.companyId,
+        protocol: protocols[index],
+        responsibleId: responsibleId ?? undefined,
+        typeId: recurring.typeId ?? undefined,
+        bankId: recurring.bankId!,
+        methodId: recurring.methodId!,
+        categoryId: recurring.categoryId ?? undefined,
+        payeeId: recurring.payeeId ?? undefined,
+        clientId: recurring.clientId ?? undefined,
+        employeeId: recurring.employeeId ?? undefined,
+      })),
+    });
+
+    // Advance the high-water mark to the last occurrence
+    const lastOcc = occurrences[occurrences.length - 1];
+    await this.prisma.companyFinanceRecurring.update({
+      where: { id: recurring.id },
+      data: { lastDate: lastOcc },
+    });
+
+    return { created: protocols.length, protocols };
+  }
+
+  /**
+   * Resolves createdById and responsibleId from the first linked CompanyFinance
+   * of the master, then calls generateEager.
+   * Used by finance.service after creating the master.
+   */
+  async generateEagerForMaster(
+    recurringId: string,
+    companyId: string,
+  ): Promise<{ created: number; protocols: string[] }> {
+    const recurring = await this.findOne(recurringId, companyId);
+
+    const firstFinance = await this.prisma.companyFinance.findFirst({
+      where: { recurrenceMasterId: recurringId },
+      select: { createdById: true, responsibleId: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (!firstFinance?.createdById) {
+      this.logger.warn(
+        `Recurring ${recurringId} has no linked finance with createdById; skipping eager generation`,
+      );
+      return { created: 0, protocols: [] };
+    }
+
+    return this.generateEager(
+      recurring,
+      firstFinance.createdById,
+      firstFinance.responsibleId ?? null,
+    );
+  }
+
+  /**
+   * Runs eager generation for every recurring master in the company.
+   * Safe to call multiple times (idempotent).
+   * Used by the backfill route and script.
+   */
+  async backfillAll(companyId: string) {
+    const recurrings = await this.prisma.companyFinanceRecurring.findMany({
+      where: { companyId, recurrence: { not: null } },
+    });
+
+    const masterIds = recurrings.map((r) => r.id);
+    const firstFinances = await this.prisma.companyFinance.findMany({
+      where: { recurrenceMasterId: { in: masterIds } },
+      select: { recurrenceMasterId: true, createdById: true, responsibleId: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const createdByMap = new Map<string, string>();
+    const responsibleMap = new Map<string, string | null>();
+    for (const f of firstFinances) {
+      if (!f.recurrenceMasterId || createdByMap.has(f.recurrenceMasterId))
+        continue;
+      createdByMap.set(f.recurrenceMasterId, f.createdById);
+      responsibleMap.set(f.recurrenceMasterId, f.responsibleId ?? null);
+    }
+
+    let totalCreated = 0;
+    const results: Array<{ recurringId: string; created: number }> = [];
+
+    for (const recurring of recurrings) {
+      const createdById = createdByMap.get(recurring.id);
+      if (!createdById) {
+        this.logger.warn(
+          `Recurring ${recurring.id} has no linked finance; skipping backfill`,
+        );
+        continue;
+      }
+
+      try {
+        const result = await this.generateEager(
+          recurring,
+          createdById,
+          responsibleMap.get(recurring.id) ?? null,
+        );
+        totalCreated += result.created;
+        results.push({ recurringId: recurring.id, created: result.created });
+      } catch (err) {
+        this.logger.error(`Backfill failed for recurring ${recurring.id}`, err);
+      }
+    }
+
+    return { processed: recurrings.length, totalCreated, results };
+  }
+
+  // ---------------------------------------------------------------------------
+  // CRUD
+  // ---------------------------------------------------------------------------
 
   async update(
     recurringId: string,
@@ -47,202 +230,108 @@ export class RecurringService {
   ) {
     await this.findOne(recurringId, companyId);
 
-    const data = normalizeRelations(updateRecurringDto);
+    const data = normalizeRelations(updateRecurringDto) as Record<
+      string,
+      unknown
+    >;
 
-    return this.prisma.companyFinanceRecurring.update({
+    const now = new Date();
+
+    // Propagate scalar & relation changes to future pending/approved finances
+    const financeUpdateData: Record<string, unknown> = {};
+
+    const scalarFields = [
+      'title',
+      'description',
+      'observation',
+      'value',
+      'flow',
+    ] as const;
+    for (const field of scalarFields) {
+      if (updateRecurringDto[field] !== undefined) {
+        financeUpdateData[field] = updateRecurringDto[field] ?? null;
+      }
+    }
+
+    const relationFields = [
+      'typeId',
+      'bankId',
+      'methodId',
+      'categoryId',
+      'payeeId',
+      'clientId',
+    ] as const;
+    for (const field of relationFields) {
+      if (updateRecurringDto[field] !== undefined) {
+        financeUpdateData[field] = updateRecurringDto[field] || null;
+      }
+    }
+
+    if (Object.keys(financeUpdateData).length > 0) {
+      await this.prisma.companyFinance.updateMany({
+        where: {
+          recurrenceMasterId: recurringId,
+          date: { gte: now },
+          status: {
+            in: [FinanceStatusEnum.PENDING, FinanceStatusEnum.APPROVED],
+          },
+        },
+        data: financeUpdateData,
+      });
+    }
+
+    // If the recurrence rule changed, wipe future pending entries and
+    // regenerate eagerly from the new rule
+    let regenerated: { created: number; protocols: string[] } | null = null;
+    if (updateRecurringDto.recurrence !== undefined) {
+      await this.prisma.companyFinance.deleteMany({
+        where: {
+          recurrenceMasterId: recurringId,
+          date: { gte: now },
+          status: {
+            in: [FinanceStatusEnum.PENDING, FinanceStatusEnum.APPROVED],
+          },
+        },
+      });
+
+      // Reset lastDate to the master's original date so generateEager
+      // starts from the beginning (idempotency handles already-paid ones)
+      data.lastDate = now;
+    }
+
+    const updated = await this.prisma.companyFinanceRecurring.update({
       where: { id: recurringId },
       data,
     });
+
+    if (updateRecurringDto.recurrence !== undefined) {
+      regenerated = await this.generateEagerForMaster(recurringId, companyId);
+    }
+
+    return { ...updated, regenerated };
   }
 
   async remove(recurringId: string, companyId: string) {
     await this.findOne(recurringId, companyId);
+
+    const now = new Date();
+    await this.prisma.companyFinance.deleteMany({
+      where: {
+        recurrenceMasterId: recurringId,
+        date: { gte: now },
+        status: {
+          in: [FinanceStatusEnum.PENDING, FinanceStatusEnum.APPROVED],
+        },
+      },
+    });
 
     return this.prisma.companyFinanceRecurring.delete({
       where: { id: recurringId },
     });
   }
 
-  /**
-   * Endpoint legado: processa apenas vencidos (de `lastDate` até `now`).
-   * Delegado ao `generateForNextDays` com janela 0 para evitar duplicação
-   * de lógica e garantir o mesmo comportamento (createdBy fallback,
-   * idempotência, etc.).
-   */
+  /** Legacy endpoint kept for compatibility. */
   async processRecurrences(companyId: string) {
-    return this.generateForNextDays(companyId, 0);
-  }
-
-  /**
-   * Lazy generation: cria todos os lançamentos financeiros que deveriam
-   * existir na janela [now, now + days] a partir das recorrências
-   * configuradas. Usa `lastDate` como high-water mark e respeita `endDate`.
-   * Idempotente via verificação de existência por `(recurrenceMasterId, date)`.
-   */
-  async generateForNextDays(companyId: string, days = 30) {
-    const now = new Date();
-    const windowEnd = new Date(now.getTime() + days * DAY_MS);
-
-    const recurrings = await this.prisma.companyFinanceRecurring.findMany({
-      where: {
-        companyId,
-        recurrence: { not: null },
-        lastDate: { lt: windowEnd },
-      },
-    });
-
-    if (recurrings.length === 0) {
-      return { processed: 0, created: 0, protocols: [] };
-    }
-
-    // CompanyFinanceRecurring não guarda createdById; recuperamos do primeiro
-    // CompanyFinance vinculado ao master (o lançamento original sempre é
-    // criado com createdById em finance.service.create).
-    const masterIds = recurrings.map((r) => r.id);
-    const linkedFinancials = await this.prisma.companyFinance.findMany({
-      where: { recurrenceMasterId: { in: masterIds } },
-      select: {
-        recurrenceMasterId: true,
-        createdById: true,
-        responsibleId: true,
-      },
-      orderBy: { createdAt: 'asc' },
-    });
-    const createdByByMaster = new Map<string, string>();
-    const responsibleByMaster = new Map<string, string | null>();
-    for (const f of linkedFinancials) {
-      if (!f.recurrenceMasterId) continue;
-      if (!createdByByMaster.has(f.recurrenceMasterId)) {
-        createdByByMaster.set(f.recurrenceMasterId, f.createdById);
-        responsibleByMaster.set(
-          f.recurrenceMasterId,
-          f.responsibleId ?? null,
-        );
-      }
-    }
-
-    const createdProtocols: string[] = [];
-    const { RRule } = await import('rrule');
-
-    for (const recurring of recurrings) {
-      try {
-        if (!recurring.recurrence) continue;
-
-        const createdById = createdByByMaster.get(recurring.id);
-        if (!createdById) {
-          this.logger.warn(
-            `Finance recurring ${recurring.id} has no linked CompanyFinance with createdById; skipping lazy generation`,
-          );
-          continue;
-        }
-        const responsibleId = responsibleByMaster.get(recurring.id) ?? null;
-
-        const endDate = recurring.endDate ?? new Date('2100-01-01');
-        const effectiveEnd =
-          endDate.getTime() < windowEnd.getTime() ? endDate : windowEnd;
-
-        if (recurring.lastDate.getTime() >= effectiveEnd.getTime()) continue;
-
-        let rule;
-        try {
-          rule = RRule.fromString(recurring.recurrence);
-        } catch (e) {
-          this.logger.warn(
-            `Invalid RRULE on finance recurring ${recurring.id}, skipping`,
-          );
-          continue;
-        }
-
-        const occurrences = (
-          rule.between(recurring.lastDate, effectiveEnd, true) as Date[]
-        ).filter((d) => d.getTime() > recurring.lastDate.getTime());
-
-        if (occurrences.length === 0) {
-          await this.prisma.companyFinanceRecurring.update({
-            where: { id: recurring.id },
-            data: { lastDate: effectiveEnd },
-          });
-          continue;
-        }
-
-        const existingItems = await this.prisma.companyFinance.findMany({
-          where: {
-            recurrenceMasterId: recurring.id,
-            date: { in: occurrences },
-          },
-          select: { date: true },
-        });
-        const existingTimes = new Set(
-          existingItems.map((e) => e.date.getTime()),
-        );
-        const toCreate = occurrences.filter(
-          (o) => !existingTimes.has(o.getTime()),
-        );
-
-        for (const dueDate of toCreate) {
-          const created = (await this.util.createWithUniqueProtocol(
-            'companyFinance',
-            {
-              title: recurring.title,
-              description: recurring.description,
-              value: recurring.value,
-              date: dueDate,
-              flow: recurring.flow,
-              observation: recurring.observation,
-              status: FinanceStatusEnum.PENDING,
-              approved: true,
-              recurrenceMasterId: recurring.id,
-              createdBy: { connect: { id: createdById } },
-              company: { connect: { id: companyId } },
-              ...(responsibleId && {
-                responsible: { connect: { id: responsibleId } },
-              }),
-              ...(recurring.typeId && {
-                type: { connect: { id: recurring.typeId } },
-              }),
-              ...(recurring.bankId && {
-                bank: { connect: { id: recurring.bankId } },
-              }),
-              ...(recurring.methodId && {
-                method: { connect: { id: recurring.methodId } },
-              }),
-              ...(recurring.categoryId && {
-                category: { connect: { id: recurring.categoryId } },
-              }),
-              ...(recurring.payeeId && {
-                payee: { connect: { id: recurring.payeeId } },
-              }),
-              ...(recurring.clientId && {
-                client: { connect: { id: recurring.clientId } },
-              }),
-              ...(recurring.employeeId && {
-                employee: { connect: { id: recurring.employeeId } },
-              }),
-            },
-          )) as { protocol: string };
-
-          createdProtocols.push(created.protocol);
-        }
-
-        const lastOcc = occurrences[occurrences.length - 1];
-        const newMarker =
-          lastOcc.getTime() > effectiveEnd.getTime() ? lastOcc : effectiveEnd;
-        await this.prisma.companyFinanceRecurring.update({
-          where: { id: recurring.id },
-          data: { lastDate: newMarker },
-        });
-      } catch (err) {
-        this.logger.error(
-          'Error generating finance recurrences for ' + recurring.id,
-          err,
-        );
-      }
-    }
-
-    return {
-      processed: recurrings.length,
-      created: createdProtocols.length,
-      protocols: createdProtocols,
-    };
+    return this.backfillAll(companyId);
   }
 }

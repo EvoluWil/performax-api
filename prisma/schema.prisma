@@ -32,6 +32,10 @@ model User {
   occurrences            CompanyOccurrence[]
   financials             CompanyFinance[]
   financialsResponsible  CompanyFinance[]      @relation("financeResponsible")
+  receivables            CompanyFinanceReceivable[]
+  advances               CompanyFinanceAdvance[]
+  contracts              CompanyContract[]
+  clientsCreated         CompanyClient[]         @relation("clientCreatedBy")
   companies              Company[]
 
   supervisedBy    CompanyUserRole[] @relation("targetUsers", fields: [supervisedByIds], references: [id])
@@ -125,6 +129,10 @@ model Company {
   financeSegments     CompanyFinanceSegment[]
   financePayee        CompanyFinancePayee[]
   recurringFinancials CompanyFinanceRecurring[]
+  receivables         CompanyFinanceReceivable[]
+  advances            CompanyFinanceAdvance[]
+  contractTypes       CompanyContractType[]
+  contracts           CompanyContract[]
   whiteLabel          CompanyWhiteLabel?
 
   group   CompanyGroup? @relation(fields: [groupId], references: [id])
@@ -242,6 +250,9 @@ model CompanyClient {
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
 
+  createdBy   User?   @relation("clientCreatedBy", fields: [createdById], references: [id])
+  createdById String? @db.ObjectId
+
   employees           CompanyEmployee[]
   entries             CompanyEntry[]
   budgets             CompanyBudget[]
@@ -249,11 +260,62 @@ model CompanyClient {
   occurrences         CompanyOccurrence[]
   financials          CompanyFinance[]
   recurringFinancials CompanyFinanceRecurring[]
+  contracts           CompanyContract[]
 
   users   CompanyUserRole[] @relation(fields: [userIds], references: [id])
   userIds String[]          @default([]) @db.ObjectId
 
   @@map("company_client")
+}
+
+model CompanyContractType {
+  id                       String                   @id @default(auto()) @map("_id") @db.ObjectId
+  name                     String
+  adjustments              ContractTypeAdjustment[]
+  lastAdjustmentPercentage Float?
+  lastAdjustmentAt         DateTime?
+  deleted                  Boolean                  @default(false)
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @db.ObjectId
+
+  contracts CompanyContract[]
+
+  @@map("company_contract_type")
+}
+
+model CompanyContract {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  value        Int       @default(0)
+  startDate    DateTime?
+  endDate      DateTime?
+  dueDate      DateTime?
+  scope        String?
+  attachment   File?
+  generatedPdf File?
+  active       Boolean   @default(true)
+  deleted      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  client   CompanyClient @relation(fields: [clientId], references: [id])
+  clientId String        @db.ObjectId
+
+  type   CompanyContractType @relation(fields: [typeId], references: [id])
+  typeId String              @db.ObjectId
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String @db.ObjectId
+
+  recurring   CompanyFinanceRecurring? @relation(fields: [recurringId], references: [id])
+  recurringId String?                  @unique @db.ObjectId
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @db.ObjectId
+
+  @@map("company_contract")
 }
 
 model CompanyEmployee {
@@ -551,6 +613,7 @@ model CompanyFinanceType {
 
   financials          CompanyFinance[]
   recurringFinancials CompanyFinanceRecurring[]
+  advances            CompanyFinanceAdvance[]
 
   @@map("company_finance_type")
 }
@@ -614,6 +677,16 @@ model CompanyFinance {
   linkedFinanceId String?          @db.ObjectId
   linkedBy        CompanyFinance[] @relation("FinanceLink")
 
+  receivable              CompanyFinanceReceivable? @relation("receivableInstallments", fields: [receivableId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  receivableId            String?                   @db.ObjectId
+  receivableInstallment   Int?
+  isInstallment           Boolean                   @default(false)
+
+  advance       CompanyFinanceAdvance? @relation("advanceApplications", fields: [advanceId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  advanceId     String?                @db.ObjectId
+  paidFromAdvance Boolean              @default(false)
+  isAdvanceDeposit Boolean             @default(false)
+
   @@map("company_finance")
 }
 
@@ -641,6 +714,7 @@ model CompanyFinancePaymentMethod {
   companyId           String                    @db.ObjectId
   financials          CompanyFinance[]
   recurringFinancials CompanyFinanceRecurring[]
+  advances            CompanyFinanceAdvance[]
 
   @@map("company_finance_payment_method")
 }
@@ -657,6 +731,7 @@ model CompanyFinanceBank {
   companyId           String                    @db.ObjectId
   financials          CompanyFinance[]
   recurringFinancials CompanyFinanceRecurring[]
+  advances            CompanyFinanceAdvance[]
 
   @@map("company_finance_bank")
 }
@@ -747,7 +822,79 @@ model CompanyFinanceRecurring {
   employee   CompanyEmployee? @relation(fields: [employeeId], references: [id])
   employeeId String?          @db.ObjectId
 
+  contract   CompanyContract?
+
   @@map("company_finance_recurring")
+}
+
+model CompanyFinanceReceivable {
+  id               String                @id @default(auto()) @map("_id") @db.ObjectId
+  protocol         String                @unique
+  title            String
+  description      String?
+  observation      String?
+  totalValue       Int
+  installmentCount Int
+  paidCount        Int                   @default(0)
+  flow             FinanceFlowEnum       @default(IN)
+  status           ReceivableStatusEnum  @default(OPEN)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  company     Company @relation(fields: [companyId], references: [id])
+  companyId   String  @db.ObjectId
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String @db.ObjectId
+
+  installments CompanyFinance[] @relation("receivableInstallments")
+
+  @@map("company_finance_receivables")
+}
+
+enum ReceivableStatusEnum {
+  OPEN
+  PARTIAL
+  SETTLED
+}
+
+model CompanyFinanceAdvance {
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  protocol       String             @unique
+  title          String
+  description    String?
+  observation    String?
+  totalValue     Int
+  remainingValue Int
+  date           DateTime
+  status         AdvanceStatusEnum  @default(OPEN)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  company     Company @relation(fields: [companyId], references: [id])
+  companyId   String  @db.ObjectId
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String @db.ObjectId
+
+  bank   CompanyFinanceBank? @relation(fields: [bankId], references: [id])
+  bankId String?             @db.ObjectId
+
+  method   CompanyFinancePaymentMethod? @relation(fields: [methodId], references: [id])
+  methodId String?                      @db.ObjectId
+
+  type   CompanyFinanceType? @relation(fields: [typeId], references: [id])
+  typeId String?             @db.ObjectId
+
+  applications CompanyFinance[] @relation("advanceApplications")
+
+  @@map("company_finance_advances")
+}
+
+enum AdvanceStatusEnum {
+  OPEN
+  PARTIAL
+  SETTLED
 }
 
 model AuditLog {
@@ -780,6 +927,11 @@ model Changelog {
 type File {
   type String
   url  String
+}
+
+type ContractTypeAdjustment {
+  percentage Float
+  appliedAt  DateTime
 }
 
 enum UserRoleEnum {
@@ -854,6 +1006,7 @@ enum FinanceStatusEnum {
   APPROVED
   PAID
   REJECTED
+  CANCELLED
 }
 
 enum FinanceFlowEnum {

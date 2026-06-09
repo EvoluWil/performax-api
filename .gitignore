@@ -2,8 +2,9 @@
 /node_modules
 
 # dist
-dist/*
-!dist/main.*
+dist/scripts/*
+dist/src/*
+!dist/src/main.*
 
 # env
 .env

@@ -9,5 +9,6 @@ export class Client implements CompanyClient {
   createdAt: Date;
   updatedAt: Date;
   companyId: string;
+  createdById: string | null;
   userIds: string[];
 }

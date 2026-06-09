@@ -9,6 +9,8 @@ import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-query
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
+import { AdvanceService } from '../advance/advance.service';
+import { ReceivableService } from '../receivable/receivable.service';
 import { RecurringService } from '../recurring/recurring.service';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateFinanceDto } from './dto/create-finance.dto';
@@ -25,7 +27,21 @@ export class FinanceService {
     private readonly util: UtilService,
     private readonly walletService: WalletService,
     private readonly recurringService: RecurringService,
+    private readonly receivableService: ReceivableService,
+    private readonly advanceService: AdvanceService,
   ) {}
+
+  private getNetWalletImpact(
+    flow: FinanceFlowEnum,
+    value: number,
+    tax: number,
+    retention: number,
+  ) {
+    if (flow === FinanceFlowEnum.IN) {
+      return value - tax - retention;
+    }
+    return value + tax + retention;
+  }
 
   async create(
     { isRecurring, recurringEndDate, recurrence, ...rest }: CreateFinanceDto,
@@ -80,21 +96,28 @@ export class FinanceService {
         where: { id: finance.id },
         data: { recurrenceMasterId: recurring.id },
       });
+
+      // Eagerly generate all occurrences (up to 100 or until endDate)
+      if (recurrence) {
+        try {
+          await this.recurringService.generateEager(
+            recurring,
+            userId,
+            data.responsible?.connect?.id ?? userId,
+          );
+        } catch (err) {
+          this.logger.error(
+            `Failed to eagerly generate recurrences for master ${recurring.id}`,
+            err,
+          );
+        }
+      }
     }
 
     return finance;
   }
 
   async findAll(companyId: string) {
-    try {
-      await this.recurringService.generateForNextDays(companyId, 30);
-    } catch (err) {
-      this.logger.error(
-        `Failed to lazy-generate finance recurrences for company ${companyId}`,
-        err,
-      );
-    }
-
     const where = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyFinance', where);
     const financials = await this.prisma.companyFinance.findMany({
@@ -218,10 +241,29 @@ export class FinanceService {
   ) {
     const finance = await this.prisma.companyFinance.findFirst({
       where: { id: financeId, companyId },
+      select: {
+        id: true,
+        status: true,
+        linkedFinanceId: true,
+        isInstallment: true,
+        receivableId: true,
+        paidFromAdvance: true,
+        advanceId: true,
+        flow: true,
+        value: true,
+        tax: true,
+        retention: true,
+      },
     });
 
     if (!finance) {
       throw new BadRequestException('Despesa não encontrada!');
+    }
+
+    if (finance.status === FinanceStatusEnum.CANCELLED) {
+      throw new BadRequestException(
+        'Lançamentos cancelados não podem ser editados.',
+      );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -235,10 +277,72 @@ export class FinanceService {
       (data as any).status !== undefined &&
       (data as any).status !== FinanceStatusEnum.PAID;
 
+    if (wasNotPaid && willBePaid && (data as any).paidFromAdvance) {
+      if (!(data as any).advanceId) {
+        throw new BadRequestException(
+          'Selecione o adiantamento para aplicar o pagamento',
+        );
+      }
+    }
+
     await this.prisma.companyFinance.update({
       where: { id: financeId },
       data,
     });
+
+    const updated = await this.prisma.companyFinance.findUnique({
+      where: { id: financeId },
+      select: {
+        flow: true,
+        value: true,
+        tax: true,
+        retention: true,
+        paidFromAdvance: true,
+        advanceId: true,
+      },
+    });
+
+    // Installment: sync receivable status but skip wallet recalculate
+    if (finance.isInstallment && finance.receivableId) {
+      if (
+        (wasNotPaid && willBePaid) ||
+        (wasPaid && willNotBePaid)
+      ) {
+        await this.receivableService.syncStatus(finance.receivableId);
+      }
+      return { ok: true };
+    }
+
+    // Advance payment: deduct from advance balance, skip wallet recalculate
+    if (wasNotPaid && willBePaid && updated?.paidFromAdvance && updated.advanceId) {
+      const appliedAmount = this.getNetWalletImpact(
+        updated.flow,
+        updated.value,
+        updated.tax,
+        updated.retention,
+      );
+      await this.advanceService.apply(
+        updated.advanceId,
+        companyId,
+        appliedAmount,
+      );
+      return { ok: true };
+    }
+
+    if (wasPaid && willNotBePaid && finance.paidFromAdvance && finance.advanceId) {
+      const appliedAmount = this.getNetWalletImpact(
+        finance.flow,
+        finance.value,
+        finance.tax,
+        finance.retention,
+      );
+      await this.advanceService.revertApplication(
+        finance.advanceId,
+        companyId,
+        appliedAmount,
+      );
+      return { ok: true };
+    }
 
     // Transfer PAID cascade: mark the linked entry as PAID too
     if (wasNotPaid && willBePaid && finance.linkedFinanceId) {
@@ -286,6 +390,14 @@ export class FinanceService {
         companyId: true,
         status: true,
         linkedFinanceId: true,
+        isInstallment: true,
+        receivableId: true,
+        paidFromAdvance: true,
+        advanceId: true,
+        flow: true,
+        value: true,
+        tax: true,
+        retention: true,
       },
     });
 
@@ -308,6 +420,8 @@ export class FinanceService {
         paymentDate: null,
         tax: 0,
         retention: 0,
+        paidFromAdvance: false,
+        advanceId: null,
       },
     });
 
@@ -331,6 +445,28 @@ export class FinanceService {
       }
     }
 
+    // Installment: sync receivable status, skip wallet recalculate
+    if (finance.isInstallment && finance.receivableId) {
+      await this.receivableService.syncStatus(finance.receivableId);
+      return { ok: true };
+    }
+
+    // Advance payment revert: restore advance balance, skip wallet recalculate
+    if (finance.paidFromAdvance && finance.advanceId) {
+      const appliedAmount = this.getNetWalletImpact(
+        finance.flow,
+        finance.value,
+        finance.tax,
+        finance.retention,
+      );
+      await this.advanceService.revertApplication(
+        finance.advanceId,
+        companyId,
+        appliedAmount,
+      );
+      return { ok: true };
+    }
+
     await this.walletService.recalculate(companyId);
     if (linkedCompanyId && linkedCompanyId !== companyId) {
       await this.walletService.recalculate(linkedCompanyId);
@@ -346,6 +482,12 @@ export class FinanceService {
 
     if (!finance) {
       throw new BadRequestException('Lançamento não encontrado!');
+    }
+
+    if (finance.status === FinanceStatusEnum.CANCELLED) {
+      throw new BadRequestException(
+        'Lançamentos cancelados não podem ser reativados ou aprovados.',
+      );
     }
 
     return this.prisma.companyFinance.update({

@@ -32,6 +32,18 @@ export class UtilService {
     return protocol;
   }
 
+  async generateUniqueProtocols<T extends keyof PrismaClient>(
+    model: T,
+    count: number,
+  ): Promise<string[]> {
+    if (count <= 0) return [];
+
+    const base = await this.generateUniqueProtocol(model);
+    return Array.from({ length: count }, (_, i) =>
+      i === 0 ? base : `${base}-${i}`,
+    );
+  }
+
   /**
    * Cria um registro garantindo unicidade do `protocol` mesmo sob
    * concorrência ou em loops apertados dentro do mesmo minuto.
