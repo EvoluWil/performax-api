@@ -17,7 +17,8 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "postinstall": "npx prisma generate && nest build",
     "prisma:generate": "prisma generate",
-    "backfill:recurrences": "ts-node -r tsconfig-paths/register scripts/backfill-recurrences.ts"
+    "backfill:recurrences": "ts-node -r tsconfig-paths/register scripts/backfill-recurrences.ts",
+    "backfill:budget-cents": "ts-node -r tsconfig-paths/register scripts/backfill-budget-cents.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

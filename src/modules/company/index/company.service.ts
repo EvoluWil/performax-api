@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserRoleEnum } from '@prisma/client';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import { isValidObjectId } from 'src/utils/is-valid-object-id.util';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 
@@ -35,6 +40,10 @@ export class CompanyService {
   }
 
   async findOne(companyId: string, userId: string) {
+    if (!isValidObjectId(companyId)) {
+      throw new BadRequestException('ID de empresa inválido');
+    }
+
     const company = await this.prisma.company.findFirst({
       where: {
         id: companyId,

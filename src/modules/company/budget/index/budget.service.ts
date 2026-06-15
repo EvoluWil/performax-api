@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BudgetStatusEnum } from '@prisma/client';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
+import { isValidObjectId } from 'src/utils/is-valid-object-id.util';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
@@ -15,11 +20,19 @@ export class BudgetService {
     private readonly qb: QBService,
   ) {}
 
+  private assertValidCompanyId(companyId: string) {
+    if (!isValidObjectId(companyId)) {
+      throw new BadRequestException('ID de empresa inválido');
+    }
+  }
+
   async create(
     createBudgetDto: CreateBudgetDto,
     companyId: string,
     userId: string,
   ) {
+    this.assertValidCompanyId(companyId);
+
     const budgetType = await this.prisma.companyBudgetType.findUnique({
       where: { id: createBudgetDto.typeId },
     });
@@ -42,6 +55,8 @@ export class BudgetService {
   }
 
   async findAll(companyId: string) {
+    this.assertValidCompanyId(companyId);
+
     const where = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyBudget', where);
     const budgets = await this.prisma.companyBudget.findMany({
@@ -51,6 +66,8 @@ export class BudgetService {
   }
 
   async findOne(budgetId: string, companyId: string) {
+    this.assertValidCompanyId(companyId);
+
     const budget = await this.prisma.companyBudget.findUnique({
       where: { id: budgetId, companyId },
       include: {
