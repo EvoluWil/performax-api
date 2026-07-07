@@ -18,4 +18,7 @@ export class Occurrence implements CompanyOccurrence {
   responsibleId: string;
   companyId: string;
   documents: File[];
+  conclusionNote: string;
+  conclusionFiles: File[];
+  completedAt: Date;
 }

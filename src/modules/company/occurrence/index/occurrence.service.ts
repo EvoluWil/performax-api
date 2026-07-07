@@ -77,6 +77,10 @@ export class OccurrenceService {
     await this.findOne(occurrenceId, companyId);
     const data = normalizeRelations(updateOccurrenceDto) as any;
 
+    if (data.status === OccurrenceStatusEnum.COMPLETED) {
+      data.completedAt = new Date();
+    }
+
     await this.prisma.companyOccurrence.update({
       where: { id: occurrenceId },
       data,
