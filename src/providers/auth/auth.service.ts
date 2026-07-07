@@ -82,13 +82,10 @@ export class AuthService {
       signInDto.email,
       signInDto.password,
     );
-
+    console.log(user);
     const session = await this.createSession(user.id);
-
-    return {
-      user,
-      session,
-    };
+    console.log(session);
+    return { user, session };
   }
 
   async signUp(signUpDto: SignUpDto) {

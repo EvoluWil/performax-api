@@ -164,6 +164,51 @@ export class FormResourcesService {
             result.employees = employees;
             break;
           }
+
+          case 'budgetTypes': {
+            const budgetTypes = await this.prisma.companyBudgetType.findMany({
+              where: {
+                companyId,
+                deleted: false,
+                ...(nameFilter ? { name: nameFilter } : {}),
+              },
+              select: { id: true, name: true, needApprove: true },
+              orderBy: { name: 'asc' },
+            });
+            result.budgetTypes = budgetTypes;
+            break;
+          }
+
+          case 'occurrenceTypes': {
+            const occurrenceTypes =
+              await this.prisma.companyOccurrenceType.findMany({
+                where: {
+                  companyId,
+                  deleted: false,
+                  ...(nameFilter ? { name: nameFilter } : {}),
+                },
+                select: { id: true, name: true, needApprove: true },
+                orderBy: { name: 'asc' },
+              });
+            result.occurrenceTypes = occurrenceTypes;
+            break;
+          }
+
+          case 'contractTypes': {
+            const contractTypes = await this.prisma.companyContractType.findMany(
+              {
+                where: {
+                  companyId,
+                  deleted: false,
+                  ...(nameFilter ? { name: nameFilter } : {}),
+                },
+                select: { id: true, name: true },
+                orderBy: { name: 'asc' },
+              },
+            );
+            result.contractTypes = contractTypes;
+            break;
+          }
         }
       }),
     );

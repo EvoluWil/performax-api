@@ -18,7 +18,10 @@
     "postinstall": "npx prisma generate && nest build",
     "prisma:generate": "prisma generate",
     "backfill:recurrences": "ts-node -r tsconfig-paths/register scripts/backfill-recurrences.ts",
-    "backfill:budget-cents": "ts-node -r tsconfig-paths/register scripts/backfill-budget-cents.ts"
+    "backfill:budget-cents": "ts-node -r tsconfig-paths/register scripts/backfill-budget-cents.ts",
+    "seed:modules": "ts-node -r tsconfig-paths/register scripts/seed-modules.ts",
+    "backfill:module-permissions": "ts-node -r tsconfig-paths/register scripts/backfill-module-permissions.ts",
+    "validate:modules": "ts-node -r tsconfig-paths/register scripts/validate-modules.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

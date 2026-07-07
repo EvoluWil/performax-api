@@ -11,15 +11,19 @@ export class PermissionService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(roleId: string, { moduleId, ...rest }: CreatePermissionDto) {
-    const permissionModule = await this.prisma.companyRole.findFirst({
-      where: {
-        permissions: { some: { moduleId } },
+    const existingPermission = await this.prisma.companyRolePermission.findFirst(
+      {
+        where: {
+          companyRoleId: roleId,
+          moduleId,
+        },
+        include: { module: true },
       },
-    });
+    );
 
-    if (permissionModule) {
+    if (existingPermission) {
       throw new ConflictException(
-        `Já existe uma permissão para o módulo "${permissionModule?.name}" neste cargo.`,
+        `Já existe uma permissão para o módulo "${existingPermission.module?.name ?? moduleId}" neste cargo.`,
       );
     }
 
