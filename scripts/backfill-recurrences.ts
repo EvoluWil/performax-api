@@ -168,6 +168,9 @@ async function main() {
             ...(recurring.categoryId && {
               category: { connect: { id: recurring.categoryId } },
             }),
+            ...(recurring.segmentId && {
+              segment: { connect: { id: recurring.segmentId } },
+            }),
             ...(recurring.payeeId && {
               payee: { connect: { id: recurring.payeeId } },
             }),

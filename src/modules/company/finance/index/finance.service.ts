@@ -82,6 +82,7 @@ export class FinanceService {
           method: data.method,
           bank: data.bank,
           category: data.category,
+          ...(data.segment ? { segment: data.segment } : {}),
           ...(data.client ? { client: data.client } : {}),
           ...(data.payee ? { payee: data.payee } : {}),
           ...(data.employee ? { employee: data.employee } : {}),

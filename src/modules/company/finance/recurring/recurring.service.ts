@@ -118,6 +118,7 @@ export class RecurringService {
         bankId: recurring.bankId!,
         methodId: recurring.methodId!,
         categoryId: recurring.categoryId ?? undefined,
+        segmentId: recurring.segmentId ?? undefined,
         payeeId: recurring.payeeId ?? undefined,
         clientId: recurring.clientId ?? undefined,
         employeeId: recurring.employeeId ?? undefined,
@@ -258,6 +259,7 @@ export class RecurringService {
       'bankId',
       'methodId',
       'categoryId',
+      'segmentId',
       'payeeId',
       'clientId',
     ] as const;

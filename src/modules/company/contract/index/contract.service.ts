@@ -221,6 +221,9 @@ export class ContractService {
         bank: { connect: { id: dto.bankId } },
         method: { connect: { id: dto.methodId } },
         category: { connect: { id: dto.categoryId } },
+        ...(dto.segmentId
+          ? { segment: { connect: { id: dto.segmentId } } }
+          : {}),
       },
     });
 

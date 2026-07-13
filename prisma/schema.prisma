@@ -762,7 +762,8 @@ model CompanyFinanceSegment {
   updatedAt DateTime @updatedAt
   deleted   Boolean  @default(false)
 
-  financials CompanyFinance[]
+  financials          CompanyFinance[]
+  recurringFinancials CompanyFinanceRecurring[]
 
   company   Company @relation(fields: [companyId], references: [id])
   companyId String  @db.ObjectId
@@ -818,6 +819,9 @@ model CompanyFinanceRecurring {
 
   category   CompanyFinanceCategory @relation(fields: [categoryId], references: [id])
   categoryId String                 @db.ObjectId
+
+  segment   CompanyFinanceSegment? @relation(fields: [segmentId], references: [id])
+  segmentId String?                @db.ObjectId
 
   payee   CompanyFinancePayee? @relation(fields: [payeeId], references: [id])
   payeeId String?              @db.ObjectId

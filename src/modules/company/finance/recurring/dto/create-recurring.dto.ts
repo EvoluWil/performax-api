@@ -68,6 +68,10 @@ export class CreateRecurringDto {
 
   @IsMongoId()
   @IsOptional()
+  segmentId?: string;
+
+  @IsMongoId()
+  @IsOptional()
   payeeId?: string;
 
   @IsMongoId()
