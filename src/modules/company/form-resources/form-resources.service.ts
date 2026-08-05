@@ -1,22 +1,35 @@
 import { Injectable } from '@nestjs/common';
+import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import { FORM_RESOURCE_MODULE_MAP } from 'src/utils/form-resource-modules.util';
 import { FormResourcesDto, ResourceKey } from './dto/form-resources.dto';
 
 type ResourceItem = { id: string; name: string; [key: string]: unknown };
 
 @Injectable()
 export class FormResourcesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly permissionService: CompanyPermissionService,
+  ) {}
 
   async findResources(
     companyId: string,
+    userId: string,
     dto: FormResourcesDto,
   ): Promise<Partial<Record<ResourceKey, ResourceItem[]>>> {
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
     const { resources, search = {} } = dto;
     const result: Partial<Record<ResourceKey, ResourceItem[]>> = {};
 
     await Promise.all(
       resources.map(async (resource) => {
+        const moduleCode = FORM_RESOURCE_MODULE_MAP[resource];
+        if (!this.permissionService.hasFilterAccess(ctx, moduleCode)) {
+          result[resource] = [];
+          return;
+        }
+
         const term = search[resource] ?? '';
         const nameFilter = term
           ? { contains: term, mode: 'insensitive' as const }
@@ -24,12 +37,19 @@ export class FormResourcesService {
 
         switch (resource) {
           case 'users': {
+            const where: Record<string, unknown> = {
+              deleted: false,
+              companyUser: { some: { companyId } },
+              ...(nameFilter ? { name: nameFilter } : {}),
+            };
+            this.permissionService.applyUserIdsScopeToWhere(
+              where,
+              ctx,
+              'user',
+              'id',
+            );
             const users = await this.prisma.user.findMany({
-              where: {
-                deleted: false,
-                companyUser: { some: { companyId } },
-                ...(nameFilter ? { name: nameFilter } : {}),
-              },
+              where: where as any,
               select: { id: true, name: true },
               orderBy: { name: 'asc' },
             });
@@ -38,12 +58,18 @@ export class FormResourcesService {
           }
 
           case 'clients': {
+            const where: Record<string, unknown> = {
+              companyId,
+              deleted: false,
+              ...(nameFilter ? { name: nameFilter } : {}),
+            };
+            await this.permissionService.applyClientScopeToWhere(
+              where,
+              ctx,
+              'client',
+            );
             const clients = await this.prisma.companyClient.findMany({
-              where: {
-                companyId,
-                deleted: false,
-                ...(nameFilter ? { name: nameFilter } : {}),
-              },
+              where: where as any,
               select: { id: true, name: true },
               orderBy: { name: 'asc' },
             });

@@ -28,8 +28,11 @@ export class BudgetController {
   }
 
   @Get()
-  findAll(@Param('companyId') companyId: string) {
-    return this.budgetService.findAll(companyId);
+  findAll(
+    @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.budgetService.findAll(companyId, user.id);
   }
 
   @Get(':budgetId')

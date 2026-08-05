@@ -33,8 +33,11 @@ export class ContractController {
   }
 
   @Get()
-  findAll(@Param('companyId') companyId: string) {
-    return this.contractService.findAll(companyId);
+  findAll(
+    @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.contractService.findAll(companyId, user.id);
   }
 
   @Get(':contractId')

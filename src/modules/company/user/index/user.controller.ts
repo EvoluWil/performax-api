@@ -1,4 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { User } from '@prisma/client';
+import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
 
@@ -15,8 +17,11 @@ export class UserController {
   }
 
   @Get()
-  findAll(@Param('companyId') companyId: string) {
-    return this.userService.findAll(companyId);
+  findAll(
+    @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.userService.findAll(companyId, user.id);
   }
 
   @Get(':userId')

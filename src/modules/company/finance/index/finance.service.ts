@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { FinanceFlowEnum, FinanceStatusEnum } from '@prisma/client';
+import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -29,6 +30,7 @@ export class FinanceService {
     private readonly recurringService: RecurringService,
     private readonly receivableService: ReceivableService,
     private readonly advanceService: AdvanceService,
+    private readonly permissionService: CompanyPermissionService,
   ) {}
 
   private getNetWalletImpact(
@@ -118,9 +120,17 @@ export class FinanceService {
     return finance;
   }
 
-  async findAll(companyId: string) {
-    const where = { companyId, deleted: false };
+  async findAll(companyId: string, userId: string) {
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertPageAccess(ctx, 'financial');
+
+    const where: Record<string, unknown> = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyFinance', where);
+    await this.permissionService.validateOperationalListWhere(
+      ctx,
+      'financial',
+      query.where as Record<string, unknown>,
+    );
     const financials = await this.prisma.companyFinance.findMany({
       ...query,
     });

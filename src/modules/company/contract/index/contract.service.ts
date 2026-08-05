@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { FinanceFlowEnum, FinanceStatusEnum } from '@prisma/client';
 import { RecurringService } from 'src/modules/company/finance/recurring/recurring.service';
+import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
@@ -37,6 +38,7 @@ export class ContractService {
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
     private readonly recurringService: RecurringService,
+    private readonly permissionService: CompanyPermissionService,
   ) {}
 
   async create(
@@ -57,9 +59,17 @@ export class ContractService {
     });
   }
 
-  async findAll(companyId: string) {
-    const where = { companyId, deleted: false };
+  async findAll(companyId: string, userId: string) {
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertPageAccess(ctx, 'contract');
+
+    const where: Record<string, unknown> = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyContract', where);
+    await this.permissionService.validateOperationalListWhere(
+      ctx,
+      'contract',
+      query.where as Record<string, unknown>,
+    );
     const contracts = await this.prisma.companyContract.findMany({
       ...query,
     });

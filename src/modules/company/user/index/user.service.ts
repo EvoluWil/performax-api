@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { MailTypeEnum } from 'src/providers/mail/dto/send-mail.dto';
 import { MailService } from 'src/providers/mail/mail.service';
+import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { defaultPlainToClass } from 'src/utils/default-plain-class.utils';
@@ -18,6 +19,7 @@ export class UserService {
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
     private readonly mailService: MailService,
+    private readonly permissionService: CompanyPermissionService,
   ) {}
 
   async create(createUserDto: CreateUserDto, companyId: string) {
@@ -145,13 +147,18 @@ export class UserService {
     return defaultPlainToClass(FindUserDto, newUser);
   }
 
-  async findAll(companyId: string) {
-    const where = {
+  async findAll(companyId: string, userId: string) {
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertFilterAccess(ctx, 'user');
+
+    const where: Record<string, unknown> = {
       OR: [
         { companyUser: { some: { companyId } } },
         { companies: { some: { id: companyId } } },
       ],
     };
+    this.permissionService.applyUserIdsScopeToWhere(where, ctx, 'user', 'id');
+
     const { count, query } = await this.qb.query('user', where);
     const users = await this.prisma.user.findMany({
       ...query,

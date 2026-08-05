@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FinanceStatusEnum } from '@prisma/client';
+import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -15,6 +16,7 @@ export class ClientService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly qb: QBService,
+    private readonly permissionService: CompanyPermissionService,
   ) {}
 
   create(createClientDto: CreateClientDto, companyId: string, userId: string) {
@@ -27,8 +29,13 @@ export class ClientService {
     });
   }
 
-  async findAll(companyId: string) {
-    const where = { companyId, deleted: false };
+  async findAll(companyId: string, userId: string) {
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertFilterAccess(ctx, 'client');
+
+    const where: Record<string, unknown> = { companyId, deleted: false };
+    await this.permissionService.applyClientScopeToWhere(where, ctx, 'client');
+
     const { count, query } = await this.qb.query('companyClient', where);
     const clients = await this.prisma.companyClient.findMany({
       ...query,
@@ -78,7 +85,12 @@ export class ClientService {
     };
   }
 
-  async findOne(clientId: string, companyId: string) {
+  async findOne(clientId: string, companyId: string, userId?: string) {
+    if (userId) {
+      const ctx = await this.permissionService.resolveContext(userId, companyId);
+      this.permissionService.assertPageAccess(ctx, 'client');
+    }
+
     const client = await this.prisma.companyClient.findUnique({
       where: { id: clientId, companyId, deleted: false },
       include: {

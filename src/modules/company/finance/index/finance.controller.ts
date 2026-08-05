@@ -38,8 +38,11 @@ export class FinanceController {
   }
 
   @Get()
-  findAll(@Param('companyId') companyId: string) {
-    return this.financeService.findAll(companyId);
+  findAll(
+    @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.financeService.findAll(companyId, user.id);
   }
 
   @Get(':financeId')

@@ -32,8 +32,11 @@ export class OccurrenceController {
   }
 
   @Get()
-  findAll(@Param('companyId') companyId: string) {
-    return this.occurrenceService.findAll(companyId);
+  findAll(
+    @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.occurrenceService.findAll(companyId, user.id);
   }
 
   @Get(':occurrenceId')

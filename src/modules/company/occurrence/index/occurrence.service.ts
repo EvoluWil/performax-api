@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { OccurrenceStatusEnum } from '@prisma/client';
+import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -13,6 +14,7 @@ export class OccurrenceService {
     private readonly prisma: PrismaService,
     private readonly util: UtilService,
     private readonly qb: QBService,
+    private readonly permissionService: CompanyPermissionService,
   ) {}
   async create(
     createOccurrenceDto: CreateOccurrenceDto,
@@ -42,9 +44,17 @@ export class OccurrenceService {
     return occurrence;
   }
 
-  async findAll(companyId: string) {
-    const where = { companyId, deleted: false };
+  async findAll(companyId: string, userId: string) {
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertPageAccess(ctx, 'occurrence');
+
+    const where: Record<string, unknown> = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyOccurrence', where);
+    await this.permissionService.validateOperationalListWhere(
+      ctx,
+      'occurrence',
+      query.where as Record<string, unknown>,
+    );
     const occurrences = await this.prisma.companyOccurrence.findMany({
       ...query,
     });

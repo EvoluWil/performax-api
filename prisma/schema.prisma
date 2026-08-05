@@ -947,6 +947,7 @@ enum UserRoleEnum {
 }
 
 enum PermissionEnum {
+  FILTER
   READ
   WRITE
   ADMIN

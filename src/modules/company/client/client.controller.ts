@@ -27,16 +27,20 @@ export class ClientController {
   }
 
   @Get()
-  findAll(@Param('companyId') companyId: string) {
-    return this.clientService.findAll(companyId);
+  findAll(
+    @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+  ) {
+    return this.clientService.findAll(companyId, user.id);
   }
 
   @Get(':clientId')
   findOne(
     @Param('clientId') clientId: string,
     @Param('companyId') companyId: string,
+    @AuthUser() user: User,
   ) {
-    return this.clientService.findOne(clientId, companyId);
+    return this.clientService.findOne(clientId, companyId, user.id);
   }
 
   @Put(':clientId')

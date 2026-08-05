@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TaskStatusEnum } from '@prisma/client';
+import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -17,6 +18,7 @@ export class TaskService {
     private readonly prisma: PrismaService,
     private readonly util: UtilService,
     private readonly recurringService: RecurringService,
+    private readonly permissionService: CompanyPermissionService,
   ) {}
   async create(
     createTaskDto: CreateTaskDto,
@@ -59,7 +61,7 @@ export class TaskService {
     return this.prisma.companyTask.create({ data });
   }
 
-  async findAll(companyId: string) {
+  async findAll(companyId: string, userId: string) {
     try {
       await this.recurringService.generateForNextDays(companyId, 30);
     } catch (err) {
@@ -69,8 +71,16 @@ export class TaskService {
       );
     }
 
-    const where = { companyId, deleted: false };
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertPageAccess(ctx, 'task');
+
+    const where: Record<string, unknown> = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyTask', where);
+    await this.permissionService.validateOperationalListWhere(
+      ctx,
+      'task',
+      query.where as Record<string, unknown>,
+    );
 
     const tasks = await this.prisma.companyTask.findMany({
       ...query,

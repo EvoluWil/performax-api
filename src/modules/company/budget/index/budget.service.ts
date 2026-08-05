@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { BudgetStatusEnum } from '@prisma/client';
+import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
@@ -18,6 +19,7 @@ export class BudgetService {
     private readonly prisma: PrismaService,
     private readonly util: UtilService,
     private readonly qb: QBService,
+    private readonly permissionService: CompanyPermissionService,
   ) {}
 
   private assertValidCompanyId(companyId: string) {
@@ -54,11 +56,19 @@ export class BudgetService {
     return budget;
   }
 
-  async findAll(companyId: string) {
+  async findAll(companyId: string, userId: string) {
     this.assertValidCompanyId(companyId);
 
-    const where = { companyId, deleted: false };
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertPageAccess(ctx, 'budget');
+
+    const where: Record<string, unknown> = { companyId, deleted: false };
     const { count, query } = await this.qb.query('companyBudget', where);
+    await this.permissionService.validateOperationalListWhere(
+      ctx,
+      'budget',
+      query.where as Record<string, unknown>,
+    );
     const budgets = await this.prisma.companyBudget.findMany({
       ...query,
     });

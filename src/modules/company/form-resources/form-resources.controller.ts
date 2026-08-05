@@ -1,4 +1,6 @@
 import { Body, Controller, Param, Post } from '@nestjs/common';
+import { User } from '@prisma/client';
+import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { FormResourcesDto } from './dto/form-resources.dto';
 import { FormResourcesService } from './form-resources.service';
 
@@ -9,8 +11,9 @@ export class FormResourcesController {
   @Post()
   findResources(
     @Param('companyId') companyId: string,
+    @AuthUser() user: User,
     @Body() dto: FormResourcesDto,
   ) {
-    return this.service.findResources(companyId, dto);
+    return this.service.findResources(companyId, user.id, dto);
   }
 }
