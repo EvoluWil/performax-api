@@ -259,7 +259,10 @@ export class CompanyPermissionService {
     const scopedUserIds = this.getScopedUserIds(ctx, moduleCode);
     if (scopedUserIds === null) return;
 
-    where.responsibleId = { in: scopedUserIds };
+    where.responsibleId = this.intersectInFilter(
+      where.responsibleId,
+      scopedUserIds,
+    );
   }
 
   async assertClientInScope(
@@ -318,15 +321,15 @@ export class CompanyPermissionService {
     moduleCode: string,
     where: Record<string, unknown>,
   ) {
-    for (const clientId of this.collectScalars(where, 'clientId')) {
+    for (const clientId of this.collectFieldValues(where, 'clientId')) {
       await this.assertClientInScope(ctx, clientId);
     }
 
-    for (const responsibleId of this.collectScalars(where, 'responsibleId')) {
+    for (const responsibleId of this.collectFieldValues(where, 'responsibleId')) {
       await this.assertUserInScope(ctx, responsibleId, 'user');
     }
 
-    for (const createdById of this.collectScalars(where, 'createdById')) {
+    for (const createdById of this.collectFieldValues(where, 'createdById')) {
       await this.assertUserInScope(ctx, createdById, 'user');
     }
 
@@ -342,7 +345,7 @@ export class CompanyPermissionService {
     }
   }
 
-  private collectScalars(
+  private collectFieldValues(
     where: Record<string, unknown>,
     field: string,
     visited = new Set<unknown>(),
@@ -351,8 +354,10 @@ export class CompanyPermissionService {
     visited.add(where);
 
     const values = new Set<string>();
-    const direct = this.extractScalar(where[field]);
-    if (direct) values.add(direct);
+
+    for (const value of this.extractValues(where[field])) {
+      values.add(value);
+    }
 
     for (const key of ['AND', 'OR'] as const) {
       const group = where[key];
@@ -360,7 +365,7 @@ export class CompanyPermissionService {
 
       for (const item of group) {
         if (!item || typeof item !== 'object') continue;
-        for (const value of this.collectScalars(
+        for (const value of this.collectFieldValues(
           item as Record<string, unknown>,
           field,
           visited,
@@ -373,23 +378,34 @@ export class CompanyPermissionService {
     return Array.from(values);
   }
 
-  private extractScalar(value: unknown): string | null {
-    if (value == null) return null;
-    if (typeof value === 'string') return value;
+  private extractValues(value: unknown): string[] {
+    if (value == null) return [];
+    if (typeof value === 'string') return [value];
     if (typeof value === 'object' && value !== null && 'in' in value) {
-      return null;
+      const ids = (value as { in: unknown }).in;
+      if (!Array.isArray(ids)) return [];
+      return ids.filter((id): id is string => typeof id === 'string' && !!id);
     }
-    return String(value);
+    return [String(value)];
   }
 
   private mergeInFilter(
     existing: unknown,
     allowedIds: string[],
   ): { in: string[] } {
-    const existingScalar = this.extractScalar(existing);
-    if (existingScalar) {
-      return { in: allowedIds.includes(existingScalar) ? [existingScalar] : [] };
+    const existingValues = this.extractValues(existing);
+    if (existingValues.length) {
+      return {
+        in: existingValues.filter((id) => allowedIds.includes(id)),
+      };
     }
     return { in: allowedIds };
+  }
+
+  private intersectInFilter(
+    existing: unknown,
+    allowedIds: string[],
+  ): { in: string[] } {
+    return this.mergeInFilter(existing, allowedIds);
   }
 }
