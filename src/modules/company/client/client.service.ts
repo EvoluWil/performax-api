@@ -3,6 +3,11 @@ import { FinanceStatusEnum } from '@prisma/client';
 import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
+import {
+  getClientFiscalStatus,
+  mapClientForResponse,
+} from 'src/utils/fiscal-completeness.util';
+import { fetchViaCep } from 'src/utils/viacep.util';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
@@ -20,13 +25,15 @@ export class ClientService {
   ) {}
 
   create(createClientDto: CreateClientDto, companyId: string, userId: string) {
-    return this.prisma.companyClient.create({
-      data: {
-        ...createClientDto,
-        company: { connect: { id: companyId } },
-        createdBy: { connect: { id: userId } },
-      },
-    });
+    return this.prisma.companyClient
+      .create({
+        data: {
+          ...createClientDto,
+          company: { connect: { id: companyId } },
+          createdBy: { connect: { id: userId } },
+        },
+      })
+      .then(mapClientForResponse);
   }
 
   async findAll(companyId: string, userId: string) {
@@ -41,7 +48,7 @@ export class ClientService {
       ...query,
     });
 
-    return { count, data: clients };
+    return { count, data: clients.map(mapClientForResponse) };
   }
 
   async getComplianceStatus(
@@ -119,7 +126,23 @@ export class ClientService {
 
     const compliance = await this.getComplianceStatus(clientId, companyId);
 
-    return { ...client, compliance };
+    return { ...mapClientForResponse(client), compliance };
+  }
+
+  async getFiscalStatus(clientId: string, companyId: string) {
+    const client = await this.prisma.companyClient.findUnique({
+      where: { id: clientId, companyId, deleted: false },
+    });
+
+    if (!client) {
+      throw new NotFoundException('Cliente não encontrado');
+    }
+
+    const mapped = mapClientForResponse(client);
+    const postalCode = mapped.fiscalAddress?.postalCode ?? '';
+    const viaCep = await fetchViaCep(postalCode);
+
+    return getClientFiscalStatus(mapped, viaCep);
   }
 
   async update(
@@ -128,10 +151,12 @@ export class ClientService {
     updateClientDto: UpdateClientDto,
   ) {
     await this.findOne(clientId, companyId);
-    return this.prisma.companyClient.update({
-      where: { id: clientId, companyId },
-      data: updateClientDto,
-    });
+    return this.prisma.companyClient
+      .update({
+        where: { id: clientId, companyId },
+        data: updateClientDto,
+      })
+      .then(mapClientForResponse);
   }
 
   async remove(clientId: string, companyId: string) {
