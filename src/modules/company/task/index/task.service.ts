@@ -82,19 +82,39 @@ export class TaskService {
       query.where as Record<string, unknown>,
     );
 
-    const tasks = await this.prisma.companyTask.findMany({
-      ...query,
-      select: {
-        ...query.select,
-        checklist: {
-          include: {
-            modules: {
-              include: { items: true },
+    const { select, include, ...restQuery } = query;
+
+    let tasks;
+    if (include != null) {
+      tasks = await this.prisma.companyTask.findMany({
+        ...restQuery,
+        include: {
+          ...include,
+          checklist: {
+            include: {
+              modules: {
+                include: { items: true },
+              },
             },
           },
         },
-      },
-    });
+      });
+    } else {
+      tasks = await this.prisma.companyTask.findMany({
+        ...restQuery,
+        select: {
+          ...select,
+          checklist: {
+            include: {
+              modules: {
+                include: { items: true },
+              },
+            },
+          },
+        },
+      });
+    }
+
     return { count, data: tasks };
   }
 
