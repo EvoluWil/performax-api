@@ -134,6 +134,7 @@ model Company {
   contractTypes       CompanyContractType[]
   contracts           CompanyContract[]
   whiteLabel          CompanyWhiteLabel?
+  fiscalConfig        CompanyFiscalConfig?
 
   group   CompanyGroup? @relation(fields: [groupId], references: [id])
   groupId String?       @db.ObjectId
@@ -183,6 +184,44 @@ model CompanyWhiteLabel {
   companyId String  @unique @db.ObjectId
 
   @@map("company_white_label")
+}
+
+model CompanyFiscalConfig {
+  id                    String          @id @default(auto()) @map("_id") @db.ObjectId
+  legalName             String?
+  tradeName             String?
+  federalTaxNumber      String?
+  stateTaxNumber        String?
+  cityTaxNumber         String?
+  email                 String?
+  phone                 String?
+  address               FiscalAddress?
+  taxRegime             TaxRegimeEnum?
+  economicActivities    EconomicActivity[]
+  spedyCompanyId        String?
+  spedyApiKey           String?
+  certificateFileName   String?
+  certificateFileBase64 String?
+  certificatePassword   String?
+  certificateExpiresAt  DateTime?
+  federalServiceCode    String?
+  nationalTaxationCode  String?
+  cityServiceCode       String?
+  nbsCode               String?
+  cnaeCode              String?
+  taxationType          String?
+  taxLocation           String?
+  issRate               Float?
+  issWithheld           Boolean?        @default(false)
+  rpsSeries             String?
+  rpsNumber             Int?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @unique @db.ObjectId
+
+  @@map("company_fiscal_config")
 }
 
 model CompanyRolePermission {
@@ -243,6 +282,11 @@ model CompanyClient {
   name      String
   cnpj      String?
   address   String?
+  personType   PersonTypeEnum?
+  cpf          String?
+  email        String?
+  phone        String?
+  fiscalAddress FiscalAddress?
   deleted   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -939,6 +983,34 @@ type File {
 type ContractTypeAdjustment {
   percentage Float
   appliedAt  DateTime
+}
+
+type FiscalAddress {
+  street       String?
+  number       String?
+  complement   String?
+  neighborhood String?
+  city         String?
+  state        String?
+  postalCode   String?
+  cityCode     String?
+}
+
+type EconomicActivity {
+  code   String
+  isMain Boolean @default(false)
+}
+
+enum PersonTypeEnum {
+  PF
+  PJ
+}
+
+enum TaxRegimeEnum {
+  SIMPLES_NACIONAL
+  SIMPLES_NACIONAL_EXCESSO
+  SIMPLES_NACIONAL_MEI
+  REGIME_NORMAL
 }
 
 enum UserRoleEnum {

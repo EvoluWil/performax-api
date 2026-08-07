@@ -34,6 +34,14 @@ export class ClientController {
     return this.clientService.findAll(companyId, user.id);
   }
 
+  @Get(':clientId/fiscal-status')
+  getFiscalStatus(
+    @Param('clientId') clientId: string,
+    @Param('companyId') companyId: string,
+  ) {
+    return this.clientService.getFiscalStatus(clientId, companyId);
+  }
+
   @Get(':clientId')
   findOne(
     @Param('clientId') clientId: string,

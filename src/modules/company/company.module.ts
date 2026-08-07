@@ -5,6 +5,7 @@ import { ContractModule } from './contract/contract.module';
 import { EmployeeModule } from './employee/employee.module';
 import { EntryModule } from './entry/entry.module';
 import { FinanceModule } from './finance/finance.module';
+import { FiscalModule } from './fiscal/fiscal.module';
 import { FormResourcesModule } from './form-resources/form-resources.module';
 import { CompanyController } from './index/company.controller';
 import { CompanyService } from './index/company.service';
@@ -29,6 +30,7 @@ import { WhiteLabelModule } from './white-label/white-label.module';
     ContractModule,
     EmployeeModule,
     FormResourcesModule,
+    FiscalModule,
     WhiteLabelModule,
   ],
   controllers: [CompanyController],
