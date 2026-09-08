@@ -5,6 +5,7 @@ import { newAccountWithoutPasswordTemplate } from './template/new-account-withou
 import { newAccountTemplate } from './template/new-account.template';
 import { newCompanyTemplate } from './template/new-company.template';
 import { recoveryPasswordTemplate } from './template/recovery-password.template';
+import { serviceInvoiceTemplate } from './template/service-invoice.template';
 
 @Injectable()
 export class MailService {
@@ -51,6 +52,36 @@ export class MailService {
       );
       return data;
     } catch (error: any) {
+      return { error: 'Não foi possível enviar o email', ok: false };
+    }
+  }
+
+  async sendInvoiceNotice(params: {
+    to: string;
+    clientName: string;
+    companyName: string;
+    periodLabel: string;
+    amount: string;
+    number?: string | null;
+  }) {
+    const content = {
+      to: [{ email: params.to, name: params.clientName }],
+      sender: {
+        email: process.env.SENDER_EMAIL,
+        name: process.env.SENDER_EMAIL_NAME,
+      },
+      subject: `Nota fiscal emitida — ${params.companyName}`,
+      htmlContent: serviceInvoiceTemplate(params),
+    };
+
+    try {
+      const { data } = await axios.post(
+        'https://api.sendinblue.com/v3/smtp/email',
+        content,
+        { headers: { 'api-key': process.env.SENDINBLUE_API_KEY } },
+      );
+      return data;
+    } catch {
       return { error: 'Não foi possível enviar o email', ok: false };
     }
   }

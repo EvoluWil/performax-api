@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
@@ -38,8 +39,15 @@ export class ClientController {
   getFiscalStatus(
     @Param('clientId') clientId: string,
     @Param('companyId') companyId: string,
+    @AuthUser() user: User,
+    @Query('resolveCep') resolveCep?: string,
   ) {
-    return this.clientService.getFiscalStatus(clientId, companyId);
+    return this.clientService.getFiscalStatus(
+      clientId,
+      companyId,
+      user.id,
+      resolveCep === 'true',
+    );
   }
 
   @Get(':clientId')

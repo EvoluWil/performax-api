@@ -5,6 +5,7 @@ import { JwtModule } from './jwt/jwt.modules';
 import { MailModule } from './mail/mail.module';
 import { PermissionModule } from './permission/permission.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SpedyModule } from './spedy/spedy.module';
 import { UtilModule } from './util/util.module';
 
 @Module({
@@ -17,8 +18,9 @@ import { UtilModule } from './util/util.module';
     AuthModule,
     // CacheModule,
     UtilModule,
+    SpedyModule,
   ],
   providers: [],
-  exports: [],
+  exports: [SpedyModule],
 })
 export class ProvidersModule {}

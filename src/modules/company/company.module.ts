@@ -12,6 +12,7 @@ import { CompanyService } from './index/company.service';
 import { ModuleModule } from './module/module.module';
 import { OccurrenceModule } from './occurrence/occurrence.module';
 import { RoleModule } from './role/role.module';
+import { ServiceInvoiceModule } from './service-invoice/service-invoice.module';
 import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
 import { WhiteLabelModule } from './white-label/white-label.module';
@@ -31,6 +32,7 @@ import { WhiteLabelModule } from './white-label/white-label.module';
     EmployeeModule,
     FormResourcesModule,
     FiscalModule,
+    ServiceInvoiceModule,
     WhiteLabelModule,
   ],
   controllers: [CompanyController],

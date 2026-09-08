@@ -1,3 +1,4 @@
+import { FiscalEnvironmentTypeEnum, TaxRegimeEnum } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -9,9 +10,10 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { TaxRegimeEnum } from '@prisma/client';
+import { IsCnpj } from 'src/decorators/cnpj.decorator';
 
 export class FiscalAddressDto {
   @IsString()
@@ -64,7 +66,9 @@ export class UpsertFiscalConfigDto {
   @IsOptional()
   tradeName?: string;
 
+  @ValidateIf((dto: UpsertFiscalConfigDto) => !!dto.federalTaxNumber?.trim())
   @IsString()
+  @IsCnpj()
   @IsOptional()
   federalTaxNumber?: string;
 
@@ -76,6 +80,7 @@ export class UpsertFiscalConfigDto {
   @IsOptional()
   cityTaxNumber?: string;
 
+  @ValidateIf((dto: UpsertFiscalConfigDto) => !!dto.email?.trim())
   @IsEmail()
   @IsOptional()
   email?: string;
@@ -101,18 +106,6 @@ export class UpsertFiscalConfigDto {
 
   @IsString()
   @IsOptional()
-  certificateFileName?: string;
-
-  @IsString()
-  @IsOptional()
-  certificateFileBase64?: string;
-
-  @IsString()
-  @IsOptional()
-  certificatePassword?: string;
-
-  @IsString()
-  @IsOptional()
   federalServiceCode?: string;
 
   @IsString()
@@ -135,10 +128,6 @@ export class UpsertFiscalConfigDto {
   @IsOptional()
   taxationType?: string;
 
-  @IsString()
-  @IsOptional()
-  taxLocation?: string;
-
   @IsNumber()
   @IsOptional()
   issRate?: number;
@@ -155,4 +144,22 @@ export class UpsertFiscalConfigDto {
   @Min(1)
   @IsOptional()
   rpsNumber?: number;
+
+  @IsEnum(FiscalEnvironmentTypeEnum)
+  @IsOptional()
+  environmentType?: FiscalEnvironmentTypeEnum;
+}
+
+export class SyncFiscalConfigDto {
+  @IsString()
+  @IsOptional()
+  certificatePassword?: string;
+
+  @IsString()
+  @IsOptional()
+  certificateFileName?: string;
+
+  @IsString()
+  @IsOptional()
+  certificateFileBase64?: string;
 }

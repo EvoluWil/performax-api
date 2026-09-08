@@ -6,9 +6,21 @@ import {
 } from '@prisma/client';
 import { ViaCepResponse } from './viacep.util';
 
+export type CityProviderOptions = {
+  rps?: boolean;
+  series?: boolean;
+  batchNumber?: boolean;
+  federalServiceCode?: boolean;
+  nbsCode?: boolean;
+};
+
 export type FiscalStatus = {
   ready: boolean;
   missingFields: string[];
+  readyForSync?: boolean;
+  readyForEmission?: boolean;
+  spedySyncStatus?: string | null;
+  cityRequirements?: CityProviderOptions | null;
 };
 
 function digitsOnly(value: string): string {
@@ -64,7 +76,13 @@ export function getClientFiscalMissingFields(
 
   if (!isFilled(client.name)) missing.push('nome');
 
-  const personType = client.personType ?? (client.cnpj ? PersonTypeEnum.PJ : client.cpf ? PersonTypeEnum.PF : undefined);
+  const personType =
+    client.personType ??
+    (client.cnpj
+      ? PersonTypeEnum.PJ
+      : client.cpf
+      ? PersonTypeEnum.PF
+      : undefined);
 
   if (!personType) {
     missing.push('tipo de pessoa (PF/PJ)');
@@ -76,18 +94,21 @@ export function getClientFiscalMissingFields(
 
   if (!isFilled(client.email)) missing.push('e-mail');
   if (!isFilled(address.street)) missing.push('endereço (logradouro)');
+  if (!isFilled(address.number)) missing.push('número do endereço');
 
   const postalCode = digitsOnly(address.postalCode ?? '');
   if (postalCode.length !== 8) missing.push('CEP');
 
-  const district =
-    address.neighborhood?.trim() || viaCep?.bairro?.trim();
+  const district = address.neighborhood?.trim() || viaCep?.bairro?.trim();
   if (!district) missing.push('bairro');
 
   const cityName = address.city?.trim() || viaCep?.localidade;
   const state = address.state?.trim()?.toUpperCase() || viaCep?.uf;
   if (!cityName) missing.push('cidade');
   if (!state) missing.push('UF');
+  if (!isFilled(address.cityCode) && !viaCep?.ibge) {
+    missing.push('código IBGE');
+  }
 
   return missing;
 }
@@ -136,6 +157,7 @@ export function getCompanyFiscalMissingFields(
   if (digitsOnly(address.postalCode ?? '').length !== 8) missing.push('CEP');
   if (!isFilled(address.city)) missing.push('cidade');
   if (!isFilled(address.state)) missing.push('UF');
+  if (!isFilled(address.cityCode)) missing.push('código IBGE');
   if (!config.taxRegime) missing.push('regime tributário');
 
   const activities = config.economicActivities ?? [];
@@ -145,13 +167,50 @@ export function getCompanyFiscalMissingFields(
     missing.push('CNAE principal');
   }
 
-  if (!isFilled(config.federalServiceCode)) {
+  const options = (config.cityProviderOptions ??
+    {}) as CityProviderOptions;
+
+  if (options.federalServiceCode !== false && !isFilled(config.federalServiceCode)) {
     missing.push('código federal do serviço');
   }
-  if (!isFilled(config.rpsSeries)) missing.push('série RPS');
-  if (!config.rpsNumber || config.rpsNumber < 1) missing.push('número RPS');
+  if (options.nbsCode && !isFilled(config.nbsCode)) missing.push('código NBS');
+  if (options.series !== false && !isFilled(config.rpsSeries)) {
+    missing.push('série RPS');
+  }
+  if (
+    (options.rps !== false || options.series !== false) &&
+    (!config.rpsNumber || config.rpsNumber < 1)
+  ) {
+    missing.push('número RPS');
+  }
 
   return missing;
+}
+
+export function getCompanyCadastroMissingFields(
+  config: CompanyFiscalConfig | null | undefined,
+): string[] {
+  const all = getCompanyFiscalMissingFields(config);
+  const nfsOnly = new Set([
+    'código federal do serviço',
+    'código NBS',
+    'série RPS',
+    'número RPS',
+  ]);
+  return all.filter((field) => !nfsOnly.has(field));
+}
+
+export function getCompanyNfseMissingFields(
+  config: CompanyFiscalConfig | null | undefined,
+): string[] {
+  const all = getCompanyFiscalMissingFields(config);
+  const nfsOnly = new Set([
+    'código federal do serviço',
+    'código NBS',
+    'série RPS',
+    'número RPS',
+  ]);
+  return all.filter((field) => nfsOnly.has(field));
 }
 
 export function isCompanyReadyForNfse(
@@ -164,7 +223,20 @@ export function getCompanyFiscalStatus(
   config: CompanyFiscalConfig | null | undefined,
 ): FiscalStatus {
   const missingFields = getCompanyFiscalMissingFields(config);
-  return { ready: missingFields.length === 0, missingFields };
+  const options = (config?.cityProviderOptions ?? null) as CityProviderOptions | null;
+  const readyForSync = getCompanyCadastroMissingFields(config).length === 0;
+  const certificateReady = !!config?.certificateUploadedAt;
+  const synced = config?.spedySyncStatus === 'SYNCED';
+
+  return {
+    ready: missingFields.length === 0,
+    missingFields,
+    readyForSync,
+    readyForEmission:
+      missingFields.length === 0 && synced && certificateReady,
+    spedySyncStatus: config?.spedySyncStatus ?? null,
+    cityRequirements: options,
+  };
 }
 
 /**

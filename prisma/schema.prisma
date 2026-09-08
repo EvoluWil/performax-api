@@ -135,6 +135,7 @@ model Company {
   contracts           CompanyContract[]
   whiteLabel          CompanyWhiteLabel?
   fiscalConfig        CompanyFiscalConfig?
+  serviceInvoices     CompanyServiceInvoice[]
 
   group   CompanyGroup? @relation(fields: [groupId], references: [id])
   groupId String?       @db.ObjectId
@@ -204,6 +205,12 @@ model CompanyFiscalConfig {
   certificateFileBase64 String?
   certificatePassword   String?
   certificateExpiresAt  DateTime?
+  certificateUploadedAt DateTime?
+  environmentType       FiscalEnvironmentTypeEnum @default(DEVELOPMENT)
+  spedySyncStatus       SpedySyncStatusEnum       @default(PENDING)
+  spedySyncError        String?
+  spedySyncedAt         DateTime?
+  cityProviderOptions   Json?
   federalServiceCode    String?
   nationalTaxationCode  String?
   cityServiceCode       String?
@@ -303,6 +310,7 @@ model CompanyClient {
   tasks               CompanyTask[]
   occurrences         CompanyOccurrence[]
   financials          CompanyFinance[]
+  serviceInvoices     CompanyServiceInvoice[]
   recurringFinancials CompanyFinanceRecurring[]
   contracts           CompanyContract[]
 
@@ -734,7 +742,52 @@ model CompanyFinance {
   paidFromAdvance Boolean              @default(false)
   isAdvanceDeposit Boolean             @default(false)
 
+  serviceInvoice   CompanyServiceInvoice? @relation(fields: [serviceInvoiceId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  serviceInvoiceId String?                @db.ObjectId
+
   @@map("company_finance")
+}
+
+enum ServiceInvoiceStatusEnum {
+  PENDING
+  PROCESSING
+  AUTHORIZED
+  REJECTED
+  ERROR
+}
+
+enum ServiceInvoiceSourceEnum {
+  MANUAL
+  BATCH
+}
+
+model CompanyServiceInvoice {
+  id            String                   @id @default(auto()) @map("_id") @db.ObjectId
+  integrationId String                   @unique
+  providerId    String?
+  number        String?
+  accessKey     String?
+  amount        Int
+  status        ServiceInvoiceStatusEnum @default(PENDING)
+  source        ServiceInvoiceSourceEnum
+  periodStart   DateTime
+  periodEnd     DateTime
+  issuedAt      DateTime?
+  errorMessage  String?
+  emailSentAt   DateTime?
+  missingEmail  Boolean                  @default(false)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId String  @db.ObjectId
+
+  client   CompanyClient @relation(fields: [clientId], references: [id])
+  clientId String        @db.ObjectId
+
+  finances CompanyFinance[]
+
+  @@map("company_service_invoice")
 }
 
 model CompanyFinanceWallet {
@@ -1011,6 +1064,17 @@ enum TaxRegimeEnum {
   SIMPLES_NACIONAL_EXCESSO
   SIMPLES_NACIONAL_MEI
   REGIME_NORMAL
+}
+
+enum FiscalEnvironmentTypeEnum {
+  DEVELOPMENT
+  PRODUCTION
+}
+
+enum SpedySyncStatusEnum {
+  PENDING
+  SYNCED
+  ERROR
 }
 
 enum UserRoleEnum {

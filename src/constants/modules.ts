@@ -54,6 +54,11 @@ export const MODULE_DEFINITIONS = [
     name: 'White Label',
     description: 'Personalização visual da empresa',
   },
+  {
+    code: 'fiscal',
+    name: 'Notas fiscais',
+    description: 'Emissão de NFS-e e cadastro fiscal da empresa',
+  },
 ] as const;
 
 export type ModuleCode = (typeof MODULE_DEFINITIONS)[number]['code'];

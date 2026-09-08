@@ -2,10 +2,22 @@ import {
   CompanyFiscalConfig,
   EconomicActivity,
   FiscalAddress,
+  FiscalEnvironmentTypeEnum,
+  SpedySyncStatusEnum,
   TaxRegimeEnum,
 } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
-export class FiscalConfigEntity implements Omit<CompanyFiscalConfig, 'certificatePassword' | 'certificateFileBase64' | 'spedyApiKey'> {
+export class FiscalConfigEntity
+  implements
+    Omit<
+      CompanyFiscalConfig,
+      | 'certificatePassword'
+      | 'certificateFileBase64'
+      | 'spedyApiKey'
+      | 'taxLocation'
+    >
+{
   id: string;
   legalName: string | null;
   tradeName: string | null;
@@ -23,13 +35,18 @@ export class FiscalConfigEntity implements Omit<CompanyFiscalConfig, 'certificat
   hasCertificate: boolean;
   hasCertificatePassword: boolean;
   certificateExpiresAt: Date | null;
+  certificateUploadedAt: Date | null;
+  environmentType: FiscalEnvironmentTypeEnum;
+  spedySyncStatus: SpedySyncStatusEnum;
+  spedySyncError: string | null;
+  spedySyncedAt: Date | null;
+  cityProviderOptions: Prisma.JsonValue | null;
   federalServiceCode: string | null;
   nationalTaxationCode: string | null;
   cityServiceCode: string | null;
   nbsCode: string | null;
   cnaeCode: string | null;
   taxationType: string | null;
-  taxLocation: string | null;
   issRate: number | null;
   issWithheld: boolean | null;
   rpsSeries: string | null;

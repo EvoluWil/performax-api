@@ -24,11 +24,18 @@ export class ClientService {
     private readonly permissionService: CompanyPermissionService,
   ) {}
 
+  private withPersonType<T extends CreateClientDto | UpdateClientDto>(dto: T): T {
+    const personType =
+      dto.personType ??
+      (dto.cpf?.trim() ? 'PF' : dto.cnpj?.trim() ? 'PJ' : undefined);
+    return (personType ? { ...dto, personType } : dto) as T;
+  }
+
   create(createClientDto: CreateClientDto, companyId: string, userId: string) {
     return this.prisma.companyClient
       .create({
         data: {
-          ...createClientDto,
+          ...this.withPersonType(createClientDto),
           company: { connect: { id: companyId } },
           createdBy: { connect: { id: userId } },
         },
@@ -129,7 +136,15 @@ export class ClientService {
     return { ...mapClientForResponse(client), compliance };
   }
 
-  async getFiscalStatus(clientId: string, companyId: string) {
+  async getFiscalStatus(
+    clientId: string,
+    companyId: string,
+    userId: string,
+    resolveCep = false,
+  ) {
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertPageAccess(ctx, 'client');
+
     const client = await this.prisma.companyClient.findUnique({
       where: { id: clientId, companyId, deleted: false },
     });
@@ -139,8 +154,9 @@ export class ClientService {
     }
 
     const mapped = mapClientForResponse(client);
-    const postalCode = mapped.fiscalAddress?.postalCode ?? '';
-    const viaCep = await fetchViaCep(postalCode);
+    const viaCep = resolveCep
+      ? await fetchViaCep(mapped.fiscalAddress?.postalCode ?? '')
+      : null;
 
     return getClientFiscalStatus(mapped, viaCep);
   }
@@ -154,7 +170,7 @@ export class ClientService {
     return this.prisma.companyClient
       .update({
         where: { id: clientId, companyId },
-        data: updateClientDto,
+        data: this.withPersonType(updateClientDto),
       })
       .then(mapClientForResponse);
   }

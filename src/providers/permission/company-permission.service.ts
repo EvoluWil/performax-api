@@ -193,6 +193,32 @@ export class CompanyPermissionService {
     }
   }
 
+  assertWriteAccess(ctx: CompanyPermissionContext, moduleCode: string) {
+    if (!this.hasLevel(ctx, moduleCode, 'WRITE')) {
+      throw new ForbiddenException(
+        `Sem permissão de escrita para o módulo ${moduleCode}`,
+      );
+    }
+  }
+
+  async assertCompanyHasModule(companyId: string, moduleCode: string) {
+    const catalog = await this.prisma.module.findFirst({
+      where: { code: moduleCode, deleted: false },
+      select: { id: true },
+    });
+    if (!catalog) {
+      throw new ForbiddenException('Módulo não disponível');
+    }
+
+    const enabled = await this.prisma.companyModule.findFirst({
+      where: { companyId, moduleId: catalog.id },
+      select: { id: true },
+    });
+    if (!enabled) {
+      throw new ForbiddenException('Módulo não habilitado para esta empresa');
+    }
+  }
+
   private async getScopedCompanyUserRoleIds(
     ctx: CompanyPermissionContext,
     moduleCode: string,

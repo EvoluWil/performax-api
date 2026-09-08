@@ -41,4 +41,5 @@ export class Finance implements CompanyFinance {
   linkedFinanceId: string;
   recurrenceMasterId: string;
   segmentId: string;
+  serviceInvoiceId: string | null;
 }
