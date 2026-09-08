@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User, UserRoleEnum } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -38,12 +42,10 @@ export class AuthService {
     const refreshToken = randomBytes(64).toString('hex');
     const accessTokenExpires = Date.now() + SIXTY_MINUTES;
 
-    await this.prisma.userSession.deleteMany({
+    await this.prisma.userSession.upsert({
       where: { userId },
-    });
-
-    await this.prisma.userSession.create({
-      data: {
+      update: { accessToken, refreshToken },
+      create: {
         accessToken,
         refreshToken,
         userId,
@@ -352,7 +354,7 @@ export class AuthService {
     });
 
     if (!session || isPast(new Date(addDays(session.createdAt, 2)))) {
-      throw new BadRequestException('Refresh token inválido ou expirado');
+      throw new UnauthorizedException('Refresh token inválido ou expirado');
     }
 
     const newSession = await this.createSession(session.userId);
