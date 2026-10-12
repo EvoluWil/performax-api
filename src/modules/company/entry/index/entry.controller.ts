@@ -9,11 +9,13 @@ import {
 } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
+import { CompanyMember } from 'src/decorators/company-member.decorator';
 import { CreateEntryDto } from './dto/create-entry.dto';
 import { UpdateEntryDto } from './dto/update-entry.dto';
 import { EntryService } from './entry.service';
 
 @Controller('companies/:companyId/entries')
+@CompanyMember()
 export class EntryController {
   constructor(private readonly entryService: EntryService) {}
 

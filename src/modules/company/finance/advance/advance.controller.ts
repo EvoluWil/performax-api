@@ -7,10 +7,12 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { AdvanceService } from './advance.service';
 import { CreateAdvanceDto } from './dto/create-advance.dto';
 
 @Controller('companies/:companyId/finance-advance')
+@RequirePermission('financial', 'READ')
 export class AdvanceController {
   constructor(private readonly advanceService: AdvanceService) {}
 
@@ -33,6 +35,7 @@ export class AdvanceController {
   }
 
   @Post()
+  @RequirePermission('financial', 'WRITE')
   create(
     @Param('companyId') companyId: string,
     @Body() dto: CreateAdvanceDto,
@@ -42,6 +45,7 @@ export class AdvanceController {
   }
 
   @Delete(':advanceId')
+  @RequirePermission('financial', 'ADMIN')
   remove(
     @Param('advanceId') advanceId: string,
     @Param('companyId') companyId: string,

@@ -7,10 +7,12 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreateReceivableDto } from './dto/create-receivable.dto';
 import { ReceivableService } from './receivable.service';
 
 @Controller('companies/:companyId/finance-receivable')
+@RequirePermission('financial', 'READ')
 export class ReceivableController {
   constructor(private readonly receivableService: ReceivableService) {}
 
@@ -28,6 +30,7 @@ export class ReceivableController {
   }
 
   @Post()
+  @RequirePermission('financial', 'WRITE')
   create(
     @Param('companyId') companyId: string,
     @Body() dto: CreateReceivableDto,
@@ -37,6 +40,7 @@ export class ReceivableController {
   }
 
   @Delete(':receivableId')
+  @RequirePermission('financial', 'ADMIN')
   remove(
     @Param('receivableId') receivableId: string,
     @Param('companyId') companyId: string,

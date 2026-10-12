@@ -7,15 +7,18 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { RoleService } from './role.service';
 
 @Controller('companies/:companyId/roles')
+@RequirePermission('role', 'READ')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post()
+  @RequirePermission('role', 'WRITE')
   create(
     @Param('companyId') companyId: string,
     @Body() createRoleDto: CreateRoleDto,
@@ -37,6 +40,7 @@ export class RoleController {
   }
 
   @Put(':roleId')
+  @RequirePermission('role', 'WRITE')
   update(
     @Param('roleId') roleId: string,
     @Param('companyId') companyId: string,
@@ -46,6 +50,7 @@ export class RoleController {
   }
 
   @Delete(':roleId')
+  @RequirePermission('role', 'ADMIN')
   remove(
     @Param('roleId') roleId: string,
     @Param('companyId') companyId: string,

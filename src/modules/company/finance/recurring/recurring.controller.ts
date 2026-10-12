@@ -7,10 +7,12 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { UpdateRecurringDto } from './dto/update-recurring.dto';
 import { RecurringService } from './recurring.service';
 
 @Controller('companies/:companyId/finance-recurring')
+@RequirePermission('financial', 'ADMIN')
 export class RecurringController {
   constructor(private readonly recurringService: RecurringService) {}
 

@@ -10,15 +10,18 @@ import {
 } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { ClientService } from './client.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 
 @Controller('companies/:companyId/clients')
+@RequirePermission('client', 'FILTER')
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}
 
   @Post()
+  @RequirePermission('client', 'WRITE')
   create(
     @Body() createClientDto: CreateClientDto,
     @Param('companyId') companyId: string,
@@ -60,6 +63,7 @@ export class ClientController {
   }
 
   @Put(':clientId')
+  @RequirePermission('client', 'WRITE')
   update(
     @Param('clientId') clientId: string,
     @Param('companyId') companyId: string,
@@ -69,6 +73,7 @@ export class ClientController {
   }
 
   @Delete(':clientId')
+  @RequirePermission('client', 'ADMIN')
   remove(
     @Param('clientId') clientId: string,
     @Param('companyId') companyId: string,

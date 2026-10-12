@@ -7,11 +7,13 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreateTypeDto } from './dto/create-type.dto';
 import { UpdateTypeDto } from './dto/update-type.dto';
 import { TypeService } from './type.service';
 
 @Controller('companies/:companyId/budget-types')
+@RequirePermission('register', 'WRITE')
 export class TypeController {
   constructor(private readonly typeService: TypeService) {}
 
@@ -38,6 +40,7 @@ export class TypeController {
   }
 
   @Delete(':typeId')
+  @RequirePermission('register', 'ADMIN')
   remove(
     @Param('typeId') typeId: string,
     @Param('companyId') companyId: string,

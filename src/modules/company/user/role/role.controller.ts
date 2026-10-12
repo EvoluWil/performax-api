@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import {
   AssignUserClientsDto,
   AssignUserRoleDto,
@@ -7,6 +8,7 @@ import {
 import { RoleService } from './role.service';
 
 @Controller('companies/:companyId/users/:userId/roles')
+@RequirePermission('user', 'READ')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
@@ -19,6 +21,7 @@ export class RoleController {
   }
 
   @Post()
+  @RequirePermission('user', 'WRITE')
   assignUserRole(
     @Param('companyId') companyId: string,
     @Param('userId') userId: string,
@@ -29,6 +32,7 @@ export class RoleController {
   }
 
   @Delete()
+  @RequirePermission('user', 'WRITE')
   removeUserRole(
     @Param('userId') userId: string,
     @Param('companyId') companyId: string,
@@ -37,6 +41,7 @@ export class RoleController {
   }
 
   @Post('clients')
+  @RequirePermission('user', 'WRITE')
   assignUserClients(
     @Param('companyId') companyId: string,
     @Param('userId') userId: string,
@@ -47,6 +52,7 @@ export class RoleController {
   }
 
   @Post('targets')
+  @RequirePermission('user', 'WRITE')
   assignUserTargets(
     @Param('companyId') companyId: string,
     @Param('userId') userId: string,

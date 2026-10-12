@@ -7,11 +7,13 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('companies/:companyId/finance-categories')
+@RequirePermission('financial', 'WRITE')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
@@ -42,6 +44,7 @@ export class CategoryController {
   }
 
   @Delete(':categoryId')
+  @RequirePermission('financial', 'ADMIN')
   remove(
     @Param('categoryId') categoryId: string,
     @Param('companyId') companyId: string,

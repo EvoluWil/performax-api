@@ -1,26 +1,21 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { FinanceStatusEnum, User } from '@prisma/client';
-import { AuthUser } from 'src/decorators/auth-user.decorator';
-import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
+import { FinanceStatusEnum } from '@prisma/client';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { ServiceInvoiceService } from './service-invoice.service';
 
 @Controller('companies/:companyId/service-invoices')
+@RequirePermission('fiscal', 'READ')
 export class ServiceInvoiceController {
-  constructor(
-    private readonly service: ServiceInvoiceService,
-    private readonly permissionService: CompanyPermissionService,
-  ) {}
+  constructor(private readonly service: ServiceInvoiceService) {}
 
   @Get()
-  async list(
+  list(
     @Param('companyId') companyId: string,
-    @AuthUser() user: User,
     @Query('from') from: string,
     @Query('to') to: string,
     @Query('invoiceStatus') invoiceStatus?: string,
     @Query('financeStatus') financeStatus?: FinanceStatusEnum,
   ) {
-    await this.assertRead(user.id, companyId);
     return this.service.list(
       companyId,
       new Date(from),
@@ -31,13 +26,17 @@ export class ServiceInvoiceController {
   }
 
   @Post()
-  async issue(
+  @RequirePermission('fiscal', 'WRITE')
+  issue(
     @Param('companyId') companyId: string,
-    @AuthUser() user: User,
     @Body()
-    body: { clientId: string; from: string; to: string; financeStatus?: FinanceStatusEnum },
+    body: {
+      clientId: string;
+      from: string;
+      to: string;
+      financeStatus?: FinanceStatusEnum;
+    },
   ) {
-    await this.assertWrite(user.id, companyId);
     return this.service.issueOne(
       companyId,
       body.clientId,
@@ -51,9 +50,9 @@ export class ServiceInvoiceController {
   }
 
   @Post('batch')
-  async issueBatch(
+  @RequirePermission('fiscal', 'WRITE')
+  issueBatch(
     @Param('companyId') companyId: string,
-    @AuthUser() user: User,
     @Body()
     body: {
       from: string;
@@ -62,24 +61,11 @@ export class ServiceInvoiceController {
       clientIds?: string[];
     },
   ) {
-    await this.assertWrite(user.id, companyId);
     return this.service.issueBatch(companyId, {
       periodStart: new Date(body.from),
       periodEnd: new Date(body.to),
       financeStatus: body.financeStatus,
       clientIds: body.clientIds,
     });
-  }
-
-  private async assertRead(userId: string, companyId: string) {
-    await this.permissionService.assertCompanyHasModule(companyId, 'fiscal');
-    const ctx = await this.permissionService.resolveContext(userId, companyId);
-    this.permissionService.assertPageAccess(ctx, 'fiscal');
-  }
-
-  private async assertWrite(userId: string, companyId: string) {
-    await this.permissionService.assertCompanyHasModule(companyId, 'fiscal');
-    const ctx = await this.permissionService.resolveContext(userId, companyId);
-    this.permissionService.assertWriteAccess(ctx, 'fiscal');
   }
 }

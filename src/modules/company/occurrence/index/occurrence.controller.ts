@@ -8,17 +8,19 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreateOccurrenceDto } from './dto/create-occurrence.dto';
 import { UpdateOccurrenceDto } from './dto/update-occurrence.dto';
 import { OccurrenceService } from './occurrence.service';
 
 @Controller('companies/:companyId/occurrences')
+@RequirePermission('occurrence', 'READ')
 export class OccurrenceController {
   constructor(private readonly occurrenceService: OccurrenceService) {}
 
   @Post()
+  @RequirePermission('occurrence', 'WRITE')
   create(
     @Param('companyId') companyId: string,
     @Body() createOccurrenceDto: CreateOccurrenceDto,
@@ -48,6 +50,7 @@ export class OccurrenceController {
   }
 
   @Put(':occurrenceId')
+  @RequirePermission('occurrence', 'WRITE')
   update(
     @Param('companyId') companyId: string,
     @Param('occurrenceId') occurrenceId: string,
@@ -60,8 +63,8 @@ export class OccurrenceController {
     );
   }
 
-  @AdminOnly()
   @Put(':occurrenceId/approve')
+  @RequirePermission('occurrence', 'ADMIN')
   approve(
     @Param('occurrenceId') occurrenceId: string,
     @Param('companyId') companyId: string,
@@ -71,6 +74,7 @@ export class OccurrenceController {
   }
 
   @Delete(':occurrenceId')
+  @RequirePermission('occurrence', 'ADMIN')
   remove(
     @Param('companyId') companyId: string,
     @Param('occurrenceId') occurrenceId: string,

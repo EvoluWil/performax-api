@@ -7,11 +7,13 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreatePayeeDto } from './dto/create-payee.dto';
 import { UpdatePayeeDto } from './dto/update-payee.dto';
 import { PayeeService } from './payee.service';
 
 @Controller('companies/:companyId/finance-payees')
+@RequirePermission('financial', 'WRITE')
 export class PayeeController {
   constructor(private readonly payeeService: PayeeService) {}
 
@@ -38,6 +40,7 @@ export class PayeeController {
   }
 
   @Delete(':payeeId')
+  @RequirePermission('financial', 'ADMIN')
   remove(
     @Param('payeeId') payeeId: string,
     @Param('companyId') companyId: string,

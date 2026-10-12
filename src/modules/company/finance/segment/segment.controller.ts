@@ -7,11 +7,13 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreateSegmentDto } from './dto/create-segment.dto';
 import { UpdateSegmentDto } from './dto/update-segment.dto';
 import { SegmentService } from './segment.service';
 
 @Controller('companies/:companyId/finance-segments')
+@RequirePermission('financial', 'WRITE')
 export class SegmentController {
   constructor(private readonly segmentService: SegmentService) {}
 
@@ -38,6 +40,7 @@ export class SegmentController {
   }
 
   @Delete(':segmentId')
+  @RequirePermission('financial', 'ADMIN')
   remove(
     @Param('segmentId') segmentId: string,
     @Param('companyId') companyId: string,

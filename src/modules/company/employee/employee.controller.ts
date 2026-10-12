@@ -7,15 +7,18 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { EmployeeService } from './employee.service';
 
 @Controller('companies/:companyId/employees')
+@RequirePermission('employee', 'READ')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
   @Post()
+  @RequirePermission('employee', 'WRITE')
   create(
     @Body() createEmployeeDto: CreateEmployeeDto,
     @Param('companyId') companyId: string,
@@ -37,6 +40,7 @@ export class EmployeeController {
   }
 
   @Put(':employeeId')
+  @RequirePermission('employee', 'WRITE')
   update(
     @Param('employeeId') employeeId: string,
     @Param('companyId') companyId: string,
@@ -50,6 +54,7 @@ export class EmployeeController {
   }
 
   @Delete(':employeeId')
+  @RequirePermission('employee', 'ADMIN')
   remove(
     @Param('employeeId') employeeId: string,
     @Param('companyId') companyId: string,

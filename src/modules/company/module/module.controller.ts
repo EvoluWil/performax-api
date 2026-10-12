@@ -1,10 +1,13 @@
 import { Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { AdminOnly } from 'src/decorators/admin-only.decorator';
+import { CompanyMember } from 'src/decorators/company-member.decorator';
 import { ModuleService } from './module.service';
 
 @Controller('companies/:companyId/modules')
 export class ModuleController {
   constructor(private readonly moduleService: ModuleService) {}
 
+  @AdminOnly()
   @Post(':moduleId')
   create(
     @Param('companyId') companyId: string,
@@ -13,11 +16,13 @@ export class ModuleController {
     return this.moduleService.create(moduleId, companyId);
   }
 
+  @CompanyMember()
   @Get()
   findAll(@Param('companyId') companyId: string) {
     return this.moduleService.findAll(companyId);
   }
 
+  @AdminOnly()
   @Delete(':moduleId')
   remove(
     @Param('moduleId') moduleId: string,

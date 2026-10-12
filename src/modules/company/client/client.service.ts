@@ -102,7 +102,7 @@ export class ClientService {
   async findOne(clientId: string, companyId: string, userId?: string) {
     if (userId) {
       const ctx = await this.permissionService.resolveContext(userId, companyId);
-      this.permissionService.assertPageAccess(ctx, 'client');
+      this.permissionService.assertFilterAccess(ctx, 'client');
     }
 
     const client = await this.prisma.companyClient.findUnique({
@@ -143,7 +143,7 @@ export class ClientService {
     resolveCep = false,
   ) {
     const ctx = await this.permissionService.resolveContext(userId, companyId);
-    this.permissionService.assertPageAccess(ctx, 'client');
+    this.permissionService.assertFilterAccess(ctx, 'client');
 
     const client = await this.prisma.companyClient.findUnique({
       where: { id: clientId, companyId, deleted: false },

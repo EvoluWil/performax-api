@@ -8,18 +8,20 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreateFinanceDto } from './dto/create-finance.dto';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { UpdateFinanceDto } from './dto/update-finance.dto';
 import { FinanceService } from './finance.service';
 
 @Controller('companies/:companyId/finance')
+@RequirePermission('financial', 'READ')
 export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}
 
   @Post()
+  @RequirePermission('financial', 'WRITE')
   create(
     @Body() createFinanceDto: CreateFinanceDto,
     @Param('companyId') companyId: string,
@@ -29,6 +31,7 @@ export class FinanceController {
   }
 
   @Post('transfer')
+  @RequirePermission('financial', 'WRITE')
   transfer(
     @Body() createTransferDto: CreateTransferDto,
     @Param('companyId') companyId: string,
@@ -54,6 +57,7 @@ export class FinanceController {
   }
 
   @Put(':financeId')
+  @RequirePermission('financial', 'WRITE')
   update(
     @Param('financeId') financeId: string,
     @Param('companyId') companyId: string,
@@ -63,6 +67,7 @@ export class FinanceController {
   }
 
   @Put(':financeId/revert-payment')
+  @RequirePermission('financial', 'WRITE')
   revertPayment(
     @Param('financeId') financeId: string,
     @Param('companyId') companyId: string,
@@ -71,6 +76,7 @@ export class FinanceController {
   }
 
   @Delete(':financeId')
+  @RequirePermission('financial', 'ADMIN')
   remove(
     @Param('financeId') financeId: string,
     @Param('companyId') companyId: string,
@@ -78,8 +84,8 @@ export class FinanceController {
     return this.financeService.remove(financeId, companyId);
   }
 
-  @AdminOnly()
   @Put(':financeId/approve')
+  @RequirePermission('financial', 'ADMIN')
   approve(
     @Param('financeId') financeId: string,
     @Param('companyId') companyId: string,

@@ -4,6 +4,7 @@ import { AdminOnlyGuard } from './admin-only.guard';
 import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
+import { PermissionGuard } from './permission.guard';
 
 @Module({
   imports: [MailModule],
@@ -17,6 +18,10 @@ import { AuthService } from './auth.service';
     {
       provide: 'APP_GUARD',
       useClass: AdminOnlyGuard,
+    },
+    {
+      provide: 'APP_GUARD',
+      useClass: PermissionGuard,
     },
   ],
 })

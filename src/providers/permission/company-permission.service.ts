@@ -201,6 +201,47 @@ export class CompanyPermissionService {
     }
   }
 
+  assertLevel(
+    ctx: CompanyPermissionContext,
+    moduleCode: string,
+    level: PermissionLevel,
+  ) {
+    if (level === 'FILTER') {
+      this.assertFilterAccess(ctx, moduleCode);
+      return;
+    }
+
+    if (level === 'READ') {
+      this.assertPageAccess(ctx, moduleCode);
+      return;
+    }
+
+    if (level === 'WRITE') {
+      this.assertWriteAccess(ctx, moduleCode);
+      return;
+    }
+
+    if (!this.hasLevel(ctx, moduleCode, 'ADMIN')) {
+      throw new ForbiddenException(
+        `Sem permissão de administração para o módulo ${moduleCode}`,
+      );
+    }
+  }
+
+  async assertCompanyMember(userId: string, companyId: string) {
+    const ctx = await this.resolveContext(userId, companyId);
+    if (ctx.isAdmin) return;
+
+    const membership = await this.prisma.companyUserRole.findUnique({
+      where: { userId_companyId: { userId, companyId } },
+      select: { id: true },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('Usuário sem acesso a esta empresa');
+    }
+  }
+
   async assertCompanyHasModule(companyId: string, moduleCode: string) {
     const catalog = await this.prisma.module.findFirst({
       where: { code: moduleCode, deleted: false },

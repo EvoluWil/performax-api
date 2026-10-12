@@ -8,6 +8,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -42,6 +43,7 @@ export class CompanyController {
     return this.companyService.findGroup(companyId, user);
   }
 
+  @AdminOnly()
   @Put(':companyId')
   update(
     @Param('companyId') companyId: string,
@@ -51,6 +53,7 @@ export class CompanyController {
     return this.companyService.update(companyId, user.id, updateCompanyDto);
   }
 
+  @AdminOnly()
   @Post(':companyId/link')
   linkCompanies(
     @Param('companyId') companyId: string,
@@ -64,6 +67,7 @@ export class CompanyController {
     );
   }
 
+  @AdminOnly()
   @Delete(':companyId/link/:targetCompanyId')
   unlinkCompany(
     @Param('companyId') companyId: string,
@@ -73,6 +77,7 @@ export class CompanyController {
     return this.companyService.unlinkCompany(targetCompanyId, user.id);
   }
 
+  @AdminOnly()
   @Delete(':companyId')
   remove(@Param('companyId') companyId: string, @AuthUser() user: User) {
     return this.companyService.remove(companyId, user.id);

@@ -8,17 +8,19 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskService } from './task.service';
 
 @Controller('companies/:companyId/tasks')
+@RequirePermission('task', 'READ')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
   @Post()
+  @RequirePermission('task', 'WRITE')
   create(
     @Body() createTaskDto: CreateTaskDto,
     @Param('companyId') companyId: string,
@@ -44,6 +46,7 @@ export class TaskController {
   }
 
   @Put(':taskId')
+  @RequirePermission('task', 'WRITE')
   update(
     @Param('taskId') taskId: string,
     @Param('companyId') companyId: string,
@@ -52,8 +55,8 @@ export class TaskController {
     return this.taskService.update(taskId, companyId, updateTaskDto);
   }
 
-  @AdminOnly()
   @Put(':taskId/approve')
+  @RequirePermission('task', 'ADMIN')
   approve(
     @Param('taskId') taskId: string,
     @Param('companyId') companyId: string,
@@ -63,6 +66,7 @@ export class TaskController {
   }
 
   @Delete(':taskId')
+  @RequirePermission('task', 'ADMIN')
   remove(
     @Param('taskId') taskId: string,
     @Param('companyId') companyId: string,

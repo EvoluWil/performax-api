@@ -8,17 +8,19 @@ import {
   Put,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { AdminOnly } from 'src/decorators/admin-only.decorator';
 import { AuthUser } from 'src/decorators/auth-user.decorator';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { BudgetService } from './budget.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 
 @Controller('companies/:companyId/budgets')
+@RequirePermission('budget', 'READ')
 export class BudgetController {
   constructor(private readonly budgetService: BudgetService) {}
 
   @Post()
+  @RequirePermission('budget', 'WRITE')
   create(
     @Body() createBudgetDto: CreateBudgetDto,
     @Param('companyId') companyId: string,
@@ -44,6 +46,7 @@ export class BudgetController {
   }
 
   @Put(':budgetId')
+  @RequirePermission('budget', 'WRITE')
   update(
     @Param('budgetId') budgetId: string,
     @Param('companyId') companyId: string,
@@ -52,8 +55,8 @@ export class BudgetController {
     return this.budgetService.update(budgetId, companyId, updateBudgetDto);
   }
 
-  @AdminOnly()
   @Put(':budgetId/approve')
+  @RequirePermission('budget', 'ADMIN')
   approve(
     @Param('budgetId') budgetId: string,
     @Param('companyId') companyId: string,
@@ -63,6 +66,7 @@ export class BudgetController {
   }
 
   @Delete(':budgetId')
+  @RequirePermission('budget', 'ADMIN')
   remove(
     @Param('budgetId') budgetId: string,
     @Param('companyId') companyId: string,

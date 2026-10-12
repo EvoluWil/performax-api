@@ -7,11 +7,13 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { BankService } from './bank.service';
 import { CreateBankDto } from './dto/create-bank.dto';
 import { UpdateBankDto } from './dto/update-bank.dto';
 
 @Controller('companies/:companyId/finance-banks')
+@RequirePermission('financial', 'WRITE')
 export class BankController {
   constructor(private readonly bankService: BankService) {}
 
@@ -38,6 +40,7 @@ export class BankController {
   }
 
   @Delete(':bankId')
+  @RequirePermission('financial', 'ADMIN')
   remove(
     @Param('bankId') bankId: string,
     @Param('companyId') companyId: string,

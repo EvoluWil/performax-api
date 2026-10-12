@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Put } from '@nestjs/common';
 import { AdminOnly } from 'src/decorators/admin-only.decorator';
+import { CompanyMember } from 'src/decorators/company-member.decorator';
 import { UpsertWhiteLabelDto } from './dto/upsert-white-label.dto';
 import { WhiteLabelService } from './white-label.service';
 
@@ -7,6 +8,7 @@ import { WhiteLabelService } from './white-label.service';
 export class WhiteLabelController {
   constructor(private readonly whiteLabelService: WhiteLabelService) {}
 
+  @CompanyMember()
   @Get()
   get(@Param('companyId') companyId: string) {
     return this.whiteLabelService.get(companyId);

@@ -7,11 +7,13 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
+import { RequirePermission } from 'src/decorators/require-permission.decorator';
 import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { PaymentMethodService } from './payment-method.service';
 
 @Controller('companies/:companyId/finance-payment-methods')
+@RequirePermission('financial', 'WRITE')
 export class PaymentMethodController {
   constructor(private readonly paymentMethodService: PaymentMethodService) {}
 
@@ -42,6 +44,7 @@ export class PaymentMethodController {
   }
 
   @Delete(':paymentMethodId')
+  @RequirePermission('financial', 'ADMIN')
   remove(
     @Param('paymentMethodId') paymentMethodId: string,
     @Param('companyId') companyId: string,
