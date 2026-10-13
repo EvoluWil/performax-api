@@ -22,6 +22,7 @@ import {
 import {
   DashboardWindow,
   DashboardWindowError,
+  formatDashboardWindowLabel,
   resolveDashboardWindow,
   startOfToday,
 } from './dashboard.window';
@@ -74,7 +75,7 @@ const BUCKET_LABELS: Record<DashboardBucket['key'], string> = {
   '61+': '61+ dias',
 };
 
-const PRIORITY_LIMIT = 20;
+const PRIORITY_LIMIT = 3;
 
 type NamedClient = { name: string } | null;
 
@@ -142,6 +143,7 @@ export class DashboardService {
         previousTo: period.previousTo.toISOString(),
         complete: period.complete,
         forecastTo: period.forecastTo.toISOString(),
+        label: formatDashboardWindowLabel(period),
       },
       overview: {
         cards: {
@@ -684,7 +686,7 @@ export class DashboardService {
       this.prisma.companyFinance.count({ where }),
       this.prisma.companyFinance.findMany({
         where,
-        orderBy: { date: 'asc' },
+        orderBy: [{ date: 'asc' }, { value: 'desc' }],
         take: PRIORITY_LIMIT,
         select: {
           id: true,

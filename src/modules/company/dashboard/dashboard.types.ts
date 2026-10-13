@@ -55,6 +55,7 @@ export type DashboardResponse = {
     previousTo: string;
     complete: boolean;
     forecastTo: string;
+    label: string;
   };
   overview: {
     cards: {

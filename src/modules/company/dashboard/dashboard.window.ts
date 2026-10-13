@@ -88,6 +88,52 @@ export function resolveDashboardWindow(
   };
 }
 
+const SHORT_MONTHS = [
+  'jan',
+  'fev',
+  'mar',
+  'abr',
+  'mai',
+  'jun',
+  'jul',
+  'ago',
+  'set',
+  'out',
+  'nov',
+  'dez',
+];
+
+const FULL_MONTHS = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
+
+function daySpan(from: Date, to: Date, withYear: boolean) {
+  const text = `${pad(from.getDate())}–${pad(to.getDate())}/${SHORT_MONTHS[from.getMonth()]}`;
+  return withYear ? `${text}/${from.getFullYear()}` : text;
+}
+
+export function formatDashboardWindowLabel(window: DashboardWindow) {
+  if (window.complete) {
+    const current = `${FULL_MONTHS[window.from.getMonth()]}/${window.from.getFullYear()}`;
+    const previous = `${FULL_MONTHS[window.previousFrom.getMonth()]}/${window.previousFrom.getFullYear()}`;
+    return `${current} × ${previous}`;
+  }
+
+  const withYear = window.from.getFullYear() !== window.previousFrom.getFullYear();
+  return `${daySpan(window.from, window.to, withYear)} × ${daySpan(window.previousFrom, window.previousTo, withYear)}`;
+}
+
 export function startOfToday(now = new Date()) {
   return startOfDay(now);
 }
