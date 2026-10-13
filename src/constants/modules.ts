@@ -61,7 +61,7 @@ export const MODULE_DEFINITIONS = [
   },
   {
     code: 'dashboard',
-    name: 'Painéis',
+    name: 'Dashboard',
     description:
       'Visão consolidada de OS, ocorrências, orçamentos e financeiro',
   },
