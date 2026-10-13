@@ -3,7 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { BudgetStatusEnum } from '@prisma/client';
+import { BudgetStatusEnum, NotificationTypeEnum } from '@prisma/client';
+import { NotificationService } from 'src/modules/company/notification/notification.service';
 import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
@@ -20,6 +21,7 @@ export class BudgetService {
     private readonly util: UtilService,
     private readonly qb: QBService,
     private readonly permissionService: CompanyPermissionService,
+    private readonly notifications: NotificationService,
   ) {}
 
   private assertValidCompanyId(companyId: string) {
@@ -51,6 +53,16 @@ export class BudgetService {
         createdBy: { connect: { id: userId } },
         protocol,
       },
+    });
+
+    await this.notifications.notify({
+      companyId,
+      recipientId: budget.responsibleId,
+      actorId: userId,
+      type: NotificationTypeEnum.BUDGET_CREATED,
+      entityId: budget.id,
+      protocol: budget.protocol,
+      recordTitle: budget.title,
     });
 
     return budget;
@@ -99,24 +111,61 @@ export class BudgetService {
     budgetId: string,
     companyId: string,
     updateBudgetDto: UpdateBudgetDto,
+    actorId: string,
   ) {
-    await this.findOne(budgetId, companyId);
+    const original = await this.findOne(budgetId, companyId);
 
-    return this.prisma.companyBudget.update({
+    const updated = await this.prisma.companyBudget.update({
       where: { id: budgetId },
       data: updateBudgetDto,
     });
+
+    if (
+      updateBudgetDto.responsibleId &&
+      updateBudgetDto.responsibleId !== original.responsibleId
+    ) {
+      await this.notifications.notify({
+        companyId,
+        recipientId: updateBudgetDto.responsibleId,
+        actorId,
+        type: NotificationTypeEnum.BUDGET_ASSIGNED,
+        entityId: original.id,
+        protocol: original.protocol,
+        recordTitle: updateBudgetDto.title ?? original.title,
+      });
+    }
+
+    return updated;
   }
 
-  async approve(budgetId: string, companyId: string, approved: boolean) {
-    await this.findOne(budgetId, companyId);
+  async approve(
+    budgetId: string,
+    companyId: string,
+    approved: boolean,
+    actorId: string,
+  ) {
+    const budget = await this.findOne(budgetId, companyId);
 
-    return this.prisma.companyBudget.update({
+    const updated = await this.prisma.companyBudget.update({
       where: { id: budgetId },
       data: approved
         ? { approved: true }
         : { approved: true, status: BudgetStatusEnum.REJECTED },
     });
+
+    await this.notifications.notify({
+      companyId,
+      recipientId: budget.responsibleId,
+      actorId,
+      type: approved
+        ? NotificationTypeEnum.BUDGET_APPROVED
+        : NotificationTypeEnum.BUDGET_REJECTED,
+      entityId: budget.id,
+      protocol: budget.protocol,
+      recordTitle: budget.title,
+    });
+
+    return updated;
   }
 
   async remove(budgetId: string, companyId: string) {

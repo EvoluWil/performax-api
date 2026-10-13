@@ -62,8 +62,14 @@ export class FinanceController {
     @Param('financeId') financeId: string,
     @Param('companyId') companyId: string,
     @Body() updateFinanceDto: UpdateFinanceDto,
+    @AuthUser() user: User,
   ) {
-    return this.financeService.update(financeId, companyId, updateFinanceDto);
+    return this.financeService.update(
+      financeId,
+      companyId,
+      updateFinanceDto,
+      user.id,
+    );
   }
 
   @Put(':financeId/revert-payment')
@@ -90,7 +96,8 @@ export class FinanceController {
     @Param('financeId') financeId: string,
     @Param('companyId') companyId: string,
     @Body('approved') approved: boolean,
+    @AuthUser() user: User,
   ) {
-    return this.financeService.approve(financeId, companyId, approved);
+    return this.financeService.approve(financeId, companyId, approved, user.id);
   }
 }

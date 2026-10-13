@@ -59,6 +59,12 @@ export const MODULE_DEFINITIONS = [
     name: 'Notas fiscais',
     description: 'Emissão de NFS-e e cadastro fiscal da empresa',
   },
+  {
+    code: 'dashboard',
+    name: 'Painéis',
+    description:
+      'Visão consolidada de OS, ocorrências, orçamentos e financeiro',
+  },
 ] as const;
 
 export type ModuleCode = (typeof MODULE_DEFINITIONS)[number]['code'];

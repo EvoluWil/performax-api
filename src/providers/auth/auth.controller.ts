@@ -72,7 +72,10 @@ export class AuthController {
   @IsPublic()
   @Post('refresh-token')
   refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshAccessToken(refreshTokenDto.refreshToken);
+    return this.authService.refreshAccessToken(
+      refreshTokenDto.refreshToken,
+      refreshTokenDto.persistent === true,
+    );
   }
 
   @Post('sign-out')

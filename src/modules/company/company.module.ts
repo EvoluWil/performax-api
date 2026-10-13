@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BudgetModule } from './budget/budget.module';
 import { ClientModule } from './client/client.module';
 import { ContractModule } from './contract/contract.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { EmployeeModule } from './employee/employee.module';
 import { EntryModule } from './entry/entry.module';
 import { FinanceModule } from './finance/finance.module';
@@ -10,6 +11,7 @@ import { FormResourcesModule } from './form-resources/form-resources.module';
 import { CompanyController } from './index/company.controller';
 import { CompanyService } from './index/company.service';
 import { ModuleModule } from './module/module.module';
+import { NotificationModule } from './notification/notification.module';
 import { OccurrenceModule } from './occurrence/occurrence.module';
 import { RoleModule } from './role/role.module';
 import { ServiceInvoiceModule } from './service-invoice/service-invoice.module';
@@ -27,8 +29,10 @@ import { WhiteLabelModule } from './white-label/white-label.module';
     BudgetModule,
     EntryModule,
     ModuleModule,
+    NotificationModule,
     ClientModule,
     ContractModule,
+    DashboardModule,
     EmployeeModule,
     FormResourcesModule,
     FiscalModule,

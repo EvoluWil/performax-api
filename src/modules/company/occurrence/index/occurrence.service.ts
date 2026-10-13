@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { OccurrenceStatusEnum } from '@prisma/client';
+import { NotificationTypeEnum, OccurrenceStatusEnum } from '@prisma/client';
+import { NotificationService } from 'src/modules/company/notification/notification.service';
 import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
@@ -15,6 +16,7 @@ export class OccurrenceService {
     private readonly util: UtilService,
     private readonly qb: QBService,
     private readonly permissionService: CompanyPermissionService,
+    private readonly notifications: NotificationService,
   ) {}
   async create(
     createOccurrenceDto: CreateOccurrenceDto,
@@ -39,6 +41,16 @@ export class OccurrenceService {
         company: { connect: { id: companyId } },
         createdBy: { connect: { id: userId } },
       },
+    });
+
+    await this.notifications.notify({
+      companyId,
+      recipientId: occurrence.responsibleId,
+      actorId: userId,
+      type: NotificationTypeEnum.OCCURRENCE_CREATED,
+      entityId: occurrence.id,
+      protocol: occurrence.protocol,
+      recordTitle: occurrence.title,
     });
 
     return occurrence;
@@ -83,8 +95,9 @@ export class OccurrenceService {
     occurrenceId: string,
     companyId: string,
     updateOccurrenceDto: UpdateOccurrenceDto,
+    actorId: string,
   ) {
-    await this.findOne(occurrenceId, companyId);
+    const original = await this.findOne(occurrenceId, companyId);
     const data = normalizeRelations(updateOccurrenceDto) as any;
 
     if (data.status === OccurrenceStatusEnum.COMPLETED) {
@@ -96,18 +109,52 @@ export class OccurrenceService {
       data,
     });
 
+    if (
+      updateOccurrenceDto.responsibleId &&
+      updateOccurrenceDto.responsibleId !== original.responsibleId
+    ) {
+      await this.notifications.notify({
+        companyId,
+        recipientId: updateOccurrenceDto.responsibleId,
+        actorId,
+        type: NotificationTypeEnum.OCCURRENCE_ASSIGNED,
+        entityId: original.id,
+        protocol: original.protocol,
+        recordTitle: updateOccurrenceDto.title ?? original.title,
+      });
+    }
+
     return { ok: true };
   }
 
-  async approve(occurrenceId: string, companyId: string, approved: boolean) {
-    await this.findOne(occurrenceId, companyId);
+  async approve(
+    occurrenceId: string,
+    companyId: string,
+    approved: boolean,
+    actorId: string,
+  ) {
+    const occurrence = await this.findOne(occurrenceId, companyId);
 
-    return this.prisma.companyOccurrence.update({
+    const updated = await this.prisma.companyOccurrence.update({
       where: { id: occurrenceId },
       data: approved
         ? { approved: true }
         : { approved: true, status: OccurrenceStatusEnum.REJECTED },
     });
+
+    await this.notifications.notify({
+      companyId,
+      recipientId: occurrence.responsibleId,
+      actorId,
+      type: approved
+        ? NotificationTypeEnum.OCCURRENCE_APPROVED
+        : NotificationTypeEnum.OCCURRENCE_REJECTED,
+      entityId: occurrence.id,
+      protocol: occurrence.protocol,
+      recordTitle: occurrence.title,
+    });
+
+    return updated;
   }
 
   async remove(occurrenceId: string, companyId: string) {

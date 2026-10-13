@@ -4,7 +4,12 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { FinanceFlowEnum, FinanceStatusEnum } from '@prisma/client';
+import {
+  FinanceFlowEnum,
+  FinanceStatusEnum,
+  NotificationTypeEnum,
+} from '@prisma/client';
+import { NotificationService } from 'src/modules/company/notification/notification.service';
 import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
@@ -31,6 +36,7 @@ export class FinanceService {
     private readonly receivableService: ReceivableService,
     private readonly advanceService: AdvanceService,
     private readonly permissionService: CompanyPermissionService,
+    private readonly notifications: NotificationService,
   ) {}
 
   private getNetWalletImpact(
@@ -69,6 +75,16 @@ export class FinanceService {
         },
         company: { connect: { id: companyId } },
       },
+    });
+
+    await this.notifications.notify({
+      companyId,
+      recipientId: finance.responsibleId,
+      actorId: userId,
+      type: NotificationTypeEnum.FINANCE_CREATED,
+      entityId: finance.id,
+      protocol: finance.protocol,
+      recordTitle: finance.title,
     });
 
     if (isRecurring || recurrence) {
@@ -249,12 +265,16 @@ export class FinanceService {
     financeId: string,
     companyId: string,
     updateFinanceDto: UpdateFinanceDto,
+    actorId: string,
   ) {
     const finance = await this.prisma.companyFinance.findFirst({
       where: { id: financeId, companyId },
       select: {
         id: true,
         status: true,
+        title: true,
+        protocol: true,
+        responsibleId: true,
         linkedFinanceId: true,
         isInstallment: true,
         receivableId: true,
@@ -300,6 +320,33 @@ export class FinanceService {
       where: { id: financeId },
       data,
     });
+
+    const recordTitle = updateFinanceDto.title ?? finance.title;
+    if (
+      updateFinanceDto.responsibleId &&
+      updateFinanceDto.responsibleId !== finance.responsibleId
+    ) {
+      await this.notifications.notify({
+        companyId,
+        recipientId: updateFinanceDto.responsibleId,
+        actorId,
+        type: NotificationTypeEnum.FINANCE_ASSIGNED,
+        entityId: finance.id,
+        protocol: finance.protocol,
+        recordTitle,
+      });
+    }
+    if (wasNotPaid && willBePaid) {
+      await this.notifications.notify({
+        companyId,
+        recipientId: updateFinanceDto.responsibleId ?? finance.responsibleId,
+        actorId,
+        type: NotificationTypeEnum.FINANCE_PAID,
+        entityId: finance.id,
+        protocol: finance.protocol,
+        recordTitle,
+      });
+    }
 
     const updated = await this.prisma.companyFinance.findUnique({
       where: { id: financeId },
@@ -486,7 +533,12 @@ export class FinanceService {
     return { ok: true };
   }
 
-  async approve(financeId: string, companyId: string, approved: boolean) {
+  async approve(
+    financeId: string,
+    companyId: string,
+    approved: boolean,
+    actorId: string,
+  ) {
     const finance = await this.prisma.companyFinance.findFirst({
       where: { id: financeId, companyId },
     });
@@ -501,12 +553,26 @@ export class FinanceService {
       );
     }
 
-    return this.prisma.companyFinance.update({
+    const updated = await this.prisma.companyFinance.update({
       where: { id: financeId },
       data: approved
         ? { approved: true }
         : { approved: true, status: FinanceStatusEnum.REJECTED },
     });
+
+    await this.notifications.notify({
+      companyId,
+      recipientId: finance.responsibleId,
+      actorId,
+      type: approved
+        ? NotificationTypeEnum.FINANCE_APPROVED
+        : NotificationTypeEnum.FINANCE_REJECTED,
+      entityId: finance.id,
+      protocol: finance.protocol,
+      recordTitle: finance.title,
+    });
+
+    return updated;
   }
 
   async transfer(dto: CreateTransferDto, companyId: string, userId: string) {

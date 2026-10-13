@@ -55,11 +55,13 @@ export class OccurrenceController {
     @Param('companyId') companyId: string,
     @Param('occurrenceId') occurrenceId: string,
     @Body() updateOccurrenceDto: UpdateOccurrenceDto,
+    @AuthUser() user: User,
   ) {
     return this.occurrenceService.update(
       occurrenceId,
       companyId,
       updateOccurrenceDto,
+      user.id,
     );
   }
 
@@ -69,8 +71,14 @@ export class OccurrenceController {
     @Param('occurrenceId') occurrenceId: string,
     @Param('companyId') companyId: string,
     @Body('approved') approved: boolean,
+    @AuthUser() user: User,
   ) {
-    return this.occurrenceService.approve(occurrenceId, companyId, approved);
+    return this.occurrenceService.approve(
+      occurrenceId,
+      companyId,
+      approved,
+      user.id,
+    );
   }
 
   @Delete(':occurrenceId')

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { NotificationModule } from '../notification/notification.module';
 import { BankModule } from './bank/bank.module';
 import { CategoryModule } from './category/category.module';
 import { FinanceController } from './index/finance.controller';
@@ -26,6 +27,7 @@ import { WalletModule } from './wallet/wallet.module';
     RecurringModule,
     ReceivableModule,
     AdvanceModule,
+    NotificationModule,
   ],
   exports: [FinanceService],
 })

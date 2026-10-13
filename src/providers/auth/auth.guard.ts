@@ -43,7 +43,16 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      const { id } = await this.jwtService.verifyAsync(token);
+      const { id, persistent } = await this.verifyToken(token);
+
+      if (persistent) {
+        const session = await this.prisma.userSession.findUnique({
+          where: { userId: id },
+        });
+        if (!session?.persistent || session.accessToken !== token) {
+          throw new UnauthorizedException('Usuário não autorizado');
+        }
+      }
 
       const user = await this.prisma.user.findUnique({
         where: { id },
@@ -65,6 +74,26 @@ export class AuthGuard implements CanActivate {
     }
 
     return true;
+  }
+
+  private async verifyToken(token: string) {
+    try {
+      return await this.jwtService.verifyAsync<{
+        id: string;
+        persistent?: boolean;
+      }>(token);
+    } catch {
+      const decoded = this.jwtService.decode(token) as {
+        persistent?: boolean;
+      } | null;
+      if (!decoded?.persistent) {
+        throw new UnauthorizedException('Usuário não autorizado');
+      }
+      return this.jwtService.verifyAsync<{
+        id: string;
+        persistent?: boolean;
+      }>(token, { ignoreExpiration: true });
+    }
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {

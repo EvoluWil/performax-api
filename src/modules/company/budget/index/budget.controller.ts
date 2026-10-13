@@ -51,8 +51,14 @@ export class BudgetController {
     @Param('budgetId') budgetId: string,
     @Param('companyId') companyId: string,
     @Body() updateBudgetDto: UpdateBudgetDto,
+    @AuthUser() user: User,
   ) {
-    return this.budgetService.update(budgetId, companyId, updateBudgetDto);
+    return this.budgetService.update(
+      budgetId,
+      companyId,
+      updateBudgetDto,
+      user.id,
+    );
   }
 
   @Put(':budgetId/approve')
@@ -61,8 +67,9 @@ export class BudgetController {
     @Param('budgetId') budgetId: string,
     @Param('companyId') companyId: string,
     @Body('approved') approved: boolean,
+    @AuthUser() user: User,
   ) {
-    return this.budgetService.approve(budgetId, companyId, approved);
+    return this.budgetService.approve(budgetId, companyId, approved, user.id);
   }
 
   @Delete(':budgetId')

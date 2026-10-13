@@ -31,23 +31,22 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
   ) {}
-  private generateAccessToken(id: string) {
-    const payload = { id };
-    const token = this.jwtService.sign(payload);
-    return token;
+  private generateAccessToken(id: string, persistent = false) {
+    return this.jwtService.sign(persistent ? { id, persistent: true } : { id });
   }
 
-  private async createSession(userId: string) {
-    const accessToken = this.generateAccessToken(userId);
+  private async createSession(userId: string, persistent = false) {
+    const accessToken = this.generateAccessToken(userId, persistent);
     const refreshToken = randomBytes(64).toString('hex');
-    const accessTokenExpires = Date.now() + SIXTY_MINUTES;
+    const accessTokenExpires = persistent ? null : Date.now() + SIXTY_MINUTES;
 
     await this.prisma.userSession.upsert({
       where: { userId },
-      update: { accessToken, refreshToken },
+      update: { accessToken, refreshToken, persistent },
       create: {
         accessToken,
         refreshToken,
+        persistent,
         userId,
       },
     });
@@ -85,7 +84,7 @@ export class AuthService {
       signInDto.password,
     );
     console.log(user);
-    const session = await this.createSession(user.id);
+    const session = await this.createSession(user.id, signInDto.persistent === true);
     console.log(session);
     return { user, session };
   }
@@ -347,17 +346,23 @@ export class AuthService {
     throw new BadRequestException('Usuário não encontrado');
   }
 
-  async refreshAccessToken(refreshToken: string) {
+  async refreshAccessToken(refreshToken: string, persistent = false) {
     const session = await this.prisma.userSession.findFirst({
       where: { refreshToken },
       include: { user: true },
     });
 
-    if (!session || isPast(new Date(addDays(session.createdAt, 2)))) {
+    if (
+      !session ||
+      (!session.persistent && isPast(new Date(addDays(session.createdAt, 2))))
+    ) {
       throw new UnauthorizedException('Refresh token inválido ou expirado');
     }
 
-    const newSession = await this.createSession(session.userId);
+    const newSession = await this.createSession(
+      session.userId,
+      session.persistent || persistent,
+    );
 
     return {
       session: newSession,

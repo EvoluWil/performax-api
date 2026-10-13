@@ -383,6 +383,20 @@ export class CompanyPermissionService {
     }
   }
 
+  assertOperationalRecordAccess(
+    ctx: CompanyPermissionContext,
+    moduleCode: string,
+    responsibleId?: string | null,
+  ) {
+    if (ctx.isAdmin) return;
+    if (this.getModuleScope(ctx, moduleCode) === PermissionScopeEnum.ALL) return;
+
+    const scopedUserIds = this.getScopedUserIds(ctx, moduleCode) ?? [];
+    if (!responsibleId || !scopedUserIds.includes(responsibleId)) {
+      throw new ForbiddenException('OS fora do escopo permitido');
+    }
+  }
+
   async validateOperationalListWhere(
     ctx: CompanyPermissionContext,
     moduleCode: string,

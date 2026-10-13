@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { TaskStatusEnum } from '@prisma/client';
+import { NotificationTypeEnum, TaskStatusEnum } from '@prisma/client';
+import { NotificationService } from 'src/modules/company/notification/notification.service';
 import { CompanyPermissionService } from 'src/providers/permission/company-permission.service';
 import { QBService } from 'src/providers/prisma/prisma-querybuilder/prisma-querybuilder.service';
 import { PrismaService } from 'src/providers/prisma/prisma.service';
@@ -8,6 +9,8 @@ import { normalizeRelations } from 'src/utils/normalize-relations.util';
 import { RecurringService } from '../recurring/recurring.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+
+export type TaskMine = 'assigned' | 'created';
 
 @Injectable()
 export class TaskService {
@@ -19,6 +22,7 @@ export class TaskService {
     private readonly util: UtilService,
     private readonly recurringService: RecurringService,
     private readonly permissionService: CompanyPermissionService,
+    private readonly notifications: NotificationService,
   ) {}
   async create(
     createTaskDto: CreateTaskDto,
@@ -58,10 +62,20 @@ export class TaskService {
     data.status = TaskStatusEnum.PENDING;
     data.approved = taskType?.needApprove ? false : true;
 
-    return this.prisma.companyTask.create({ data });
+    const task = await this.prisma.companyTask.create({ data });
+    await this.notifications.notify({
+      companyId,
+      recipientId: createTaskDto.responsibleId,
+      actorId: userId,
+      type: NotificationTypeEnum.TASK_CREATED,
+      entityId: task.id,
+      protocol: task.protocol,
+      recordTitle: task.title,
+    });
+    return task;
   }
 
-  async findAll(companyId: string, userId: string) {
+  async findAll(companyId: string, userId: string, mine?: TaskMine) {
     try {
       await this.recurringService.generateForNextDays(companyId, 30);
     } catch (err) {
@@ -75,12 +89,22 @@ export class TaskService {
     this.permissionService.assertPageAccess(ctx, 'task');
 
     const where: Record<string, unknown> = { companyId, deleted: false };
-    const { count, query } = await this.qb.query('companyTask', where);
+    const { count: scopedCount, query } = await this.qb.query(
+      'companyTask',
+      where,
+    );
+    const listWhere = query.where as Record<string, unknown>;
     await this.permissionService.validateOperationalListWhere(
       ctx,
       'task',
-      query.where as Record<string, unknown>,
+      listWhere,
     );
+    this.applyMineFilter(listWhere, userId, mine);
+
+    let count = scopedCount;
+    if (mine) {
+      count = await this.prisma.companyTask.count({ where: listWhere as any });
+    }
 
     const { select, include, ...restQuery } = query;
 
@@ -151,8 +175,15 @@ export class TaskService {
     taskId: string,
     companyId: string,
     updateTaskDto: UpdateTaskDto,
+    userId: string,
   ) {
     const original = await this.findOne(taskId, companyId);
+    const ctx = await this.permissionService.resolveContext(userId, companyId);
+    this.permissionService.assertOperationalRecordAccess(
+      ctx,
+      'task',
+      original.responsibleId,
+    );
 
     const data: any = normalizeRelations(updateTaskDto);
 
@@ -304,18 +335,103 @@ export class TaskService {
       }
     }
 
+    await this.notifyTaskChanges(original, updateTaskDto, userId, companyId);
+
     return { ok: true };
   }
 
-  async approve(taskId: string, companyId: string, approved: boolean) {
-    await this.findOne(taskId, companyId);
+  private async notifyTaskChanges(
+    original: {
+      id: string;
+      protocol: string;
+      title: string;
+      responsibleId: string | null;
+      status: TaskStatusEnum;
+    },
+    dto: UpdateTaskDto,
+    actorId: string,
+    companyId: string,
+  ) {
+    const recipientId = dto.responsibleId ?? original.responsibleId;
+    const recordTitle = dto.title ?? original.title;
 
-    return this.prisma.companyTask.update({
+    if (dto.responsibleId && dto.responsibleId !== original.responsibleId) {
+      await this.notifications.notify({
+        companyId,
+        recipientId: dto.responsibleId,
+        actorId,
+        type: NotificationTypeEnum.TASK_ASSIGNED,
+        entityId: original.id,
+        protocol: original.protocol,
+        recordTitle,
+      });
+    }
+
+    if (!dto.status || dto.status === original.status) return;
+
+    const type =
+      dto.status === TaskStatusEnum.EMERGENCY
+        ? NotificationTypeEnum.TASK_EMERGENCY
+        : dto.status === TaskStatusEnum.IMPEDED
+          ? NotificationTypeEnum.TASK_IMPEDED
+          : null;
+    if (!type) return;
+
+    await this.notifications.notify({
+      companyId,
+      recipientId,
+      actorId,
+      type,
+      entityId: original.id,
+      protocol: original.protocol,
+      recordTitle,
+    });
+  }
+
+  private applyMineFilter(
+    where: Record<string, unknown>,
+    userId: string,
+    mine?: TaskMine,
+  ) {
+    if (mine === 'assigned') {
+      where.responsibleId = userId;
+      return;
+    }
+
+    if (mine === 'created') {
+      delete where.responsibleId;
+      where.createdById = userId;
+    }
+  }
+
+  async approve(
+    taskId: string,
+    companyId: string,
+    approved: boolean,
+    actorId: string,
+  ) {
+    const task = await this.findOne(taskId, companyId);
+
+    const updated = await this.prisma.companyTask.update({
       where: { id: taskId },
       data: approved
         ? { approved: true }
         : { approved: true, status: TaskStatusEnum.REJECTED },
     });
+
+    await this.notifications.notify({
+      companyId,
+      recipientId: task.responsibleId,
+      actorId,
+      type: approved
+        ? NotificationTypeEnum.TASK_APPROVED
+        : NotificationTypeEnum.TASK_REJECTED,
+      entityId: task.id,
+      protocol: task.protocol,
+      recordTitle: task.title,
+    });
+
+    return updated;
   }
 
   async remove(taskId: string, companyId: string) {
