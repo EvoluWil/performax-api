@@ -6,6 +6,7 @@ import {
 import { PrismaService } from 'src/providers/prisma/prisma.service';
 import { UtilService } from 'src/providers/util/util.service';
 import { normalizeRelations } from 'src/utils/normalize-relations.util';
+import { expandRecurrenceOccurrences } from 'src/utils/recurrence-occurrences.util';
 import { UpdateRecurringDto } from './dto/update-recurring.dto';
 
 const MAX_EAGER = 100;
@@ -52,28 +53,20 @@ export class RecurringService {
   ): Promise<{ created: number; protocols: string[] }> {
     if (!recurring.recurrence) return { created: 0, protocols: [] };
 
-    const { RRule } = await import('rrule');
+    const occurrences = await expandRecurrenceOccurrences(
+      recurring.recurrence,
+      recurring.date,
+      {
+        endDate: recurring.endDate,
+        max: MAX_EAGER,
+      },
+    );
 
-    let rule: InstanceType<typeof RRule>;
-    try {
-      rule = RRule.fromString(recurring.recurrence);
-    } catch {
+    if (occurrences.length === 0) {
       this.logger.warn(
-        `Invalid RRULE on recurring ${recurring.id}, skipping eager generation`,
+        `Invalid or empty RRULE on recurring ${recurring.id}, skipping eager generation`,
       );
       return { created: 0, protocols: [] };
-    }
-
-    // Determine the full set of occurrences to target
-    let occurrences: Date[];
-    if (recurring.endDate) {
-      occurrences = rule.between(
-        recurring.date,
-        recurring.endDate,
-        true,
-      ) as Date[];
-    } else {
-      occurrences = rule.all((_, len) => len < MAX_EAGER) as Date[];
     }
 
     if (occurrences.length === 0) return { created: 0, protocols: [] };
