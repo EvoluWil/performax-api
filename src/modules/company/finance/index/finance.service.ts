@@ -280,6 +280,7 @@ export class FinanceService {
         receivableId: true,
         paidFromAdvance: true,
         advanceId: true,
+        isAdvanceDeposit: true,
         flow: true,
         value: true,
         tax: true,
@@ -301,20 +302,17 @@ export class FinanceService {
     const { recurrence: _recurrence, ...rest } = updateFinanceDto as any;
     const data = normalizeRelations(rest);
 
+    if (finance.advanceId && !finance.isAdvanceDeposit) {
+      delete (data as any).advanceId;
+      delete (data as any).paidFromAdvance;
+    }
+
     const wasNotPaid = finance.status !== FinanceStatusEnum.PAID;
     const willBePaid = (data as any).status === FinanceStatusEnum.PAID;
     const wasPaid = finance.status === FinanceStatusEnum.PAID;
     const willNotBePaid =
       (data as any).status !== undefined &&
       (data as any).status !== FinanceStatusEnum.PAID;
-
-    if (wasNotPaid && willBePaid && (data as any).paidFromAdvance) {
-      if (!(data as any).advanceId) {
-        throw new BadRequestException(
-          'Selecione o adiantamento para aplicar o pagamento',
-        );
-      }
-    }
 
     await this.prisma.companyFinance.update({
       where: { id: financeId },
@@ -371,33 +369,31 @@ export class FinanceService {
       return { ok: true };
     }
 
-    // Advance payment: deduct from advance balance, skip wallet recalculate
-    if (wasNotPaid && willBePaid && updated?.paidFromAdvance && updated.advanceId) {
-      const appliedAmount = this.getNetWalletImpact(
-        updated.flow,
-        updated.value,
-        updated.tax,
-        updated.retention,
-      );
-      await this.advanceService.apply(
-        updated.advanceId,
+    // Linked to advance: nominal settlement only — no wallet movement
+    if (
+      wasNotPaid &&
+      willBePaid &&
+      finance.advanceId &&
+      !finance.isAdvanceDeposit
+    ) {
+      await this.advanceService.recordLinkedFinancePaid(
+        finance.advanceId,
         companyId,
-        appliedAmount,
+        finance.value,
       );
       return { ok: true };
     }
 
-    if (wasPaid && willNotBePaid && finance.paidFromAdvance && finance.advanceId) {
-      const appliedAmount = this.getNetWalletImpact(
-        finance.flow,
-        finance.value,
-        finance.tax,
-        finance.retention,
-      );
-      await this.advanceService.revertApplication(
+    if (
+      wasPaid &&
+      willNotBePaid &&
+      finance.advanceId &&
+      !finance.isAdvanceDeposit
+    ) {
+      await this.advanceService.revertLinkedFinancePaid(
         finance.advanceId,
         companyId,
-        appliedAmount,
+        finance.value,
       );
       return { ok: true };
     }
@@ -452,6 +448,7 @@ export class FinanceService {
         receivableId: true,
         paidFromAdvance: true,
         advanceId: true,
+        isAdvanceDeposit: true,
         flow: true,
         value: true,
         tax: true,
@@ -471,6 +468,9 @@ export class FinanceService {
 
     let linkedCompanyId: string | null = null;
 
+    const revertAdvanceLink =
+      !!finance.advanceId && !finance.isAdvanceDeposit;
+
     await this.prisma.companyFinance.update({
       where: { id: finance.id },
       data: {
@@ -478,8 +478,9 @@ export class FinanceService {
         paymentDate: null,
         tax: 0,
         retention: 0,
-        paidFromAdvance: false,
-        advanceId: null,
+        ...(revertAdvanceLink
+          ? { paidFromAdvance: true, advanceId: finance.advanceId }
+          : { paidFromAdvance: false, advanceId: null }),
       },
     });
 
@@ -509,18 +510,11 @@ export class FinanceService {
       return { ok: true };
     }
 
-    // Advance payment revert: restore advance balance, skip wallet recalculate
-    if (finance.paidFromAdvance && finance.advanceId) {
-      const appliedAmount = this.getNetWalletImpact(
-        finance.flow,
-        finance.value,
-        finance.tax,
-        finance.retention,
-      );
-      await this.advanceService.revertApplication(
+    if (revertAdvanceLink && finance.advanceId) {
+      await this.advanceService.revertLinkedFinancePaid(
         finance.advanceId,
         companyId,
-        appliedAmount,
+        finance.value,
       );
       return { ok: true };
     }

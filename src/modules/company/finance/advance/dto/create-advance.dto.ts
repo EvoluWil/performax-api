@@ -1,10 +1,13 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsDateString,
   IsInt,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Min,
 } from 'class-validator';
 
 export class CreateAdvanceDto {
@@ -20,10 +23,15 @@ export class CreateAdvanceDto {
   @IsOptional()
   observation?: string;
 
-  /** Value in cents */
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsMongoId({ each: true })
+  financeIds: string[];
+
+  /** Effective cash received, in cents */
   @IsInt()
-  @IsNotEmpty()
-  totalValue: number;
+  @Min(1)
+  receivedValue: number;
 
   @IsDateString()
   @IsNotEmpty()

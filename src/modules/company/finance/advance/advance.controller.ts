@@ -21,11 +21,6 @@ export class AdvanceController {
     return this.advanceService.findAll(companyId);
   }
 
-  @Get('available')
-  findAvailable(@Param('companyId') companyId: string) {
-    return this.advanceService.findAvailable(companyId);
-  }
-
   @Get(':advanceId')
   findOne(
     @Param('advanceId') advanceId: string,

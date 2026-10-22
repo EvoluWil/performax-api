@@ -979,6 +979,7 @@ model CompanyFinanceAdvance {
   description    String?
   observation    String?
   totalValue     Int
+  receivedValue  Int                @default(0)
   remainingValue Int
   date           DateTime
   status         AdvanceStatusEnum  @default(OPEN)
