@@ -12,7 +12,6 @@ import {
 } from 'class-validator';
 import { FinanceOutFieldsConstraint } from '../../index/dto/finance-out-fields.validator';
 
-@Validate(FinanceOutFieldsConstraint)
 export class CreateReceivableDto {
   @IsString()
   @IsNotEmpty()
@@ -43,6 +42,7 @@ export class CreateReceivableDto {
   firstDueDate: string;
 
   @IsEnum(FinanceFlowEnum)
+  @Validate(FinanceOutFieldsConstraint)
   flow: FinanceFlowEnum;
 
   @IsMongoId()
