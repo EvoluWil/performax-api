@@ -8,9 +8,12 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Validate,
   ValidateIf,
 } from 'class-validator';
+import { FinanceOutFieldsConstraint } from './finance-out-fields.validator';
 
+@Validate(FinanceOutFieldsConstraint)
 export class CreateFinanceDto {
   @IsString()
   @IsNotEmpty()
@@ -58,7 +61,7 @@ export class CreateFinanceDto {
 
   @IsMongoId()
   @IsOptional()
-  clientId: string;
+  clientId?: string;
 
   @IsMongoId()
   @IsOptional()

@@ -8,8 +8,11 @@ import {
   IsString,
   Max,
   Min,
+  Validate,
 } from 'class-validator';
+import { FinanceOutFieldsConstraint } from '../../index/dto/finance-out-fields.validator';
 
+@Validate(FinanceOutFieldsConstraint)
 export class CreateReceivableDto {
   @IsString()
   @IsNotEmpty()
